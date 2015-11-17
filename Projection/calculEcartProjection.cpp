@@ -19,6 +19,7 @@ int main()
 	std::vector<cv::Point3f> objectPoints;
 	std::vector<double> distances;
 	std::vector<double> moyDistances;
+	double moyFinale = 0;
 
 	// Création des points à projeter
 	for(int x = 0; x < COLCHESSBOARD; x++)
@@ -58,18 +59,21 @@ int main()
 
 
 		//cacul des distances entre projections
+		double moy = 0;
 		for(int j = 0; j < COLCHESSBOARD * ROWCHESSBOARD; j++)
 		{
 			double d = sqrt(pow(chessCornersInit[j].y - imagePoints[j].y, 2) + pow(chessCornersInit[j].x - imagePoints[j].x, 2));
 			distances.push_back(d);
+			moy += d;
 			std::cout << "distance point numero " << j << " : " << std::endl
 				<< "    subpix : x = " << chessCornersInit[j].x << "    y = " << chessCornersInit[j].y << std::endl
 				<< "    projec : x = " << imagePoints[j].x << "    y = " << imagePoints[j].y << std::endl
 				<< " distance : " << d << std::endl << std::endl;
 		}
 
-		moyDistances.push_back(distances[i] / (COLCHESSBOARD * ROWCHESSBOARD));
+		moyDistances.push_back(moy / (COLCHESSBOARD * ROWCHESSBOARD));
 		std::cout << std::endl << std::endl << "moyenne ecart points image " << i << " : " << moyDistances[i] << std::endl << std::endl;
+		moyFinale += moyDistances[i];
 
 		// Dessin des points projetés
 		//for(int m = 0; m < objectPoints.size(); m++)
@@ -81,6 +85,10 @@ int main()
 		int a;
 		std::cin >> a;
 	}
+
+	std::cout << "moyenne sur toutes images : " << moyFinale / NBRIMAGESCALIB << std::endl;
+	int a;
+	std::cin >> a;
 
 	return 0;
 }
