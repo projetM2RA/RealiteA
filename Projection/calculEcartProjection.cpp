@@ -82,8 +82,8 @@ int main()
 		//cv::imshow("image", imCalib[i]);
 
 		//cv::waitKey(0);
-		int a;
-		std::cin >> a;
+		//int a;
+		//std::cin >> a;
 	}
 
 	std::cout << "moyenne sur toutes images : " << moyFinale / NBRIMAGESCALIB << std::endl;
