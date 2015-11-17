@@ -3,7 +3,7 @@
 #include <sstream>
 #include <fstream>
 
-#define NBRIMAGESCALIB	38
+#define NBRIMAGESCALIB	20
 #define COLCHESSBOARD	9
 #define ROWCHESSBOARD	6
 
