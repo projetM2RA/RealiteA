@@ -17,6 +17,7 @@ int main()
 	std::vector<cv::Point2f> chessCornersInit;
 	std::vector<cv::Point3f> objectPoints;
 	std::vector<double> distances;
+	std::vector<double> moyDistances;
 
 	// Création des points à projeter
 	for(int x = 0; x < COLCHESSBOARD; x++)
@@ -63,7 +64,8 @@ int main()
 			std::cout << "distance point numero " << j << " : " << d << std::endl;
 		}
 
-		std::cout << std::endl << std::endl << "moyenne ecart points image " << i << " : " << distances[i] / (COLCHESSBOARD * ROWCHESSBOARD) << std::endl << std::endl;
+		moyDistances.push_back(distances[i] / (COLCHESSBOARD * ROWCHESSBOARD));
+		std::cout << std::endl << std::endl << "moyenne ecart points image " << i << " : " << moyDistances[i] << std::endl << std::endl;
 
 		// Dessin des points projetés
 		//for(int m = 0; m < objectPoints.size(); m++)
@@ -72,6 +74,7 @@ int main()
 		//cv::imshow("image", imCalib[i]);
 
 		//cv::waitKey(0);
+		_sleep(10000); // oui c'est deguelasse, et alors ?!?
 	}
 
 	return 0;
