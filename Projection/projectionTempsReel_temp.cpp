@@ -8,10 +8,7 @@
 
 int main()
 {
-	cv::Mat imCalib;
-	cv::Mat imCalibColor;
 	cv::Mat cameraMatrix, distCoeffs;
-	cv::Mat rvecs, tvecs;
 	std::vector<cv::Point2f> chessCornersInit;
 	std::vector<cv::Point2f> imagePoints;
 	std::vector<cv::Point3f> chessCorners3D;
@@ -46,49 +43,53 @@ int main()
 
 	fs.release();	
 
-	//do{
-	while(imCalibColor.empty()){
+	for(;;){
+		cv::Mat imCalib;
+		cv::Mat imCalibColor;
+		cv::Mat rvecs, tvecs;
+
 		vcap >> imCalibColor;
+		cv::imshow("Projection", imCalibColor);
 		cv::cvtColor(imCalibColor, imCalib, CV_BGR2GRAY);
 			
 		bool patternfound = cv::findChessboardCorners(imCalib, cv::Size(ROWCHESSBOARD, COLCHESSBOARD), chessCornersInit);
 
-		if(patternfound)
+		if(patternfound){
 			cv::cornerSubPix(imCalib, chessCornersInit, cv::Size(5, 5), cv::Size(-1, -1), cv::TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1));
 
-		cv::solvePnP(chessCorners3D, chessCornersInit, cameraMatrix, distCoeffs, rvecs, tvecs);
+			cv::solvePnP(chessCorners3D, chessCornersInit, cameraMatrix, distCoeffs, rvecs, tvecs);
 
-		cv::Mat rotVec(3, 3, CV_64F);
-		cv::Rodrigues(rvecs, rotVec);
+			cv::Mat rotVec(3, 3, CV_64F);
+			cv::Rodrigues(rvecs, rotVec);
 
-		cv::Mat matRT = cv::Mat::zeros(4, 4, CV_64F);
+			cv::Mat matRT = cv::Mat::zeros(4, 4, CV_64F);
 
-		matRT.at<double>(0, 0) = rotVec.at<double>(0, 0);
-		matRT.at<double>(0, 1) = rotVec.at<double>(0, 1);
-		matRT.at<double>(0, 2) = rotVec.at<double>(0, 2);
-		matRT.at<double>(1, 0) = rotVec.at<double>(1, 0);
-		matRT.at<double>(1, 1) = rotVec.at<double>(1, 1);
-		matRT.at<double>(1, 2) = rotVec.at<double>(1, 2);
-		matRT.at<double>(2, 0) = rotVec.at<double>(2, 0);
-		matRT.at<double>(2, 1) = rotVec.at<double>(2, 1);
-		matRT.at<double>(2, 2) = rotVec.at<double>(2, 2);
-		matRT.at<double>(0, 3) = tvecs.at<double>(0);
-		matRT.at<double>(1, 3) = tvecs.at<double>(1);
-		matRT.at<double>(2, 3) = tvecs.at<double>(2);
-		matRT.at<double>(3, 0) = 0;
-		matRT.at<double>(3, 1) = 0;
-		matRT.at<double>(3, 2) = 0;
-		matRT.at<double>(3, 3) = 1;
+			matRT.at<double>(0, 0) = rotVec.at<double>(0, 0);
+			matRT.at<double>(0, 1) = rotVec.at<double>(0, 1);
+			matRT.at<double>(0, 2) = rotVec.at<double>(0, 2);
+			matRT.at<double>(1, 0) = rotVec.at<double>(1, 0);
+			matRT.at<double>(1, 1) = rotVec.at<double>(1, 1);
+			matRT.at<double>(1, 2) = rotVec.at<double>(1, 2);
+			matRT.at<double>(2, 0) = rotVec.at<double>(2, 0);
+			matRT.at<double>(2, 1) = rotVec.at<double>(2, 1);
+			matRT.at<double>(2, 2) = rotVec.at<double>(2, 2);
+			matRT.at<double>(0, 3) = tvecs.at<double>(0);
+			matRT.at<double>(1, 3) = tvecs.at<double>(1);
+			matRT.at<double>(2, 3) = tvecs.at<double>(2);
+			matRT.at<double>(3, 0) = 0;
+			matRT.at<double>(3, 1) = 0;
+			matRT.at<double>(3, 2) = 0;
+			matRT.at<double>(3, 3) = 1;
 
-		// Projection
-		cv::projectPoints(objectPoints, rvecs, tvecs, cameraMatrix, distCoeffs, imagePoints);
+			// Projection
+			cv::projectPoints(objectPoints, rvecs, tvecs, cameraMatrix, distCoeffs, imagePoints);
 
-		// Dessin des points projetés
-		for(int m = 0; m < objectPoints.size(); m++)
-			cv::circle(imCalibColor, cv::Point(imagePoints[m].x, imagePoints[m].y), 3, cv::Scalar(0,0,255), 1, 8, 0);
+			// Dessin des points projetés
+			for(int m = 0; m < objectPoints.size(); m++)
+				cv::circle(imCalibColor, cv::Point(imagePoints[m].x, imagePoints[m].y), 3, cv::Scalar(0,0,255), 1, 8, 0);
+		}
 	}
 
-	//} while();
 
 	return 0;
 }
