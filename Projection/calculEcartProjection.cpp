@@ -60,9 +60,12 @@ int main()
 		//cacul des distances entre projections
 		for(int j = 0; j < COLCHESSBOARD * ROWCHESSBOARD; j++)
 		{
-			double d = (chessCornersInit[j].y - imagePoints[j].y) / (chessCornersInit[j].x - imagePoints[j].x);
+			double d = sqrt(pow(chessCornersInit[j].y - imagePoints[j].y, 2) + pow(chessCornersInit[j].x - imagePoints[j].x, 2));
 			distances.push_back(d);
-			std::cout << "distance point numero " << j << " : " << d << std::endl;
+			std::cout << "distance point numero " << j << " : " << std::endl
+				<< "    subpix : x = " << chessCornersInit[j].x << "    y = " << chessCornersInit[j].y << std::endl
+				<< "    projec : x = " << imagePoints[j].x << "    y = " << imagePoints[j].y << std::endl
+				<< " distance : " << d << std::endl << std::endl;
 		}
 
 		moyDistances.push_back(distances[i] / (COLCHESSBOARD * ROWCHESSBOARD));
@@ -75,7 +78,8 @@ int main()
 		//cv::imshow("image", imCalib[i]);
 
 		//cv::waitKey(0);
-		Sleep(100000);// oui c'est degueulasse, et alors ?!?
+		int a;
+		std::cin >> a;
 	}
 
 	return 0;
