@@ -56,12 +56,14 @@ int main()
 
 
 		//cacul des distances entre projections
-		for(int i = 0; i < COLCHESSBOARD * ROWCHESSBOARD; i++)
+		for(int j = 0; j < COLCHESSBOARD * ROWCHESSBOARD; j++)
 		{
-			double d = (chessCornersInit[i].y - imagePoints[i].y) / (chessCornersInit[i].x - imagePoints[i].x);
+			double d = (chessCornersInit[j].y - imagePoints[j].y) / (chessCornersInit[j].x - imagePoints[j].x);
 			distances.push_back(d);
-			std::cout << "distance point numero " << i << " : " << d << std::endl;
+			std::cout << "distance point numero " << j << " : " << d << std::endl;
 		}
+
+		std::cout << std::endl << std::endl << "moyenne ecart points image " << i << " : " << distances[i] / (COLCHESSBOARD * ROWCHESSBOARD) << std::endl << std::endl;
 
 		// Dessin des points projetés
 		//for(int m = 0; m < objectPoints.size(); m++)
