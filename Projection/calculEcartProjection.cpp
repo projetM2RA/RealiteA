@@ -1,4 +1,5 @@
 #include <opencv2/opencv.hpp>
+#include <windows.h>
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -74,7 +75,7 @@ int main()
 		//cv::imshow("image", imCalib[i]);
 
 		//cv::waitKey(0);
-		_sleep(10000); // oui c'est deguelasse, et alors ?!?
+		Sleep(100000);// oui c'est degueulasse, et alors ?!?
 	}
 
 	return 0;
