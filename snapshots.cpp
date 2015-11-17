@@ -7,7 +7,7 @@ using namespace cv;
 using namespace std;
 
 #define NBIMAGES  10
-#define SAVEDPATH "C:/Users/Leo/Desktop/Projet M2/Snapshots/Images/"
+#define SAVEDPATH "C:/Users/Nico/Desktop/snapshot/"
 
 int main()
 {	
@@ -30,8 +30,12 @@ int main()
 		
 		for(;;){
 		   Mat out;
-		   vcap >> out;
-		   imshow( "Frame", out );
+		   while (out.empty())
+		   {
+			   vcap >> out;
+		   }		
+		   namedWindow("webCamflux",WINDOW_AUTOSIZE);
+		   imshow( "webCamflux", out );	   
 		   char c = (char)waitKey(33);
 		   if(c == 32){
 				try {
