@@ -10,31 +10,19 @@
 int main()
 {
 	cv::Mat imCalib[NBRIMAGESCALIB];
-	cv::Mat cameraMatrix = cv::Mat::eye(3, 3, CV_64F), distCoeffs = cv::Mat::zeros(8, 1, CV_64F);
-	cameraMatrix.at<double>(0,0) = 1.0;
+	cv::Mat cameraMatrix, distCoeffs;
 
-	std::vector<cv::Mat> rvecs, tvecs;
-	std::vector<std::vector<cv::Point2f>> chessCornersInit;
-	std::vector<std::vector<cv::Point3f>> chessCorners3D;
+	cv::Mat rvecs, tvecs;
+	std::vector<cv::Point2f> chessCornersInit;
+	std::vector<cv::Point3f> chessCorners3D;
 
-	for(int i = 0; i < NBRIMAGESCALIB; i++)
+	for(int j = 0; j < COLCHESSBOARD; j++)
 	{
-		std::vector<cv::Point2f> initCorners(ROWCHESSBOARD * COLCHESSBOARD, cv::Point2f(0, 0));
-		chessCornersInit.push_back(initCorners);
-	}
-
-	for(int i = 0; i < NBRIMAGESCALIB; i++)
-	{
-		std::vector<cv::Point3f> initCorners3D;
-		for(int j = 0; j < COLCHESSBOARD; j++)
+		for(int k = 0; k < ROWCHESSBOARD; k++)
 		{
-			for(int k = 0; k < ROWCHESSBOARD; k++)
-			{
-				cv::Point3f corner(j * 26.0f, k * 26.0f, 0.0f);
-				initCorners3D.push_back(corner);
-			}
+			cv::Point3f corner(j * 26.0f, k * 26.0f, 0.0f);
+			chessCorners3D.push_back(corner);
 		}
-		chessCorners3D.push_back(initCorners3D);
 	}
 
 	cv::FileStorage fs("../rsc/intrinsicMatrix.yml", cv::FileStorage::READ);
@@ -55,15 +43,15 @@ int main()
 		filename << "../rsc/mires/RTMatrix" << i + 1 << ".yml";
 		cv::FileStorage fsRT(filename.str(), cv::FileStorage::WRITE);
 
-		bool patternfound = cv::findChessboardCorners(imCalib[i], cv::Size(ROWCHESSBOARD, COLCHESSBOARD), chessCornersInit[i]);
+		bool patternfound = cv::findChessboardCorners(imCalib[i], cv::Size(ROWCHESSBOARD, COLCHESSBOARD), chessCornersInit);
 
 		if(patternfound)
-			cv::cornerSubPix(imCalib[i], chessCornersInit[i], cv::Size(5, 5), cv::Size(-1, -1), cv::TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1));
+			cv::cornerSubPix(imCalib[i], chessCornersInit, cv::Size(5, 5), cv::Size(-1, -1), cv::TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1));
 
-		cv::solvePnP(chessCorners3D[i], chessCornersInit[i], cameraMatrix, distCoeffs, rvecs[i], tvecs[i]);
+		cv::solvePnP(chessCorners3D, chessCornersInit, cameraMatrix, distCoeffs, rvecs, tvecs);
 
 		cv::Mat rotVec(3, 3, CV_64F);
-		cv::Rodrigues(rvecs[i], rotVec);
+		cv::Rodrigues(rvecs, rotVec);
 
 		cv::Mat matRT = cv::Mat::zeros(4, 4, CV_64F);
 
@@ -77,9 +65,9 @@ int main()
 		matRT.at<double>(2, 1) = rotVec.at<double>(2, 1);
 		matRT.at<double>(2, 2) = rotVec.at<double>(2, 2);
 
-		matRT.at<double>(0, 3) = tvecs[i].at<double>(0);
-		matRT.at<double>(1, 3) = tvecs[i].at<double>(1);
-		matRT.at<double>(2, 3) = tvecs[i].at<double>(2);
+		matRT.at<double>(0, 3) = tvecs.at<double>(0);
+		matRT.at<double>(1, 3) = tvecs.at<double>(1);
+		matRT.at<double>(2, 3) = tvecs.at<double>(2);
 
 		matRT.at<double>(3, 0) = 0;
 		matRT.at<double>(3, 1) = 0;
