@@ -6,6 +6,8 @@
 using namespace std;
 using namespace cv;
 
+// ESPACE pour lancer le record - ESCAPE pour stop
+
 int main ()
 {
 	int record = 0;
