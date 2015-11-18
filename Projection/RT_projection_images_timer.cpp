@@ -115,12 +115,12 @@ int main()
 		for(int m=0 ; m<objectPoints.size() ; m++)
 			cv::circle(imCalibColor[i],cv::Point(imagePoints[m].x, imagePoints[m].y), 3, cv::Scalar(0,0,255), 1, 8, 0);
 		
-		//cv::imshow("image", imCalibColor[i]);
+		cv::imshow("image", imCalibColor[i]);
 
 		std::cout << std::endl << "Temps total pour l'image" << i+1 << " \t" << float(clock()-startImage)/CLOCKS_PER_SEC << " sec" << std::endl;
 		timer = clock();
 		
-		//cv::waitKey(0);
+		cv::waitKey(0);
 	}
 
 	int a;
