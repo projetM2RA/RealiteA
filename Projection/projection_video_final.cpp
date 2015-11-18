@@ -15,15 +15,20 @@ int main()
 	time_t startImage = 0;
 	std::cout << "Debut projection\t" << std::endl;
 
-	cv::Mat imCalib[NBRIMAGESCALIB];
-	cv::Mat imCalibRS[NBRIMAGESCALIB];
-	cv::Mat imCalibColor[NBRIMAGESCALIB];
-	cv::Mat cameraMatrix, distCoeffs;
+	bool patternfound = false;
+	int i = 0;
 
+	cv::TermCriteria termcrit(CV_TERMCRIT_ITER|CV_TERMCRIT_EPS, 20, 0.03);
+	cv::Size winSize(31,31);
+	
+	cv::Mat cameraMatrix, distCoeffs;
+	cv::Mat imCalib;
+	cv::Mat imCalibColor;
+	cv::Mat imCalibNext;
 	cv::Mat rvecs, tvecs;
 	std::vector<cv::Point2f> imagePoints;
 	std::vector<cv::Point3f> objectPoints;
-	std::vector<cv::Point2f> chessCornersInit;
+	std::vector<cv::Point2f> chessCornersInit[2];
 	std::vector<cv::Point3f> chessCorners3D;
 
 	// Creation des points a projeter
@@ -43,42 +48,55 @@ int main()
 
 	fs.release();
 
-	std::cout << "Initialisations\t" << float(clock()-start)/CLOCKS_PER_SEC << " sec" << std::endl;
-	timer = clock();
+	cv::VideoCapture vcap("../rsc/capture.avi"); 
+	if(!vcap.isOpened()){
+		  std::cout << "FAIL!" << std::endl;
+		  return -1;
+	}
 
-	for(int i = 0; i < NBRIMAGESCALIB; i++)
+	do{
+		timer = clock();
+		startImage = clock();
+
+		do{
+			vcap >> imCalibColor;
+		} while(imCalibColor.empty());
+		cv::imshow("Projection", imCalibColor);
+		cv::cvtColor(imCalibColor, imCalib, CV_BGR2GRAY);
+		cv::waitKey();
+	
+		patternfound = cv::findChessboardCorners(imCalib, cv::Size(ROWCHESSBOARD, COLCHESSBOARD), chessCornersInit[0]);
+		
+		std::cout << "findChessboardCorners\t" << float(clock()-timer)/CLOCKS_PER_SEC << " sec" << std::endl;
+		timer = clock();
+	} while(!patternfound);
+
+	for(;;)
 	{
 		timer = clock();
 		startImage = clock();
 
-		std::ostringstream oss;
-		oss << "../rsc/mires/mire" << i + 1 << ".png";
-		imCalibColor[i] = cv::imread(oss.str());
-		cv::cvtColor(imCalibColor[i], imCalib[i], CV_BGR2GRAY);
-		//cv::resize(imCalibRS[i], imCalib[i], cv::Size(), 0.5, 0.5, CV_INTER_AREA);
+		
+			vcap >> imCalibColor;
+		
+						
+		if(!imCalibNext.empty())
+		{
+			cv::swap(imCalib, imCalibNext); // copie de l'ancienne image pour le flot optique
+			for(size_t c = 0; c < chessCornersInit[0].size(); c++)
+				chessCornersInit[0][c] = chessCornersInit[1][c];
+			chessCornersInit[1].clear();
+		}
+		else
+			cv::cornerSubPix(imCalib, chessCornersInit[0], cv::Size(5, 5), cv::Size(-1, -1), cv::TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1));
 
-		std::cout << std::endl << "Ouverture/conversion image\t" << float(clock()-timer)/CLOCKS_PER_SEC << " sec" << std::endl;
-		timer = clock();
-	
-		/*std::ostringstream filename;
-		filename << "../rsc/mires/RTMatrix" << i + 1 << ".yml";
-		cv::FileStorage fsRT(filename.str(), cv::FileStorage::WRITE);*/
+		cv::cvtColor(imCalibColor, imCalibNext, CV_BGR2GRAY);
 
-		bool patternfound = cv::findChessboardCorners(imCalib[i], cv::Size(ROWCHESSBOARD, COLCHESSBOARD), chessCornersInit);
+		std::vector<uchar> status;
+		std::vector<float> err;
+		cv::calcOpticalFlowPyrLK(imCalib, imCalibNext, chessCornersInit[0], chessCornersInit[1], status, err, winSize, 3, termcrit, 0, 0.0001);
 
-		std::cout << "findChessboardCorners\t" << float(clock()-timer)/CLOCKS_PER_SEC << " sec" << std::endl;
-		timer = clock();
-
-		if(patternfound)
-			cv::cornerSubPix(imCalib[i], chessCornersInit, cv::Size(5, 5), cv::Size(-1, -1), cv::TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1));
-
-		std::cout << "cornerSubPix\t" << float(clock()-timer)/CLOCKS_PER_SEC << " sec" << std::endl;
-		timer = clock();
-
-		cv::solvePnP(chessCorners3D, chessCornersInit, cameraMatrix, distCoeffs, rvecs, tvecs);
-
-		std::cout << "solvePnP\t" << float(clock()-timer)/CLOCKS_PER_SEC << " sec" << std::endl;
-		timer = clock();
+		cv::solvePnP(chessCorners3D, chessCornersInit[0], cameraMatrix, distCoeffs, rvecs, tvecs);
 
 		cv::Mat rotVec(3, 3, CV_64F);
 		cv::Rodrigues(rvecs, rotVec);
@@ -94,39 +112,25 @@ int main()
 		matRT.at<double>(2, 0) = rotVec.at<double>(2, 0);
 		matRT.at<double>(2, 1) = rotVec.at<double>(2, 1);
 		matRT.at<double>(2, 2) = rotVec.at<double>(2, 2);
-
 		matRT.at<double>(0, 3) = tvecs.at<double>(0);
 		matRT.at<double>(1, 3) = tvecs.at<double>(1);
 		matRT.at<double>(2, 3) = tvecs.at<double>(2);
-
 		matRT.at<double>(3, 0) = 0;
 		matRT.at<double>(3, 1) = 0;
 		matRT.at<double>(3, 2) = 0;
 		matRT.at<double>(3, 3) = 1;
 
-		std::cout << "calcul matrices\t" << float(clock()-timer)/CLOCKS_PER_SEC << " sec" << std::endl;
-		timer = clock();
-		
-		// Projection
+		//Projection
 		cv::projectPoints(objectPoints, rotVec, tvecs, cameraMatrix, distCoeffs, imagePoints);
-
-		std::cout << "projectPoints\t" << float(clock()-timer)/CLOCKS_PER_SEC << " sec" << std::endl;
-		timer = clock();
 
 		// Dessin des points projetes
 		for(int m=0 ; m<objectPoints.size() ; m++)
-			cv::circle(imCalibColor[i],cv::Point(imagePoints[m].x, imagePoints[m].y), 3, cv::Scalar(0,0,255), 1, 8, 0);
-		
-		cv::imshow("image", imCalibColor[i]);
+			cv::circle(imCalibColor,cv::Point(imagePoints[m].x, imagePoints[m].y), 3, cv::Scalar(0,0,255), 1, 8, 0);
 
-		std::cout << std::endl << "Temps total pour l'image" << i+1 << " \t" << float(clock()-startImage)/CLOCKS_PER_SEC << " sec" << std::endl;
-		timer = clock();
-		
-		cv::waitKey(0);
+		cv::imshow("Projection", imCalibColor);
+
+		//cv::waitKey();
 	}
-
-	int a;
-	std::cin >> a;
 
 	return 0;
 }
