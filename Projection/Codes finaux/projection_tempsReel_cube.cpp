@@ -16,6 +16,7 @@ int main()
 	std::cout << "Debut projection\t" << std::endl;
 
 	bool patternfound = false;
+	bool reset = false;
 	int i = 0;
 
 	cv::TermCriteria termcrit(CV_TERMCRIT_ITER|CV_TERMCRIT_EPS, 20, 0.03);
@@ -59,70 +60,85 @@ int main()
 		  return -1;
 	}
 
-	do{
-		vcap >> imCalibColor;
-		cv::imshow("Projection", imCalibColor);
-		cv::waitKey(30);
-		cv::cvtColor(imCalibColor, imCalib, CV_BGR2GRAY);
-		//cv::waitKey();
-		timer = clock();
-		startImage = clock();
+	while(!reset){
+		do{
+			vcap >> imCalibColor;
+			cv::imshow("Projection", imCalibColor);
+			cv::waitKey(30);
+			cv::cvtColor(imCalibColor, imCalib, CV_BGR2GRAY);
+			timer = clock();
+			startImage = clock();
 	
-		patternfound = cv::findChessboardCorners(imCalib, cv::Size(ROWCHESSBOARD, COLCHESSBOARD), chessCornersInit[0], cv::CALIB_CB_FAST_CHECK);
+			patternfound = cv::findChessboardCorners(imCalib, cv::Size(ROWCHESSBOARD, COLCHESSBOARD), chessCornersInit[0], cv::CALIB_CB_FAST_CHECK);
 		
-		std::cout << "findChessboardCorners\t" << float(clock()-timer)/CLOCKS_PER_SEC << " sec" << std::endl;
-		timer = clock(); 
-	} while(!patternfound);
+			std::cout << "findChessboardCorners\t" << float(clock()-timer)/CLOCKS_PER_SEC << " sec" << std::endl;
+			timer = clock(); 
+		} while(!patternfound);
 
-	for(;;)
-	{		
-		vcap >> imCalibColor;		
+		for(;;)
+		{		
+			vcap >> imCalibColor;		
 						
-		if(!imCalibNext.empty())
-		{
-			cv::swap(imCalib, imCalibNext); // copie de l'ancienne image pour le flot optique
-			for(size_t c = 0; c < chessCornersInit[0].size(); c++)
-				chessCornersInit[0][c] = chessCornersInit[1][c];
-			chessCornersInit[1].clear();
+			if(!imCalibNext.empty())
+			{
+				cv::swap(imCalib, imCalibNext); // copie de l'ancienne image pour le flot optique
+				for(size_t c = 0; c < chessCornersInit[0].size(); c++)
+					chessCornersInit[0][c] = chessCornersInit[1][c];
+				chessCornersInit[1].clear();
+			}
+			else
+				cv::cornerSubPix(imCalib, chessCornersInit[0], cv::Size(5, 5), cv::Size(-1, -1), cv::TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1));
+
+			cv::cvtColor(imCalibColor, imCalibNext, CV_BGR2GRAY);
+
+			std::vector<uchar> status;
+			std::vector<float> err;
+			cv::calcOpticalFlowPyrLK(imCalib, imCalibNext, chessCornersInit[0], chessCornersInit[1], status, err, winSize, 3, termcrit, 0, 0.0001);
+
+			cv::solvePnP(chessCorners3D, chessCornersInit[0], cameraMatrix, distCoeffs, rvecs, tvecs);
+
+			cv::Mat rotVec(3, 3, CV_64F);
+			cv::Rodrigues(rvecs, rotVec);
+
+			//Projection
+			cv::projectPoints(objectPoints, rotVec, tvecs, cameraMatrix, distCoeffs, imagePoints);
+
+			// Dessin des points projetes
+			cv::line(imCalibColor, imagePoints[0], imagePoints[4], cv::Scalar(255,255,0), 2, 8);
+			cv::line(imCalibColor, imagePoints[1], imagePoints[5], cv::Scalar(255,255,0), 2, 8);
+			cv::line(imCalibColor, imagePoints[2], imagePoints[6], cv::Scalar(255,255,0), 2, 8);
+			cv::line(imCalibColor, imagePoints[3], imagePoints[7], cv::Scalar(255,255,0), 2, 8);
+
+			cv::line(imCalibColor, imagePoints[0], imagePoints[1], cv::Scalar(255,0,255), 2, 8);
+			cv::line(imCalibColor, imagePoints[1], imagePoints[2], cv::Scalar(255,0,255), 2, 8);
+			cv::line(imCalibColor, imagePoints[2], imagePoints[3], cv::Scalar(255,0,255), 2, 8);
+			cv::line(imCalibColor, imagePoints[3], imagePoints[0], cv::Scalar(255,0,255), 2, 8);
+
+			cv::line(imCalibColor, imagePoints[4], imagePoints[5], cv::Scalar(0,255,255), 2, 8);
+			cv::line(imCalibColor, imagePoints[5], imagePoints[6], cv::Scalar(0,255,255), 2, 8);
+			cv::line(imCalibColor, imagePoints[6], imagePoints[7], cv::Scalar(0,255,255), 2, 8);
+			cv::line(imCalibColor, imagePoints[7], imagePoints[4], cv::Scalar(0,255,255), 2, 8);
+
+			cv::imshow("Projection", imCalibColor);
+
+			char c = (char)cv::waitKey(30);
+			if(c == 27)
+			{
+				reset = true;
+				break;
+			}
+			else if(c == 32)
+			{
+				patternfound = false;
+
+				imagePoints.clear();
+				chessCornersInit[0].clear();
+				chessCornersInit[1].clear();
+				imCalibNext.release();
+
+				break;
+			}
 		}
-		else
-			cv::cornerSubPix(imCalib, chessCornersInit[0], cv::Size(5, 5), cv::Size(-1, -1), cv::TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1));
-
-		cv::cvtColor(imCalibColor, imCalibNext, CV_BGR2GRAY);
-
-		std::vector<uchar> status;
-		std::vector<float> err;
-		cv::calcOpticalFlowPyrLK(imCalib, imCalibNext, chessCornersInit[0], chessCornersInit[1], status, err, winSize, 3, termcrit, 0, 0.0001);
-
-		cv::solvePnP(chessCorners3D, chessCornersInit[0], cameraMatrix, distCoeffs, rvecs, tvecs);
-
-		cv::Mat rotVec(3, 3, CV_64F);
-		cv::Rodrigues(rvecs, rotVec);
-
-		//Projection
-		cv::projectPoints(objectPoints, rotVec, tvecs, cameraMatrix, distCoeffs, imagePoints);
-
-		// Dessin des points projetes
-		cv::line(imCalibColor, imagePoints[0], imagePoints[4], cv::Scalar(255,255,0), 2, 8);
-		cv::line(imCalibColor, imagePoints[1], imagePoints[5], cv::Scalar(255,255,0), 2, 8);
-		cv::line(imCalibColor, imagePoints[2], imagePoints[6], cv::Scalar(255,255,0), 2, 8);
-		cv::line(imCalibColor, imagePoints[3], imagePoints[7], cv::Scalar(255,255,0), 2, 8);
-
-		cv::line(imCalibColor, imagePoints[0], imagePoints[1], cv::Scalar(255,0,255), 2, 8);
-		cv::line(imCalibColor, imagePoints[1], imagePoints[2], cv::Scalar(255,0,255), 2, 8);
-		cv::line(imCalibColor, imagePoints[2], imagePoints[3], cv::Scalar(255,0,255), 2, 8);
-		cv::line(imCalibColor, imagePoints[3], imagePoints[0], cv::Scalar(255,0,255), 2, 8);
-
-		cv::line(imCalibColor, imagePoints[4], imagePoints[5], cv::Scalar(0,255,255), 2, 8);
-		cv::line(imCalibColor, imagePoints[5], imagePoints[6], cv::Scalar(0,255,255), 2, 8);
-		cv::line(imCalibColor, imagePoints[6], imagePoints[7], cv::Scalar(0,255,255), 2, 8);
-		cv::line(imCalibColor, imagePoints[7], imagePoints[4], cv::Scalar(0,255,255), 2, 8);
-
-		cv::imshow("Projection", imCalibColor);
-
-		char c = (char)cv::waitKey(30);
-		if(c == 27)
-			break;
 	}
 
 	return 0;
