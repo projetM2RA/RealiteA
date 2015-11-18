@@ -2,6 +2,7 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
+#include <time.h>
 
 #define NBRIMAGESCALIB	17
 #define COLCHESSBOARD	9
@@ -9,6 +10,11 @@
 
 int main()
 {
+	time_t timer = 0;
+	time_t start = clock();
+	time_t startImage = 0;
+	std::cout << "Debut projection\t" << std::endl;
+
 	cv::Mat imCalib[NBRIMAGESCALIB];
 	cv::Mat imCalibColor[NBRIMAGESCALIB];
 	cv::Mat cameraMatrix, distCoeffs;
@@ -36,12 +42,21 @@ int main()
 
 	fs.release();
 
+	std::cout << "Initialisations\t" << float(clock()-start)/CLOCKS_PER_SEC << " sec" << std::endl;
+	timer = clock();
+
 	for(int i = 0; i < NBRIMAGESCALIB; i++)
 	{
+		timer = clock();
+		startImage = clock();
+
 		std::ostringstream oss;
 		oss << "../rsc/mires/mire" << i + 1 << ".png";
 		imCalibColor[i] = cv::imread(oss.str());
 		cv::cvtColor(imCalibColor[i], imCalib[i], CV_BGR2GRAY);
+
+		std::cout << std::endl << "Ouverture/conversion image\t" << float(clock()-timer)/CLOCKS_PER_SEC << " sec" << std::endl;
+		timer = clock();
 	
 		/*std::ostringstream filename;
 		filename << "../rsc/mires/RTMatrix" << i + 1 << ".yml";
@@ -49,10 +64,19 @@ int main()
 
 		bool patternfound = cv::findChessboardCorners(imCalib[i], cv::Size(ROWCHESSBOARD, COLCHESSBOARD), chessCornersInit);
 
+		std::cout << "findChessboardCorners\t" << float(clock()-timer)/CLOCKS_PER_SEC << " sec" << std::endl;
+		timer = clock();
+
 		if(patternfound)
 			cv::cornerSubPix(imCalib[i], chessCornersInit, cv::Size(5, 5), cv::Size(-1, -1), cv::TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1));
 
+		std::cout << "cornerSubPix\t" << float(clock()-timer)/CLOCKS_PER_SEC << " sec" << std::endl;
+		timer = clock();
+
 		cv::solvePnP(chessCorners3D, chessCornersInit, cameraMatrix, distCoeffs, rvecs, tvecs);
+
+		std::cout << "solvePnP\t" << float(clock()-timer)/CLOCKS_PER_SEC << " sec" << std::endl;
+		timer = clock();
 
 		cv::Mat rotVec(3, 3, CV_64F);
 		cv::Rodrigues(rvecs, rotVec);
@@ -77,18 +101,30 @@ int main()
 		matRT.at<double>(3, 1) = 0;
 		matRT.at<double>(3, 2) = 0;
 		matRT.at<double>(3, 3) = 1;
+
+		std::cout << "calcul matrices\t" << float(clock()-timer)/CLOCKS_PER_SEC << " sec" << std::endl;
+		timer = clock();
 		
 		// Projection
 		cv::projectPoints(objectPoints, rotVec, tvecs, cameraMatrix, distCoeffs, imagePoints);
+
+		std::cout << "projectPoints\t" << float(clock()-timer)/CLOCKS_PER_SEC << " sec" << std::endl;
+		timer = clock();
 
 		// Dessin des points projetes
 		for(int m=0 ; m<objectPoints.size() ; m++)
 			cv::circle(imCalibColor[i],cv::Point(imagePoints[m].x, imagePoints[m].y), 3, cv::Scalar(0,0,255), 1, 8, 0);
 		
-		cv::imshow("image", imCalibColor[i]);
+		//cv::imshow("image", imCalibColor[i]);
 
-		cv::waitKey(0);
+		std::cout << std::endl << "Temps total pour l'image" << i+1 << " \t" << float(clock()-startImage)/CLOCKS_PER_SEC << " sec" << std::endl;
+		timer = clock();
+		
+		//cv::waitKey(0);
 	}
+
+	int a;
+	std::cin >> a;
 
 	return 0;
 }
