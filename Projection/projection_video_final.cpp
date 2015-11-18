@@ -55,30 +55,22 @@ int main()
 	}
 
 	do{
-		timer = clock();
-		startImage = clock();
-
-		do{
-			vcap >> imCalibColor;
-		} while(imCalibColor.empty());
+		vcap >> imCalibColor;
 		cv::imshow("Projection", imCalibColor);
 		cv::cvtColor(imCalibColor, imCalib, CV_BGR2GRAY);
 		cv::waitKey();
+		timer = clock();
+		startImage = clock();
 	
-		patternfound = cv::findChessboardCorners(imCalib, cv::Size(ROWCHESSBOARD, COLCHESSBOARD), chessCornersInit[0]);
+		patternfound = cv::findChessboardCorners(imCalib, cv::Size(ROWCHESSBOARD, COLCHESSBOARD), chessCornersInit[0], cv::CALIB_CB_FAST_CHECK);
 		
 		std::cout << "findChessboardCorners\t" << float(clock()-timer)/CLOCKS_PER_SEC << " sec" << std::endl;
-		timer = clock();
+		timer = clock(); 
 	} while(!patternfound);
 
 	for(;;)
-	{
-		timer = clock();
-		startImage = clock();
-
-		
-			vcap >> imCalibColor;
-		
+	{		
+		vcap >> imCalibColor;		
 						
 		if(!imCalibNext.empty())
 		{
@@ -129,7 +121,7 @@ int main()
 
 		cv::imshow("Projection", imCalibColor);
 
-		//cv::waitKey();
+		cv::waitKey(67);
 	}
 
 	return 0;
