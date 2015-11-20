@@ -62,7 +62,7 @@ bool detecterMire(cv::VideoCapture vcap, std::vector<cv::Point2f> *pointsMire, c
 			
 		patternFound = cv::findChessboardCorners(imCalibColor, cv::Size(ROWCHESSBOARD, COLCHESSBOARD), *pointsMire, cv::CALIB_CB_FAST_CHECK);
 				
-		key = (char)cv::waitKey();
+		key = (char)cv::waitKey(67);
 	}while(!patternFound && key != 27);
 
 	if(patternFound)
@@ -103,7 +103,10 @@ int main()
 
 	bool patternfound = false;
 	bool reset = false;
+	bool endVideo = false;
+	bool resetAuto = false;
 	int i = 0;
+	int nbImages = 0;
 	double moyFinale = 0;
 
 	cv::TermCriteria termcrit(CV_TERMCRIT_ITER | CV_TERMCRIT_EPS, 20, 0.03);
@@ -151,7 +154,10 @@ int main()
 
 	fs.release();
 
-	cv::VideoCapture vcap("../rsc/capture.avi"); 
+	std::ofstream file;
+	file.open ("../rsc/error.txt");
+
+	cv::VideoCapture vcap(0); 
 	if(!vcap.isOpened())
 	{
 		  std::cout << "FAIL!" << std::endl;
@@ -175,6 +181,9 @@ int main()
 		{
 			vcap >> imCalibColor;
 
+		/*	if(imCalibColor.empty())
+				endVideo = true;*/
+
 			cv::Mat rotVec = trackingMire(&imCalibColor, &imCalibNext, &chessCornersInit, &chessCorners3D, &cameraMatrix, &distCoeffs, &tvecs);
 
 			dessinerCube(&imCalibColor, cubeObjectPoints, rotVec, tvecs, cameraMatrix, distCoeffs);
@@ -186,38 +195,50 @@ int main()
 				double d = sqrt(pow(chessCornersInit[0][j].y - imagePoints[j].y, 2) + pow(chessCornersInit[0][j].x - imagePoints[j].x, 2));
 				distances.push_back(d);
 				moy += d;
-				std::cout << "distance point numero " << j << " : " << std::endl
+				/*std::cout << "distance point numero " << j << " : " << std::endl
 					<< "    subpix : x = " << chessCornersInit[0][j].x << "    y = " << chessCornersInit[0][j].y << std::endl
 					<< "    projec : x = " << imagePoints[j].x << "    y = " << imagePoints[j].y << std::endl
-					<< " distance : " << d << std::endl << std::endl;
+					<< " distance : " << d << std::endl << std::endl;*/
 			}
 
 			moyDistances.push_back(moy / (COLCHESSBOARD * ROWCHESSBOARD));
-			std::cout << std::endl << std::endl << "moyenne ecart points image " << i << " : " << moyDistances[i] << std::endl << std::endl;
+			//std::cout << std::endl << std::endl << "moyenne ecart points image " << i << " : " << moyDistances[i] << std::endl << std::endl;
+			file << "moyenne ecart points image " << i << " : " << moyDistances[i] << std::endl;
+
+			if(moyDistances[i] > 2){ // si l'ecart de reproj est trop grand, reset
+				resetAuto = true;
+				break;
+			}
+
 			moyFinale += moyDistances[i];
 			i++;
+			nbImages++;
 
 			cv::imshow("Projection", imCalibColor);
 
-			key = (char)cv::waitKey();
+			key = (char)cv::waitKey(67);
 
-		}while(key != 27 && key != 32);
+		}while(key != 27 && key != 32 && resetAuto != true);
 
-		if(key == 32)
+		if(key == 32 || resetAuto == true)
 		{
 			patternfound = false;
+			resetAuto = false;
+			i = 0;
 			
 			imagePoints.clear();
 			chessCornersInit[0].clear();
 			chessCornersInit[1].clear();
+			moyDistances.clear();
+			distances.clear();
 			imCalibNext.release();
 		}
 
 	}while(key != 27);
-
-	std::cout << "moyenne sur toutes images : " << moyFinale / NBRIMAGESCALIB << std::endl;
-	int a;
-	std::cin >> a;
+		
+	//std::cout << "moyenne sur toutes images : " << moyFinale / NBRIMAGESCALIB << std::endl;
+	file << std::endl << "moyenne sur toutes images : " << moyFinale / nbImages << std::endl;
+	file.close();
 
 	return 0;
 }

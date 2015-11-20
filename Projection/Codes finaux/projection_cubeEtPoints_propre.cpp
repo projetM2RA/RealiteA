@@ -124,14 +124,14 @@ int main()
 			objectPoints.push_back(cv::Point3f(x * 26.0f, y * 26.0f, 0.0f));
 
 	// Creation des points a projeter
-	cubeObjectPoints.push_back(cv::Point3f(50, 25, 0));
-	cubeObjectPoints.push_back(cv::Point3f(150, 25, 0));
-	cubeObjectPoints.push_back(cv::Point3f(150, 125, 0));
-	cubeObjectPoints.push_back(cv::Point3f(50, 125, 0));
-	cubeObjectPoints.push_back(cv::Point3f(50, 25, 100));
-	cubeObjectPoints.push_back(cv::Point3f(150, 25, 100));
-	cubeObjectPoints.push_back(cv::Point3f(150, 125, 100));
-	cubeObjectPoints.push_back(cv::Point3f(50, 125, 100));
+	cubeObjectPoints.push_back(cv::Point3f(52, 26, 0));
+	cubeObjectPoints.push_back(cv::Point3f(156, 26, 0));
+	cubeObjectPoints.push_back(cv::Point3f(156, 128, 0));
+	cubeObjectPoints.push_back(cv::Point3f(52, 128, 0));
+	cubeObjectPoints.push_back(cv::Point3f(52, 26, 104));
+	cubeObjectPoints.push_back(cv::Point3f(156, 26, 104));
+	cubeObjectPoints.push_back(cv::Point3f(156, 128, 104));
+	cubeObjectPoints.push_back(cv::Point3f(52, 128, 104));
 
 	// Creation des coins de la mire
 	for(int x = 0; x < COLCHESSBOARD; x++)
