@@ -44,9 +44,34 @@ std::vector<cv::Point2f> dessinerPoints(cv::Mat* imCalibColor, const std::vector
 
 	// Dessin des points projetes
 	for(int m = 0; m < objectPoints.size(); m++)
-		cv::circle(*imCalibColor, cv::Point(imagePoints[m].x, imagePoints[m].y), 3, cv::Scalar(0, 0, 255), 1, 8, 0);
+		cv::circle(*imCalibColor, cv::Point((int)imagePoints[m].x, (int)imagePoints[m].y), 3, cv::Scalar(0, 0, 255), 1, 8, 0);
 
 	return imagePoints;
+}
+
+void CallBackMouse(int event, int x, int y, int flags, void* userdata)
+{
+	cv::Point2f* p = (cv::Point2f*) userdata;
+
+	if  ( event == cv::EVENT_LBUTTONDOWN )
+    {
+         std::cout << x << ", " << y << std::endl;
+		 p->x = x;
+		 p->y = y;
+    }
+     /*else if  ( event == cv::EVENT_RBUTTONDOWN )
+     {
+          std::cout << "Right button of the mouse is clicked - position (" << x << ", " << y << ")" << std::endl;
+     }
+     else if  ( event == cv::EVENT_MBUTTONDOWN )
+     {
+          std::cout << "Middle button of the mouse is clicked - position (" << x << ", " << y << ")" << std::endl;
+     }
+     else if ( event == cv::EVENT_MOUSEMOVE )
+     {
+          std::cout << "Mouse move over the window - position (" << x << ", " << y << ")" << std::endl;
+
+     }*/
 }
 
 bool detecterMire(cv::VideoCapture vcap, std::vector<cv::Point2f> *pointsMire, cv::Mat *imCalibNext)
@@ -59,7 +84,7 @@ bool detecterMire(cv::VideoCapture vcap, std::vector<cv::Point2f> *pointsMire, c
 		vcap >> imCalibColor;
 		cv::imshow("Projection", imCalibColor);
 		cv::cvtColor(imCalibColor, imCalibColor, CV_BGR2GRAY);
-			
+
 		patternFound = cv::findChessboardCorners(imCalibColor, cv::Size(ROWCHESSBOARD, COLCHESSBOARD), *pointsMire, cv::CALIB_CB_FAST_CHECK);
 				
 		key = (char)cv::waitKey(67);
@@ -69,6 +94,40 @@ bool detecterMire(cv::VideoCapture vcap, std::vector<cv::Point2f> *pointsMire, c
 		*imCalibNext = imCalibColor;
 	
 	return patternFound; // normalement, si echap est presse, patternFound = false
+}
+
+bool setFace(cv::VideoCapture vcap, std::vector<cv::Point2f> *pointsVisage, std::vector<cv::Point3f> *pointsVisage3D, std::vector<cv::Point3f> *objectPointsVisage, cv::Mat *imCalibNext)
+{
+	cv::Mat imCalibColor;
+	cv::Mat imCalibGray;
+	cv::Point2f p;
+	char key = 0;
+	bool endFace = false;
+
+	do{
+		vcap >> imCalibColor;
+		cv::imshow("Projection", imCalibColor);
+		cv::cvtColor(imCalibColor, imCalibGray, CV_BGR2GRAY);
+	
+		key = (char)cv::waitKey(67);
+	}while(key != 32);
+
+	for(int i=0 ; i<6 ; i++){
+		cv::imshow("Projection", imCalibColor);
+		std::cout << "Clic gauche sur le point " << i+1 <<" du visage : ";
+		cv::setMouseCallback("Projection", CallBackMouse, &p);
+		cv::waitKey(0);
+		(*pointsVisage).push_back(p);
+		(*pointsVisage3D).push_back(cv::Point3f(p.x, p.y, 0.f));	
+		(*objectPointsVisage).push_back(cv::Point3f(p.x, p.y, 0.f));
+	}	
+
+	endFace = true;
+
+	if(endFace)
+		*imCalibNext = imCalibGray;
+	
+	return endFace;
 }
 
 cv::Mat trackingMire(cv::Mat *imCalibColor, cv::Mat *imCalibNext, std::vector<std::vector<cv::Point2f>> *chessCornersInit, std::vector<cv::Point3f> *chessCorners3D, cv::Mat *cameraMatrix, cv::Mat *distCoeffs, cv::Mat *tvecs)
@@ -99,7 +158,7 @@ int main()
 	time_t timer = 0;
 	time_t start = clock();
 	time_t startImage = 0;
-	std::cout << "Debut projection\t" << std::endl;
+	std::cout << "Debut projection" << std::endl << std::endl;
 
 	bool patternfound = false;
 	bool reset = false;
@@ -121,8 +180,11 @@ int main()
 	std::vector<cv::Point2f> imagePoints;
 	std::vector<cv::Point3f> objectPoints;
 	std::vector<cv::Point3f> cubeObjectPoints;
+	std::vector<cv::Point3f> objectPointsVisage;
 	std::vector<std::vector<cv::Point2f>> chessCornersInit(2);
+	std::vector<std::vector<cv::Point2f>> pointsVisageInit(2);
 	std::vector<cv::Point3f> chessCorners3D;
+	std::vector<cv::Point3f> pointsVisage3D;
 	std::vector<double> distances;
 	std::vector<double> moyDistances;
 	
@@ -156,25 +218,33 @@ int main()
 
 	std::ofstream file;
 	file.open ("../rsc/error.txt");
-
+	
 	cv::VideoCapture vcap(0);
 	if(!vcap.isOpened())
 	{
 		  std::cout << "FAIL!" << std::endl;
 		  return -1;
 	}
-
+	
 	char key = 0;
 
 	do
 	{
-		std::cout << "recherche de mire" << std::endl;
+		// Détection de mire
+		/*std::cout << "recherche de mire" << std::endl;
 
 		bool detectionMire = detecterMire(vcap, &chessCornersInit[1], &imCalibNext);
 
 		std::cout << "mire detectee" << std::endl << std::endl;
 
 		if(!detectionMire)
+			break;
+		*/
+
+		// Pointage du visage
+		bool detectVisage = setFace(vcap, &pointsVisageInit[1], &pointsVisage3D, &objectPointsVisage, &imCalibNext);
+
+		if(!detectVisage)
 			break;
 
 		do
@@ -186,36 +256,39 @@ int main()
 				break;
 			}
 
-			cv::Mat rotVec = trackingMire(&imCalibColor, &imCalibNext, &chessCornersInit, &chessCorners3D, &cameraMatrix, &distCoeffs, &tvecs);
+			//cv::Mat rotVec = trackingMire(&imCalibColor, &imCalibNext, &chessCornersInit, &chessCorners3D, &cameraMatrix, &distCoeffs, &tvecs);
+			cv::Mat rotVec = trackingMire(&imCalibColor, &imCalibNext, &pointsVisageInit, &pointsVisage3D, &cameraMatrix, &distCoeffs, &tvecs);
 
-			dessinerCube(&imCalibColor, cubeObjectPoints, rotVec, tvecs, cameraMatrix, distCoeffs);
-			imagePoints = dessinerPoints(&imCalibColor, objectPoints, rotVec, tvecs, cameraMatrix, distCoeffs);
+			//dessinerCube(&imCalibColor, cubeObjectPoints, rotVec, tvecs, cameraMatrix, distCoeffs);
+			//imagePoints = dessinerPoints(&imCalibColor, objectPoints, rotVec, tvecs, cameraMatrix, distCoeffs);
+			imagePoints = dessinerPoints(&imCalibColor, objectPointsVisage, rotVec, tvecs, cameraMatrix, distCoeffs);
+			std::cout << imagePoints << std::endl;
 
 			// Calcul d'erreur de reprojection
-			double moy = 0;
-			for(int j = 0; j < COLCHESSBOARD * ROWCHESSBOARD; j++)
-			{
-				double d = sqrt(pow(chessCornersInit[0][j].y - imagePoints[j].y, 2) + pow(chessCornersInit[0][j].x - imagePoints[j].x, 2));
-				distances.push_back(d);
-				moy += d;
-				/*std::cout << "distance point numero " << j << " : " << std::endl
-					<< "    subpix : x = " << chessCornersInit[0][j].x << "    y = " << chessCornersInit[0][j].y << std::endl
-					<< "    projec : x = " << imagePoints[j].x << "    y = " << imagePoints[j].y << std::endl
-					<< " distance : " << d << std::endl << std::endl;*/
-			}
+			//double moy = 0;
+			//for(int j = 0; j < COLCHESSBOARD * ROWCHESSBOARD; j++)
+			//{
+			//	double d = sqrt(pow(chessCornersInit[0][j].y - imagePoints[j].y, 2) + pow(chessCornersInit[0][j].x - imagePoints[j].x, 2));
+			//	distances.push_back(d);
+			//	moy += d;
+			//	/*std::cout << "distance point numero " << j << " : " << std::endl
+			//		<< "    subpix : x = " << chessCornersInit[0][j].x << "    y = " << chessCornersInit[0][j].y << std::endl
+			//		<< "    projec : x = " << imagePoints[j].x << "    y = " << imagePoints[j].y << std::endl
+			//		<< " distance : " << d << std::endl << std::endl;*/
+			//}
 
-			moyDistances.push_back(moy / (COLCHESSBOARD * ROWCHESSBOARD));
-			//std::cout << std::endl << std::endl << "moyenne ecart points image " << i << " : " << moyDistances[i] << std::endl << std::endl;
-			file << "moyenne ecart points image " << i << " : " << moyDistances[i] << " px" << std::endl;
+			//moyDistances.push_back(moy / (COLCHESSBOARD * ROWCHESSBOARD));
+			////std::cout << std::endl << std::endl << "moyenne ecart points image " << i << " : " << moyDistances[i] << std::endl << std::endl;
+			//file << "moyenne ecart points image " << i << " : " << moyDistances[i] << " px" << std::endl;
 
-			if(moyDistances[i] > 2){ // si l'ecart de reproj est trop grand, reset
-				resetAuto = true;
-				break;
-			}
+			//if(moyDistances[i] > 2){ // si l'ecart de reproj est trop grand, reset
+			//	resetAuto = true;
+			//	break;
+			//}
 
-			moyFinale += moyDistances[i];
-			i++;
-			nbImages++;
+			//moyFinale += moyDistances[i];
+			//i++;
+			//nbImages++;
 
 			cv::imshow("Projection", imCalibColor);
 
