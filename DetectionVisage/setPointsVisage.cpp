@@ -4,9 +4,9 @@
 #include <fstream>
 #include <time.h>
 
-#define NBRIMAGESCALIB	17
 #define COLCHESSBOARD	9
 #define ROWCHESSBOARD	6
+#define NBPTSFACE		5
 
 void init()
 {
@@ -112,7 +112,7 @@ bool setFace(cv::VideoCapture vcap, std::vector<cv::Point2f> *pointsVisage, std:
 		key = (char)cv::waitKey(67);
 	}while(key != 32);
 
-	for(int i=0 ; i<6 ; i++){
+	for(int i=0 ; i<NBPTSFACE ; i++){
 		cv::imshow("Projection", imCalibColor);
 		std::cout << "Clic gauche sur le point " << i+1 <<" du visage : ";
 		cv::setMouseCallback("Projection", CallBackMouse, &p);
@@ -299,12 +299,17 @@ int main()
 		if(key == 32 || resetAuto == true)
 		{
 			patternfound = false;
+			detectVisage = false;
 			resetAuto = false;
 			i = 0;
 			
 			imagePoints.clear();
 			chessCornersInit[0].clear();
 			chessCornersInit[1].clear();
+			pointsVisageInit[0].clear();
+			pointsVisageInit[1].clear();
+			pointsVisage3D.clear();
+			objectPointsVisage.clear();
 			moyDistances.clear();
 			distances.clear();
 			imCalibNext.release();
