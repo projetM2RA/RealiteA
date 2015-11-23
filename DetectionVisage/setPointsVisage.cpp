@@ -6,7 +6,7 @@
 
 #define COLCHESSBOARD	9
 #define ROWCHESSBOARD	6
-#define NBPTSFACE		5
+#define NBPTSFACE		6
 
 void init()
 {
@@ -56,8 +56,8 @@ void CallBackMouse(int event, int x, int y, int flags, void* userdata)
 	if  ( event == cv::EVENT_LBUTTONDOWN )
     {
          std::cout << x << ", " << y << std::endl;
-		 p->x = x;
-		 p->y = y;
+		 p->x = (float)x;
+		 p->y = (float)y;
     }
      /*else if  ( event == cv::EVENT_RBUTTONDOWN )
      {
@@ -96,12 +96,13 @@ bool detecterMire(cv::VideoCapture vcap, std::vector<cv::Point2f> *pointsMire, c
 	return patternFound; // normalement, si echap est presse, patternFound = false
 }
 
-bool setFace(cv::VideoCapture vcap, std::vector<cv::Point2f> *pointsVisage, std::vector<cv::Point3f> *pointsVisage3D, std::vector<cv::Point3f> *objectPointsVisage, cv::Mat *imCalibNext)
+bool setFace(cv::VideoCapture vcap, std::vector<cv::Point2f> *pointsVisage, std::vector<cv::Point3f> *pointsVisage3D, std::vector<cv::Point3f> *objectPointsVisage, std::vector<cv::Point3f> *cubeObjectPointsVisage, cv::Mat *imCalibNext)
 {
 	cv::Mat imCalibColor;
 	cv::Mat imCalibGray;
 	cv::Point2f p;
 	char key = 0;
+	bool escape = false;
 	bool endFace = false;
 
 	do{
@@ -110,17 +111,33 @@ bool setFace(cv::VideoCapture vcap, std::vector<cv::Point2f> *pointsVisage, std:
 		cv::cvtColor(imCalibColor, imCalibGray, CV_BGR2GRAY);
 	
 		key = (char)cv::waitKey(67);
+		if(key == 27){
+				return endFace;
+				break;
+			}
 	}while(key != 32);
 
-	for(int i=0 ; i<NBPTSFACE ; i++){
-		cv::imshow("Projection", imCalibColor);
-		std::cout << "Clic gauche sur le point " << i+1 <<" du visage : ";
-		cv::setMouseCallback("Projection", CallBackMouse, &p);
-		cv::waitKey(0);
-		(*pointsVisage).push_back(p);
-		(*pointsVisage3D).push_back(cv::Point3f(p.x, p.y, 0.f));	
-		(*objectPointsVisage).push_back(cv::Point3f(p.x, p.y, 0.f));
-	}	
+	do{
+		for(int i=0 ; i<NBPTSFACE ; i++){
+			cv::imshow("Projection", imCalibColor);
+			std::cout << "Clic gauche sur le point " << i+1 <<" du visage : ";
+			cv::setMouseCallback("Projection", CallBackMouse, &p);
+			key = (char)cv::waitKey(0);
+			if(key == 27){
+				return endFace;
+				break;
+			}
+			(*pointsVisage).push_back(p);
+			(*pointsVisage3D).push_back(cv::Point3f(p.x, p.y, 0.f));	
+			(*objectPointsVisage).push_back(cv::Point3f(p.x, p.y, 0.f));
+			if(i<4)
+				(*cubeObjectPointsVisage).push_back(cv::Point3f(p.x, p.y, 0.f));
+		}	
+		escape = true;
+	} while(escape != true && key != 27);
+
+	for(int i=0 ; i<4 ; i++)
+		(*cubeObjectPointsVisage).push_back(cv::Point3f((*cubeObjectPointsVisage)[i].x, (*cubeObjectPointsVisage)[i].y, 100.f));
 
 	endFace = true;
 
@@ -176,11 +193,13 @@ int main()
 	cv::Mat imCalibColor;
 	cv::Mat imCalibNext;
 	cv::Mat rvecs, tvecs;
+	cv::Mat rvecsVisage, tvecsVisage;
 	
 	std::vector<cv::Point2f> imagePoints;
 	std::vector<cv::Point3f> objectPoints;
 	std::vector<cv::Point3f> cubeObjectPoints;
 	std::vector<cv::Point3f> objectPointsVisage;
+	std::vector<cv::Point3f> cubeObjectPointsVisage;
 	std::vector<std::vector<cv::Point2f>> chessCornersInit(2);
 	std::vector<std::vector<cv::Point2f>> pointsVisageInit(2);
 	std::vector<cv::Point3f> chessCorners3D;
@@ -231,18 +250,18 @@ int main()
 	do
 	{
 		// Détection de mire
-		/*std::cout << "recherche de mire" << std::endl;
+		//std::cout << "recherche de mire" << std::endl;
 
-		bool detectionMire = detecterMire(vcap, &chessCornersInit[1], &imCalibNext);
+		//bool detectionMire = detecterMire(vcap, &chessCornersInit[1], &imCalibNext);
 
-		std::cout << "mire detectee" << std::endl << std::endl;
+		//std::cout << "mire detectee" << std::endl << std::endl;
 
-		if(!detectionMire)
-			break;
-		*/
+		//if(!detectionMire)
+		//	break;
+		
 
 		// Pointage du visage
-		bool detectVisage = setFace(vcap, &pointsVisageInit[1], &pointsVisage3D, &objectPointsVisage, &imCalibNext);
+		bool detectVisage = setFace(vcap, &pointsVisageInit[1], &pointsVisage3D, &objectPointsVisage, &cubeObjectPointsVisage, &imCalibNext);
 
 		if(!detectVisage)
 			break;
@@ -257,14 +276,16 @@ int main()
 			}
 
 			//cv::Mat rotVec = trackingMire(&imCalibColor, &imCalibNext, &chessCornersInit, &chessCorners3D, &cameraMatrix, &distCoeffs, &tvecs);
-			cv::Mat rotVec = trackingMire(&imCalibColor, &imCalibNext, &pointsVisageInit, &pointsVisage3D, &cameraMatrix, &distCoeffs, &tvecs);
+			cv::Mat rotVecVisage = trackingMire(&imCalibColor, &imCalibNext, &pointsVisageInit, &pointsVisage3D, &cameraMatrix, &distCoeffs, &tvecsVisage);
 
-			//dessinerCube(&imCalibColor, cubeObjectPoints, rotVec, tvecs, cameraMatrix, distCoeffs);
-			//imagePoints = dessinerPoints(&imCalibColor, objectPoints, rotVec, tvecs, cameraMatrix, distCoeffs);
-			imagePoints = dessinerPoints(&imCalibColor, objectPointsVisage, rotVec, tvecs, cameraMatrix, distCoeffs);
-			std::cout << imagePoints << std::endl;
+			/*dessinerCube(&imCalibColor, cubeObjectPoints, rotVec, tvecs, cameraMatrix, distCoeffs);
+			imagePoints = dessinerPoints(&imCalibColor, objectPoints, rotVec, tvecs, cameraMatrix, distCoeffs);*/
+			//dessinerCube(&imCalibColor, cubeObjectPointsVisage, rotVecVisage, tvecsVisage, cameraMatrix, distCoeffs);
+			imagePoints = dessinerPoints(&imCalibColor, objectPointsVisage, rotVecVisage, tvecsVisage, cameraMatrix, distCoeffs);
+			
+			//std::cout << imagePoints << std::endl;
 
-			// Calcul d'erreur de reprojection
+			//Calcul d'erreur de reprojection
 			//double moy = 0;
 			//for(int j = 0; j < COLCHESSBOARD * ROWCHESSBOARD; j++)
 			//{
