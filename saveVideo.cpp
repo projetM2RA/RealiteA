@@ -22,6 +22,9 @@ int main ()
 	
 	double width = vcap.get(CV_CAP_PROP_FRAME_WIDTH);
 	double height = vcap.get(CV_CAP_PROP_FRAME_HEIGHT);
+
+	Mat emptyMat((int)height, (int)width, CV_8UC1);
+	emptyMat = cv::Scalar(0,0,0);
 	
 	cout << "Camera properties\n";
 	cout << "width = " << width << endl <<"height = "<< height << endl;
@@ -32,7 +35,7 @@ int main ()
 	{	
 		Mat frame;		
 		vcap >> frame;		
-		Mat emptyMat(frame.size(), CV_MAKETYPE(frame.depth(), 1));
+		
 		imshow("moi", frame);
 		char c = (char)waitKey(33);
 		if(c == 32){

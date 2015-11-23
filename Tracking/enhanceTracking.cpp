@@ -133,14 +133,14 @@ int main()
 			objectPoints.push_back(cv::Point3f(x * 26.0f, y * 26.0f, 0.0f));
 
 	// Creation des points a projeter
-	cubeObjectPoints.push_back(cv::Point3f(50, 25, 0));
-	cubeObjectPoints.push_back(cv::Point3f(150, 25, 0));
-	cubeObjectPoints.push_back(cv::Point3f(150, 125, 0));
-	cubeObjectPoints.push_back(cv::Point3f(50, 125, 0));
-	cubeObjectPoints.push_back(cv::Point3f(50, 25, 100));
-	cubeObjectPoints.push_back(cv::Point3f(150, 25, 100));
-	cubeObjectPoints.push_back(cv::Point3f(150, 125, 100));
-	cubeObjectPoints.push_back(cv::Point3f(50, 125, 100));
+	cubeObjectPoints.push_back(cv::Point3f(52, 26, 0));
+	cubeObjectPoints.push_back(cv::Point3f(156, 26, 0));
+	cubeObjectPoints.push_back(cv::Point3f(156, 128, 0));
+	cubeObjectPoints.push_back(cv::Point3f(52, 128, 0));
+	cubeObjectPoints.push_back(cv::Point3f(52, 26, 104));
+	cubeObjectPoints.push_back(cv::Point3f(156, 26, 104));
+	cubeObjectPoints.push_back(cv::Point3f(156, 128, 104));
+	cubeObjectPoints.push_back(cv::Point3f(52, 128, 104));
 
 	// Creation des coins de la mire
 	for(int x = 0; x < COLCHESSBOARD; x++)
@@ -157,7 +157,7 @@ int main()
 	std::ofstream file;
 	file.open ("../rsc/error.txt");
 
-	cv::VideoCapture vcap(0); 
+	cv::VideoCapture vcap("../rsc/testitest.avi");
 	if(!vcap.isOpened())
 	{
 		  std::cout << "FAIL!" << std::endl;
@@ -181,14 +181,17 @@ int main()
 		{
 			vcap >> imCalibColor;
 
-		/*	if(imCalibColor.empty())
-				endVideo = true;*/
+			if(imCalibColor.empty()){
+				endVideo = true;
+				break;
+			}
 
 			cv::Mat rotVec = trackingMire(&imCalibColor, &imCalibNext, &chessCornersInit, &chessCorners3D, &cameraMatrix, &distCoeffs, &tvecs);
 
 			dessinerCube(&imCalibColor, cubeObjectPoints, rotVec, tvecs, cameraMatrix, distCoeffs);
 			imagePoints = dessinerPoints(&imCalibColor, objectPoints, rotVec, tvecs, cameraMatrix, distCoeffs);
 
+			// Calcul d'erreur de reprojection
 			double moy = 0;
 			for(int j = 0; j < COLCHESSBOARD * ROWCHESSBOARD; j++)
 			{
@@ -203,7 +206,7 @@ int main()
 
 			moyDistances.push_back(moy / (COLCHESSBOARD * ROWCHESSBOARD));
 			//std::cout << std::endl << std::endl << "moyenne ecart points image " << i << " : " << moyDistances[i] << std::endl << std::endl;
-			file << "moyenne ecart points image " << i << " : " << moyDistances[i] << std::endl;
+			file << "moyenne ecart points image " << i << " : " << moyDistances[i] << " px" << std::endl;
 
 			if(moyDistances[i] > 2){ // si l'ecart de reproj est trop grand, reset
 				resetAuto = true;
@@ -234,10 +237,10 @@ int main()
 			imCalibNext.release();
 		}
 
-	}while(key != 27);
+	}while(key != 27 && endVideo != true);
 		
 	//std::cout << "moyenne sur toutes images : " << moyFinale / NBRIMAGESCALIB << std::endl;
-	file << std::endl << "moyenne sur toutes images : " << moyFinale / nbImages << std::endl;
+	file << std::endl << "moyenne sur toutes images : " << moyFinale / nbImages << " px" << std::endl;
 	file.close();
 
 	return 0;
