@@ -83,7 +83,7 @@ bool detecterQR(cv::VideoCapture vcap, std::vector<cv::Point2f> *pointsQR, std::
 	
 	int A = 0, B= 0, C= 0;
 	char key;
-	int mark = 0;
+	int mark;
 	bool patternFound = false;
 
 	do
@@ -139,12 +139,41 @@ bool detecterQR(cv::VideoCapture vcap, std::vector<cv::Point2f> *pointsQR, std::
 			(*pointsQR).push_back(mc[A]);
 			(*QRpoint3D).push_back(cv::Point3f(mc[A].x,mc[A].y,0.f));
 			(*tabuseless).push_back(cv::Point3f(mc[A].x,mc[A].y,0.f));
+			
 			(*pointsQR).push_back(mc[B]);
 			(*QRpoint3D).push_back(cv::Point3f(mc[B].x,mc[B].y,0.f));
-			(*tabuseless).push_back(cv::Point3f(mc[A].x,mc[A].y,0.f));
+			(*tabuseless).push_back(cv::Point3f(mc[B].x,mc[B].y,0.f));
+			
 			(*pointsQR).push_back(mc[C]);
 			(*QRpoint3D).push_back(cv::Point3f(mc[C].x,mc[C].y,0.f));
-			(*tabuseless).push_back(cv::Point3f(mc[A].x,mc[A].y,0.f));
+			(*tabuseless).push_back(cv::Point3f(mc[C].x,mc[C].y,0.f));
+			
+
+			cv::Point2f D(0.0f,0.0f);
+			cv::Point2f E(0.0f,0.0f);
+			cv::Point2f F(0.0f,0.0f);
+
+			D.x = (mc[A].x + mc[B].x)/2;
+			E.x = (mc[B].x + mc[C].x)/2;
+			F.x = (mc[C].x + mc[A].x)/2;
+
+			D.y = (mc[A].y + mc[B].y)/2;
+			E.y = (mc[B].y + mc[C].y)/2;
+			F.y = (mc[C].y + mc[A].y)/2;
+
+			(*pointsQR).push_back(D);
+			(*QRpoint3D).push_back(cv::Point3f(D.x,D.y,0.f));
+			(*tabuseless).push_back(cv::Point3f(D.x,D.y,0.f));
+	
+			(*pointsQR).push_back(E);
+			(*QRpoint3D).push_back(cv::Point3f(E.x,E.y,0.f));
+			(*tabuseless).push_back(cv::Point3f(E.x,E.y,0.f));
+			
+			(*pointsQR).push_back(F);
+			(*QRpoint3D).push_back(cv::Point3f(F.x,F.y,0.f));
+			(*tabuseless).push_back(cv::Point3f(F.x,F.y,0.f));
+			
+
 			patternFound = true;
 			std::cout << "patternfound" << std::endl;
 
@@ -326,6 +355,10 @@ int main()
 			imagePoints.clear();
 			chessCornersInit[0].clear();
 			chessCornersInit[1].clear();
+			QRpointinit[0].clear();
+			QRpointinit[1].clear();
+			QRpoint3D.clear();
+			tabuseless.clear();
 			moyDistances.clear();
 			distances.clear();
 			imCalibNext.release();
