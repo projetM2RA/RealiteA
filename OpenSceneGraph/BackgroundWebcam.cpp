@@ -38,8 +38,8 @@
 
 #include <stdio.h>
 
-#define COLCHESSBOARD	9
-#define ROWCHESSBOARD	6
+#define COLCHESSBOARD   9
+#define ROWCHESSBOARD   6
 
 
 std::vector<cv::Point2f> dessinerPoints(cv::Mat* imCalibColor, const std::vector<cv::Point3f> & objectPoints, const cv::Mat & rotVec, const cv::Mat & tvecs, const cv::Mat & cameraMatrix, const cv::Mat & distCoeffs)
@@ -58,7 +58,7 @@ std::vector<cv::Point2f> dessinerPoints(cv::Mat* imCalibColor, const std::vector
 bool detecterMire(cv::Mat imCalibColor, std::vector<cv::Point2f> *pointsMire, cv::Mat *imCalibNext)
 {
     bool patternFound = false;
-	cv::Mat imNB;
+    cv::Mat imNB;
 
     cv::cvtColor(imCalibColor, imNB, CV_BGR2GRAY);
             
@@ -265,10 +265,10 @@ void main()
 
     objet3D = osgDB::readNodeFile("dumptruck.osgt");
     osg::ref_ptr<osg::PositionAttitudeTransform> pat = new osg::PositionAttitudeTransform();
-	osg::ref_ptr<osg::MatrixTransform> mat = new osg::MatrixTransform();
-	mat->addChild(objet3D);
+    osg::ref_ptr<osg::MatrixTransform> mat = new osg::MatrixTransform();
+    mat->addChild(objet3D);
     pat->addChild(mat);
-	pat->setScale(osg::Vec3d(0.1f, 0.1f, 0.1f));
+    pat->setScale(osg::Vec3d(0.1f, 0.1f, 0.1f));
 
     // construct the viewer.
     osgViewer::Viewer viewer;
@@ -284,59 +284,63 @@ void main()
     viewer.setCameraManipulator(new osgGA::TrackballManipulator());
     viewer.realize();  // set up windows and associated threads.
 
-	char key = 0;
-	bool detectionMire = false;
+    char key = 0;
+    bool detectionMire = false;
 
     do
-    {		
-		patternfound = false;
-		resetAuto = false;
-		detectionMire = false;
-			
-		imagePoints.clear();
-		chessCornersInit[0].clear();
-		chessCornersInit[1].clear();
-		moyDistances = 0;
-		distances.clear();
-		imCalibNext.release();
-		
-		group->removeChild(pat);
-		std::cout << "recherche de mire" << std::endl;
+    {       
+        patternfound = false;
+        resetAuto = false;
+        detectionMire = false;
+            
+        imagePoints.clear();
+        chessCornersInit[0].clear();
+        chessCornersInit[1].clear();
+        moyDistances = 0;
+        distances.clear();
+        imCalibNext.release();
+        
+        group->removeChild(pat);
+        std::cout << "recherche de mire" << std::endl;
 
-		do
-		{
-			vcap >> *frame;
-			backgroundImage->dirty();
-	        detectionMire = detecterMire(*frame, &chessCornersInit[1], &imCalibNext);
-			viewer.frame();
-		}while(!detectionMire && !viewer.done());
+        do
+        {
+            vcap >> *frame;
+            backgroundImage->dirty();
+            detectionMire = detecterMire(*frame, &chessCornersInit[1], &imCalibNext);
+            viewer.frame();
+        }while(!detectionMire && !viewer.done());
 
-		if(viewer.done())
-			break;
+        if(viewer.done())
+            break;
 
         std::cout << "mire detectee" << std::endl << std::endl;
-		group->addChild(pat);
+        group->addChild(pat);
 
-		do
-		{			
-			vcap >> *frame;
-			
+        do
+        {           
+            vcap >> *frame;
+            
             cv::Mat rotVec = trackingMire(frame, &imCalibNext, &chessCornersInit, &chessCorners3D, &cameraMatrix, &distCoeffs, &tvecs);
 
             imagePoints = dessinerPoints(frame, objectPoints, rotVec, tvecs, cameraMatrix, distCoeffs);
 
-			osg::Vec3d pos = pat->getPosition();
+            osg::Vec3d pos = pat->getPosition();
 
-			//pat->setPosition(osg::Vec3d(tvecs.at<double>(0, 0) / 100, tvecs.at<double>(2, 0) / 100, -tvecs.at<double>(1, 0) / 100));
+            //pat->setPosition(osg::Vec3d(tvecs.at<double>(0, 0) / 100, tvecs.at<double>(2, 0) / 100, -tvecs.at<double>(1, 0) / 100));
 
-			osg::Matrixd rotateMat;
-			rotateMat.set(rotVec.at<double>(0, 0), rotVec.at<double>(0, 1), rotVec.at<double>(0, 2), tvecs.at<double>(0, 0),
-				rotVec.at<double>(1, 0), rotVec.at<double>(1, 1), rotVec.at<double>(1, 2), tvecs.at<double>(2, 0),
-				rotVec.at<double>(2, 0), rotVec.at<double>(2, 1), rotVec.at<double>(2, 2), -tvecs.at<double>(1, 0),
-				0, 0, 0, 1);
+            osg::Matrixd rotateMat;
+            /*rotateMat.set(rotVec.at<double>(0, 0), rotVec.at<double>(0, 1), rotVec.at<double>(0, 2), tvecs.at<double>(0, 0),
+                rotVec.at<double>(1, 0), rotVec.at<double>(1, 1), rotVec.at<double>(1, 2), tvecs.at<double>(2, 0),
+                rotVec.at<double>(2, 0), rotVec.at<double>(2, 1), rotVec.at<double>(2, 2), -tvecs.at<double>(1, 0),
+                0, 0, 0, 1);*/
+            rotateMat.set(rotVec.at<double>(0, 0), rotVec.at<double>(0, 1), rotVec.at<double>(0, 2), 0,
+                rotVec.at<double>(1, 0), rotVec.at<double>(1, 1), rotVec.at<double>(1, 2), 0,
+                rotVec.at<double>(2, 0), rotVec.at<double>(2, 1), rotVec.at<double>(2, 2), 0,
+                0, 0, 0, 1);
 
-			mat->setMatrix(rotateMat);
-			
+            mat->setMatrix(rotateMat);
+            
             // Calcul d'erreur de reprojection
             double moy = 0;
             for(int j = 0; j < COLCHESSBOARD * ROWCHESSBOARD; j++)
@@ -351,11 +355,11 @@ void main()
             if(moyDistances > 2) // si l'ecart de reproj est trop grand, reset
                 resetAuto = true;
 
-			key = cv::waitKey(33);
+            key = cv::waitKey(33);
 
-			backgroundImage->dirty();
-			viewer.frame();
-		}while(!viewer.done() && !resetAuto && key != 32);
+            backgroundImage->dirty();
+            viewer.frame();
+        }while(!viewer.done() && !resetAuto && key != 32);
 
     }while(!viewer.done());
     //viewer.run();
