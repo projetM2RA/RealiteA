@@ -330,14 +330,14 @@ void main()
             //pat->setPosition(osg::Vec3d(tvecs.at<double>(0, 0) / 100, tvecs.at<double>(2, 0) / 100, -tvecs.at<double>(1, 0) / 100));
 
             osg::Matrixd rotateMat;
-            /*rotateMat.set(rotVec.at<double>(0, 0), rotVec.at<double>(0, 1), rotVec.at<double>(0, 2), tvecs.at<double>(0, 0),
+            rotateMat.set(rotVec.at<double>(0, 0), rotVec.at<double>(0, 1), rotVec.at<double>(0, 2), tvecs.at<double>(0, 0),
                 rotVec.at<double>(1, 0), rotVec.at<double>(1, 1), rotVec.at<double>(1, 2), tvecs.at<double>(2, 0),
                 rotVec.at<double>(2, 0), rotVec.at<double>(2, 1), rotVec.at<double>(2, 2), -tvecs.at<double>(1, 0),
-                0, 0, 0, 1);*/
+                0, 0, 0, 1);/*
             rotateMat.set(rotVec.at<double>(0, 0), rotVec.at<double>(0, 1), rotVec.at<double>(0, 2), 0,
                 rotVec.at<double>(1, 0), rotVec.at<double>(1, 1), rotVec.at<double>(1, 2), 0,
                 rotVec.at<double>(2, 0), rotVec.at<double>(2, 1), rotVec.at<double>(2, 2), 0,
-                0, 0, 0, 1);
+                0, 0, 0, 1);*/
 
             mat->setMatrix(rotateMat);
             
