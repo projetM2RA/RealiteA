@@ -4,14 +4,8 @@
 #include <fstream>
 #include <time.h>
 
-#define NBRIMAGESCALIB	17
 #define COLCHESSBOARD	9
 #define ROWCHESSBOARD	6
-
-void init()
-{
-
-}
 
 void dessinerCube(cv::Mat* imCalibColor, const std::vector<cv::Point3f> & objectPoints, const cv::Mat & rotVec, const cv::Mat & tvecs, const cv::Mat & cameraMatrix, const cv::Mat & distCoeffs)
 {
