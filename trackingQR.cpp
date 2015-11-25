@@ -36,6 +36,26 @@ void dessinerCube(cv::Mat* imCalibColor, const std::vector<cv::Point3f> & object
 	cv::line(*imCalibColor, imagePoints[7], imagePoints[4], cv::Scalar(0, 255, 255), 2, 8);
 }
 
+void dessinerPyra(cv::Mat* imCalibColor, const std::vector<cv::Point3f> & objectPoints, const cv::Mat & rotVec, const cv::Mat & tvecs, const cv::Mat & cameraMatrix, const cv::Mat & distCoeffs)
+{
+	std::vector<cv::Point2f> imagePoints;
+	//Projection
+	cv::projectPoints(objectPoints, rotVec, tvecs, cameraMatrix, distCoeffs, imagePoints);
+
+	// Dessin des points projetes
+	cv::line(*imCalibColor, imagePoints[0], imagePoints[3], cv::Scalar(255, 255, 0), 2, 8);
+	cv::line(*imCalibColor, imagePoints[1], imagePoints[4], cv::Scalar(255, 255, 0), 2, 8);
+	cv::line(*imCalibColor, imagePoints[2], imagePoints[5], cv::Scalar(255, 255, 0), 2, 8);
+
+	cv::line(*imCalibColor, imagePoints[0], imagePoints[1], cv::Scalar(255, 0, 255), 2, 8);
+	cv::line(*imCalibColor, imagePoints[1], imagePoints[2], cv::Scalar(255, 0, 255), 2, 8);
+	cv::line(*imCalibColor, imagePoints[2], imagePoints[0], cv::Scalar(255, 0, 255), 2, 8);
+
+	cv::line(*imCalibColor, imagePoints[3], imagePoints[4], cv::Scalar(0, 255, 255), 2, 8);
+	cv::line(*imCalibColor, imagePoints[4], imagePoints[5], cv::Scalar(0, 255, 255), 2, 8);
+	cv::line(*imCalibColor, imagePoints[5], imagePoints[3], cv::Scalar(0, 255, 255), 2, 8);
+}
+
 std::vector<cv::Point2f> dessinerPoints(cv::Mat* imCalibColor, const std::vector<cv::Point3f> & objectPoints, const cv::Mat & rotVec, const cv::Mat & tvecs, const cv::Mat & cameraMatrix, const cv::Mat & distCoeffs)
 {	
 	std::vector<cv::Point2f> imagePoints;
@@ -75,7 +95,7 @@ bool detecterMire(cv::VideoCapture vcap, std::vector<cv::Point2f> *pointsMire, c
 	return patternFound; // normalement, si echap est presse, patternFound = false
 }
 
-bool detecterQR(cv::VideoCapture vcap, std::vector<cv::Point2f> *pointsQR, std::vector<cv::Point3f> *QRpoint3D, std::vector<cv::Point3f> *tabuseless, cv::Mat *imCalibNext)
+bool detecterQR(cv::VideoCapture vcap, std::vector<cv::Point2f> *pointsQR, std::vector<cv::Point3f> *QRpoint3D, std::vector<cv::Point3f> *tabuseless, std::vector<cv::Point3f> *QRpointObject3D, cv::Mat *imCalibNext)
 {
 	cv::Mat imCalibColor;	
 	cv::vector<cv::vector<cv::Point> > contours;
@@ -147,7 +167,13 @@ bool detecterQR(cv::VideoCapture vcap, std::vector<cv::Point2f> *pointsQR, std::
 			(*pointsQR).push_back(mc[C]);
 			(*QRpoint3D).push_back(cv::Point3f(mc[C].x,mc[C].y,0.f));
 			(*tabuseless).push_back(cv::Point3f(mc[C].x,mc[C].y,0.f));
-			
+
+			(*QRpointObject3D).push_back(cv::Point3f(mc[A].x,mc[A].y,0.f));
+			(*QRpointObject3D).push_back(cv::Point3f(mc[B].x,mc[B].y,0.f));
+			(*QRpointObject3D).push_back(cv::Point3f(mc[C].x,mc[C].y,0.f));
+			(*QRpointObject3D).push_back(cv::Point3f(mc[A].x,mc[A].y,100));
+			(*QRpointObject3D).push_back(cv::Point3f(mc[B].x,mc[B].y,100));
+			(*QRpointObject3D).push_back(cv::Point3f(mc[C].x,mc[C].y,100));
 
 			cv::Point2f D(0.0f,0.0f);
 			cv::Point2f E(0.0f,0.0f);
@@ -238,7 +264,7 @@ int main()
 	
 	std::vector<cv::Point2f> imagePoints;
 	std::vector<cv::Point3f> objectPoints;
-	std::vector<cv::Point3f> cubeObjectPoints;
+	std::vector<cv::Point3f> QRpointObject3D;
 	std::vector<std::vector<cv::Point2f>> chessCornersInit(2);
 	std::vector<std::vector<cv::Point2f>> QRpointinit(2);
 	std::vector<cv::Point3f> QRpoint3D;
@@ -247,27 +273,6 @@ int main()
 	std::vector<double> distances;
 	std::vector<double> moyDistances;
 	
-
-	// Creation des points a projeter
-	for(int x = 0; x < COLCHESSBOARD; x++)
-		for(int y = 0; y < ROWCHESSBOARD; y++)
-			objectPoints.push_back(cv::Point3f(x * 26.0f, y * 26.0f, 0.0f));
-
-	// Creation des points a projeter
-	cubeObjectPoints.push_back(cv::Point3f(52, 26, 0));
-	cubeObjectPoints.push_back(cv::Point3f(156, 26, 0));
-	cubeObjectPoints.push_back(cv::Point3f(156, 128, 0));
-	cubeObjectPoints.push_back(cv::Point3f(52, 128, 0));
-	cubeObjectPoints.push_back(cv::Point3f(52, 26, 104));
-	cubeObjectPoints.push_back(cv::Point3f(156, 26, 104));
-	cubeObjectPoints.push_back(cv::Point3f(156, 128, 104));
-	cubeObjectPoints.push_back(cv::Point3f(52, 128, 104));
-
-	// Creation des coins de la mire
-	for(int x = 0; x < COLCHESSBOARD; x++)
-		for(int y = 0; y < ROWCHESSBOARD; y++)
-			chessCorners3D.push_back(cv::Point3f(x * 26.0f, y * 26.0f, 0.0f));	
-
 	cv::FileStorage fs("../rsc/intrinsicMatrix.yml", cv::FileStorage::READ);
 
 	fs["cameraMatrix"] >> cameraMatrix;
@@ -295,7 +300,7 @@ int main()
 
 		std::cout << "mire detectee" << std::endl << std::endl;*/
 
-		bool detectionQR = detecterQR(vcap , &QRpointinit[1], &QRpoint3D, &tabuseless , &imCalibNext);
+		bool detectionQR = detecterQR(vcap , &QRpointinit[1], &QRpoint3D, &tabuseless, &QRpointObject3D, &imCalibNext);
 
 		if(!detectionQR)
 			break;
@@ -311,34 +316,35 @@ int main()
 
 			cv::Mat rotVec = trackingMire(&imCalibColor, &imCalibNext, &QRpointinit, &QRpoint3D, &cameraMatrix, &distCoeffs, &tvecs);
 
-			//dessinerCube(&imCalibColor, cubeObjectPoints, rotVec, tvecs, cameraMatrix, distCoeffs);
+			dessinerPyra(&imCalibColor, QRpointObject3D, rotVec, tvecs, cameraMatrix, distCoeffs);
 			imagePoints = dessinerPoints(&imCalibColor, tabuseless, rotVec, tvecs, cameraMatrix, distCoeffs);
 
-			// Calcul d'erreur de reprojection
-			//double moy = 0;
-			//for(int j = 0; j < COLCHESSBOARD * ROWCHESSBOARD; j++)
-			//{
-			//	double d = sqrt(pow(chessCornersInit[0][j].y - imagePoints[j].y, 2) + pow(chessCornersInit[0][j].x - imagePoints[j].x, 2));
-			//	distances.push_back(d);
-			//	moy += d;
-			//	/*std::cout << "distance point numero " << j << " : " << std::endl
-			//		<< "    subpix : x = " << chessCornersInit[0][j].x << "    y = " << chessCornersInit[0][j].y << std::endl
-			//		<< "    projec : x = " << imagePoints[j].x << "    y = " << imagePoints[j].y << std::endl
-			//		<< " distance : " << d << std::endl << std::endl;*/
-			//}
+			//Calcul d'erreur de reprojection
+			double moy = 0;
+			for(int j = 0; j < QRpointinit[1].size(); j++)
+			{
+				double d = sqrt(pow(QRpointinit[0][j].y - tabuseless[j].y, 2) + pow(QRpointinit[0][j].x - tabuseless[j].x, 2));
+				distances.push_back(d);
+				moy += d;
+				/*std::cout << "distance point numero " << j << " : " << std::endl
+					<< "    subpix : x = " << chessCornersInit[0][j].x << "    y = " << chessCornersInit[0][j].y << std::endl
+					<< "    projec : x = " << imagePoints[j].x << "    y = " << imagePoints[j].y << std::endl
+					<< " distance : " << d << std::endl << std::endl;*/
+			}
 
-			//moyDistances.push_back(moy / (COLCHESSBOARD * ROWCHESSBOARD));
+			moyDistances.push_back(moy / QRpointinit[1].size());
 			////std::cout << std::endl << std::endl << "moyenne ecart points image " << i << " : " << moyDistances[i] << std::endl << std::endl;
 			//file << "moyenne ecart points image " << i << " : " << moyDistances[i] << " px" << std::endl;
 
-			//if(moyDistances[i] > 2){ // si l'ecart de reproj est trop grand, reset
-			//	resetAuto = true;
-			//	break;
-			//}
+			if(moyDistances[i] > 10){ // si l'ecart de reproj est trop grand, reset
+				resetAuto = true;
+				std::cout << "RESET" << std::endl;
+				break;
+			}
 
 			//moyFinale += moyDistances[i];
-			//i++;
-			//nbImages++;
+			i++;
+			nbImages++;
 
 			cv::imshow("Projection", imCalibColor);
 
@@ -358,6 +364,7 @@ int main()
 			QRpointinit[0].clear();
 			QRpointinit[1].clear();
 			QRpoint3D.clear();
+			QRpointObject3D.clear();
 			tabuseless.clear();
 			moyDistances.clear();
 			distances.clear();
@@ -366,9 +373,5 @@ int main()
 
 	}while(key != 27 && endVideo != true);
 		
-	//std::cout << "moyenne sur toutes images : " << moyFinale / NBRIMAGESCALIB << std::endl;
-	file << std::endl << "moyenne sur toutes images : " << moyFinale / nbImages << " px" << std::endl;
-	file.close();
-
 	return 0;
 }

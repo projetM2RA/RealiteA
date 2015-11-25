@@ -45,7 +45,7 @@ std::vector<cv::Point2f> dessinerPoints(cv::Mat* imCalibColor, const std::vector
 
 	// Dessin des points projetes
 	for(int m = 0; m < objectPoints.size(); m++)
-		cv::circle(*imCalibColor, cv::Point((int)imagePoints[m].x, (int)imagePoints[m].y), 3, cv::Scalar(0, 0, 255), 1, 8, 0);
+		cv::circle(*imCalibColor, cv::Point((int)imagePoints[m].x, (int)imagePoints[m].y), 3, cv::Scalar(255, 0, 0), 1, 8, 0);
 
 	return imagePoints;
 }
@@ -177,14 +177,17 @@ bool detecterVisage(cv::VideoCapture vcap, Chehra *chehra, std::vector<cv::Point
 			}
 		}
 
-		(*cubeObjectPointsVisage).push_back(cv::Point3f((*pointsVisage)[0].x-50,(*pointsVisage)[0].y-100,0.f));
-		(*cubeObjectPointsVisage).push_back(cv::Point3f((*pointsVisage)[9].x+50,(*pointsVisage)[9].y-100,0.f));		
-		(*cubeObjectPointsVisage).push_back(cv::Point3f((*pointsVisage)[9].x+50,(*pointsVisage)[9].y+130,0.f));
-		(*cubeObjectPointsVisage).push_back(cv::Point3f((*pointsVisage)[0].x-50,(*pointsVisage)[0].y+130,0.f));
-		(*cubeObjectPointsVisage).push_back(cv::Point3f((*pointsVisage)[0].x-50,(*pointsVisage)[0].y-100,sqrt(pow((*pointsVisage)[0].y - (*pointsVisage)[9].y, 2) + pow((*pointsVisage)[0].x - (*pointsVisage)[9].x, 2))));
-		(*cubeObjectPointsVisage).push_back(cv::Point3f((*pointsVisage)[9].x+50,(*pointsVisage)[9].y-100,sqrt(pow((*pointsVisage)[0].y - (*pointsVisage)[9].y, 2) + pow((*pointsVisage)[0].x - (*pointsVisage)[9].x, 2))));
-		(*cubeObjectPointsVisage).push_back(cv::Point3f((*pointsVisage)[9].x+50,(*pointsVisage)[9].y+130,sqrt(pow((*pointsVisage)[0].y - (*pointsVisage)[9].y, 2) + pow((*pointsVisage)[0].x - (*pointsVisage)[9].x, 2))));
-		(*cubeObjectPointsVisage).push_back(cv::Point3f((*pointsVisage)[0].x-50,(*pointsVisage)[0].y+130,sqrt(pow((*pointsVisage)[0].y - (*pointsVisage)[9].y, 2) + pow((*pointsVisage)[0].x - (*pointsVisage)[9].x, 2))));
+		float headW = ((*pointsVisage)[9].x - (*pointsVisage)[0].x);
+		float headH = ((*pointsVisage)[37].y - (*pointsVisage)[9].y)*2;
+
+		(*cubeObjectPointsVisage).push_back(cv::Point3f((*pointsVisage)[0].x-headW,(*pointsVisage)[0].y-headH,0.f));
+		(*cubeObjectPointsVisage).push_back(cv::Point3f((*pointsVisage)[9].x+headW,(*pointsVisage)[9].y-headH,0.f));		
+		(*cubeObjectPointsVisage).push_back(cv::Point3f((*pointsVisage)[9].x+headW,(*pointsVisage)[9].y+headH,0.f));
+		(*cubeObjectPointsVisage).push_back(cv::Point3f((*pointsVisage)[0].x-headW,(*pointsVisage)[0].y+headH,0.f));
+		(*cubeObjectPointsVisage).push_back(cv::Point3f((*pointsVisage)[0].x-headW,(*pointsVisage)[0].y-headH,headW));
+		(*cubeObjectPointsVisage).push_back(cv::Point3f((*pointsVisage)[9].x+headW,(*pointsVisage)[9].y-headH,headW));
+		(*cubeObjectPointsVisage).push_back(cv::Point3f((*pointsVisage)[9].x+headW,(*pointsVisage)[9].y+headH,headW));
+		(*cubeObjectPointsVisage).push_back(cv::Point3f((*pointsVisage)[0].x-headW,(*pointsVisage)[0].y+headH,headW));
 
 	}
 	
