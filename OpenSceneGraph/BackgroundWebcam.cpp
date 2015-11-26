@@ -55,12 +55,12 @@ std::vector<cv::Point2f> dessinerPoints(cv::Mat* imCalibColor, const std::vector
     return imagePoints;
 }
 
-bool detecterMire(cv::Mat imCalibColor, std::vector<cv::Point2f> *pointsMire, cv::Mat *imCalibNext)
+bool detecterMire(cv::Mat* imCalibColor, std::vector<cv::Point2f> *pointsMire, cv::Mat *imCalibNext)
 {
     bool patternFound = false;
     cv::Mat imNB;
 
-    cv::cvtColor(imCalibColor, imNB, CV_BGR2GRAY);
+    cv::cvtColor(*imCalibColor, imNB, CV_BGR2GRAY);
             
     patternFound = cv::findChessboardCorners(imNB, cv::Size(ROWCHESSBOARD, COLCHESSBOARD), *pointsMire, cv::CALIB_CB_FAST_CHECK);
     
@@ -268,7 +268,6 @@ void main()
     osg::ref_ptr<osg::MatrixTransform> mat = new osg::MatrixTransform();
     mat->addChild(objet3D);
     pat->addChild(mat);
-    pat->setScale(osg::Vec3d(0.1f, 0.1f, 0.1f));
 
     // construct the viewer.
     osgViewer::Viewer viewer;
@@ -283,6 +282,9 @@ void main()
     viewer.setSceneData(group.get());
     viewer.setCameraManipulator(new osgGA::TrackballManipulator());
     viewer.realize();  // set up windows and associated threads.
+
+    
+    //pat->setScale(osg::Vec3d(0.5f, 0.5f, 0.5f));
 
     char key = 0;
     bool detectionMire = false;
@@ -307,7 +309,7 @@ void main()
         {
             vcap >> *frame;
             backgroundImage->dirty();
-            detectionMire = detecterMire(*frame, &chessCornersInit[1], &imCalibNext);
+            detectionMire = detecterMire(frame, &chessCornersInit[1], &imCalibNext);
             viewer.frame();
         }while(!detectionMire && !viewer.done());
 
@@ -325,19 +327,20 @@ void main()
 
             imagePoints = dessinerPoints(frame, objectPoints, rotVec, tvecs, cameraMatrix, distCoeffs);
 
-            osg::Vec3d pos = pat->getPosition();
+            //osg::Vec3d pos = pat->getPosition();
 
-            //pat->setPosition(osg::Vec3d(tvecs.at<double>(0, 0) / 100, tvecs.at<double>(2, 0) / 100, -tvecs.at<double>(1, 0) / 100));
+            pat->setPosition(osg::Vec3d(tvecs.at<double>(0, 0), tvecs.at<double>(2, 0), -tvecs.at<double>(1, 0)));
 
-            osg::Matrixd rotateMat;
-            rotateMat.set(rotVec.at<double>(0, 0), rotVec.at<double>(0, 1), rotVec.at<double>(0, 2), tvecs.at<double>(0, 0),
-                rotVec.at<double>(1, 0), rotVec.at<double>(1, 1), rotVec.at<double>(1, 2), tvecs.at<double>(2, 0),
-                rotVec.at<double>(2, 0), rotVec.at<double>(2, 1), rotVec.at<double>(2, 2), -tvecs.at<double>(1, 0),
-                0, 0, 0, 1);/*
-            rotateMat.set(rotVec.at<double>(0, 0), rotVec.at<double>(0, 1), rotVec.at<double>(0, 2), 0,
-                rotVec.at<double>(1, 0), rotVec.at<double>(1, 1), rotVec.at<double>(1, 2), 0,
-                rotVec.at<double>(2, 0), rotVec.at<double>(2, 1), rotVec.at<double>(2, 2), 0,
+            osg::Matrixd rotateMat;/*
+            rotateMat.set(rotVec.at<double>(0, 0), rotVec.at<double>(0, 1), rotVec.at<double>(0, 2), tvecs.at<double>(0, 0) / 100,
+                rotVec.at<double>(1, 0), rotVec.at<double>(1, 1), rotVec.at<double>(1, 2), tvecs.at<double>(2, 0) / 100,
+                rotVec.at<double>(2, 0), rotVec.at<double>(2, 1), rotVec.at<double>(2, 2), -tvecs.at<double>(1, 0) / 100,
                 0, 0, 0, 1);*/
+            rotateMat.set(
+                rotVec.at<double>(0, 0), -rotVec.at<double>(0, 2), rotVec.at<double>(0, 1), 0,
+                rotVec.at<double>(1, 0), -rotVec.at<double>(1, 2), rotVec.at<double>(1, 1), 0,
+                rotVec.at<double>(2, 0), -rotVec.at<double>(2, 2), rotVec.at<double>(2, 1), 0,
+                0, 0, 0, 1);
 
             mat->setMatrix(rotateMat);
             
