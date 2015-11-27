@@ -190,7 +190,6 @@ void main()
 {
     bool patternfound = false;
     bool reset = false;
-    bool endVideo = false;
     bool resetAuto = false;
     int nbImages = 0;
     double moyFinale = 0;
@@ -206,7 +205,6 @@ void main()
     
     std::vector<cv::Point2f> imagePoints;
     std::vector<cv::Point3f> objectPoints;
-    std::vector<cv::Point3f> cubeObjectPoints;
     std::vector<std::vector<cv::Point2f>> chessCornersInit(2);
     std::vector<cv::Point3f> chessCorners3D;
     std::vector<double> distances;
@@ -217,16 +215,6 @@ void main()
     for(int x = 0; x < COLCHESSBOARD; x++)
         for(int y = 0; y < ROWCHESSBOARD; y++)
             objectPoints.push_back(cv::Point3f(x * 26.0f, y * 26.0f, 0.0f));
-
-    // Creation des points a projeter
-    cubeObjectPoints.push_back(cv::Point3f(52, 26, 0));
-    cubeObjectPoints.push_back(cv::Point3f(156, 26, 0));
-    cubeObjectPoints.push_back(cv::Point3f(156, 128, 0));
-    cubeObjectPoints.push_back(cv::Point3f(52, 128, 0));
-    cubeObjectPoints.push_back(cv::Point3f(52, 26, 104));
-    cubeObjectPoints.push_back(cv::Point3f(156, 26, 104));
-    cubeObjectPoints.push_back(cv::Point3f(156, 128, 104));
-    cubeObjectPoints.push_back(cv::Point3f(52, 128, 104));
 
     // Creation des coins de la mire
     for(int x = 0; x < COLCHESSBOARD; x++)
@@ -261,13 +249,6 @@ void main()
 
     // read the scene from the list of file specified commandline args.
     osg::ref_ptr<osg::Node> scene;
-    osg::ref_ptr<osg::Node> objet3D;
-
-    objet3D = osgDB::readNodeFile("dumptruck.osgt");
-    osg::ref_ptr<osg::PositionAttitudeTransform> pat = new osg::PositionAttitudeTransform();
-    osg::ref_ptr<osg::MatrixTransform> mat = new osg::MatrixTransform();
-    mat->addChild(objet3D);
-    pat->addChild(mat);
 
     // construct the viewer.
     osgViewer::Viewer viewer;
@@ -275,12 +256,11 @@ void main()
     osg::ref_ptr<osg::Group> group = new osg::Group;
 
     // add the HUD subgraph.
-    group->addChild(pat);
     group->addChild(createHUD(backgroundImage));
 
     // set the scene to render
     viewer.setSceneData(group.get());
-    viewer.setCameraManipulator(new osgGA::TrackballManipulator());
+    //viewer.setCameraManipulator(new osgGA::TrackballManipulator());
     viewer.realize();  // set up windows and associated threads.
 
     
@@ -288,6 +268,17 @@ void main()
 
     char key = 0;
     bool detectionMire = false;
+
+    double near = .1, far = 100.0;
+    osg::Matrixd projectionMatrix;
+    projectionMatrix.set(
+        cameraMatrix.at<double>(0, 0) / cameraMatrix.at<double>(0, 2), 0, 0, 0,
+        0, cameraMatrix.at<double>(1, 0) / cameraMatrix.at<double>(1, 2), 0, 0,
+        0, 0, - (far + near) / (far - near), (2 * far * near) / (far - near),
+        0, 0, -1, 0);
+
+    viewer.getCamera()->setProjectionMatrix(projectionMatrix);
+    
 
     do
     {       
@@ -302,7 +293,7 @@ void main()
         distances.clear();
         imCalibNext.release();
         
-        group->removeChild(pat);
+        //group->removeChild(pat);
         std::cout << "recherche de mire" << std::endl;
 
         do
@@ -317,7 +308,7 @@ void main()
             break;
 
         std::cout << "mire detectee" << std::endl << std::endl;
-        group->addChild(pat);
+        //group->addChild(pat);
 
         do
         {           
@@ -329,7 +320,7 @@ void main()
 
             //osg::Vec3d pos = pat->getPosition();
 
-            pat->setPosition(osg::Vec3d(tvecs.at<double>(0, 0), tvecs.at<double>(2, 0), -tvecs.at<double>(1, 0)));
+            //pat->setPosition(osg::Vec3d(tvecs.at<double>(0, 0), tvecs.at<double>(2, 0), -tvecs.at<double>(1, 0)));
 
             osg::Matrixd rotateMat;/*
             rotateMat.set(rotVec.at<double>(0, 0), rotVec.at<double>(0, 1), rotVec.at<double>(0, 2), tvecs.at<double>(0, 0) / 100,
@@ -342,7 +333,7 @@ void main()
                 rotVec.at<double>(2, 0), -rotVec.at<double>(2, 2), rotVec.at<double>(2, 1), 0,
                 0, 0, 0, 1);
 
-            mat->setMatrix(rotateMat);
+            //mat->setMatrix(rotateMat);
             
             // Calcul d'erreur de reprojection
             double moy = 0;
@@ -365,5 +356,4 @@ void main()
         }while(!viewer.done() && !resetAuto && key != 32);
 
     }while(!viewer.done());
-    //viewer.run();
 }
