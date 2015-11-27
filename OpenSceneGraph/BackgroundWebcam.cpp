@@ -37,6 +37,7 @@
 #include <opencv2/opencv.hpp>
 
 #include <stdio.h>
+#include <cmath>
 
 #define COLCHESSBOARD   9
 #define ROWCHESSBOARD   6
@@ -140,44 +141,7 @@ osg::Camera* createHUD(osg::Image* bgImage)
             texturedQuad->getOrCreateStateSet()->setTextureAttributeAndModes(0, textureRect, osg::StateAttribute::ON);
             texturedQuad->getOrCreateStateSet()->setMode(GL_DEPTH_TEST, osg::StateAttribute::OFF);
             geode->addDrawable(texturedQuad);
-        } 
-
-
-        {
-            osg::BoundingBox bb;
-            for(unsigned int i=0;i<geode->getNumDrawables();++i)
-            {
-                bb.expandBy(geode->getDrawable(i)->getBoundingBox());
-            }
-
-            osg::Geometry* geom = new osg::Geometry;
-
-            osg::Vec3Array* vertices = new osg::Vec3Array;
-            float depth = bb.zMin()-0.1;
-            vertices->push_back(osg::Vec3(bb.xMin(),bb.yMax(),depth));
-            vertices->push_back(osg::Vec3(bb.xMin(),bb.yMin(),depth));
-            vertices->push_back(osg::Vec3(bb.xMax(),bb.yMin(),depth));
-            vertices->push_back(osg::Vec3(bb.xMax(),bb.yMax(),depth));
-            geom->setVertexArray(vertices);
-
-            osg::Vec3Array* normals = new osg::Vec3Array;
-            normals->push_back(osg::Vec3(0.0f,0.0f,1.0f));
-            geom->setNormalArray(normals, osg::Array::BIND_OVERALL);
-
-            osg::Vec4Array* colors = new osg::Vec4Array;
-            colors->push_back(osg::Vec4(1.0f,1.0,0.8f,0.2f));
-            geom->setColorArray(colors, osg::Array::BIND_OVERALL);
-
-            geom->addPrimitiveSet(new osg::DrawArrays(GL_QUADS,0,4));
-
-            osg::StateSet* stateset = geom->getOrCreateStateSet();
-            stateset->setMode(GL_BLEND,osg::StateAttribute::ON);
-            //stateset->setAttribute(new osg::PolygonOffset(1.0f,1.0f),osg::StateAttribute::ON);
-            stateset->setRenderingHint(osg::StateSet::TRANSPARENT_BIN);
-
-            geode->addDrawable(geom);
         }
-
         camera->addChild(geode);
     }
 
@@ -205,6 +169,7 @@ void main()
     
     std::vector<cv::Point2f> imagePoints;
     std::vector<cv::Point3f> objectPoints;
+    std::vector<cv::Point3f> cubeObjectPoints;
     std::vector<std::vector<cv::Point2f>> chessCornersInit(2);
     std::vector<cv::Point3f> chessCorners3D;
     std::vector<double> distances;
@@ -215,6 +180,16 @@ void main()
     for(int x = 0; x < COLCHESSBOARD; x++)
         for(int y = 0; y < ROWCHESSBOARD; y++)
             objectPoints.push_back(cv::Point3f(x * 26.0f, y * 26.0f, 0.0f));
+
+    // Creation des points a projeter
+    cubeObjectPoints.push_back(cv::Point3f(52, 26, 0));
+    cubeObjectPoints.push_back(cv::Point3f(156, 26, 0));
+    cubeObjectPoints.push_back(cv::Point3f(156, 128, 0));
+    cubeObjectPoints.push_back(cv::Point3f(52, 128, 0));
+    cubeObjectPoints.push_back(cv::Point3f(52, 26, 104));
+    cubeObjectPoints.push_back(cv::Point3f(156, 26, 104));
+    cubeObjectPoints.push_back(cv::Point3f(156, 128, 104));
+    cubeObjectPoints.push_back(cv::Point3f(52, 128, 104));
 
     // Creation des coins de la mire
     for(int x = 0; x < COLCHESSBOARD; x++)
@@ -248,37 +223,59 @@ void main()
         osg::Image::AllocationMode::NO_DELETE, 1);
 
     // read the scene from the list of file specified commandline args.
-    osg::ref_ptr<osg::Node> scene;
+    osg::ref_ptr<osg::Group> group = new osg::Group;
+    osg::ref_ptr<osg::Node> objet3D = osgDB::readNodeFile("dumptruck.osgt");
+    osg::ref_ptr<osg::Camera> cam = createHUD(backgroundImage);
+    osg::ref_ptr<osg::PositionAttitudeTransform> pat = new osg::PositionAttitudeTransform;
+    osg::ref_ptr<osg::PositionAttitudeTransform> pat2 = new osg::PositionAttitudeTransform;
 
     // construct the viewer.
     osgViewer::Viewer viewer;
 
-    osg::ref_ptr<osg::Group> group = new osg::Group;
-
     // add the HUD subgraph.
-    group->addChild(createHUD(backgroundImage));
+    group->addChild(cam);
+    pat->addChild(pat2);
+    pat2->addChild(objet3D);
+    group->addChild(pat);
 
     // set the scene to render
     viewer.setSceneData(group.get());
-    //viewer.setCameraManipulator(new osgGA::TrackballManipulator());
     viewer.realize();  // set up windows and associated threads.
-
-    
-    //pat->setScale(osg::Vec3d(0.5f, 0.5f, 0.5f));
 
     char key = 0;
     bool detectionMire = false;
 
-    double near = .1, far = 100.0;
+    cv::Mat Rc, C = cv::Mat(3, 1, CV_64F), rotVecInv;
+    pat->setScale(osg::Vec3d(0.08, 0.08, 0.08));
+    pat->setAttitude(osg::Quat(osg::DegreesToRadians(180.0), osg::Vec3d(1.0, 0.0, 0.0)));
+    pat2->setPosition(osg::Vec3d(15.0, 4.0, 5.0));
+
+/*  
+    // projection
+    double fx = cameraMatrix.at<double>(0, 0);
+    double fy = cameraMatrix.at<double>(1, 1);
+    double cx = cameraMatrix.at<double>(1, 2);
+    double cy = cameraMatrix.at<double>(1, 0);
+    double W  = (double)frame->cols;
+    double H  = (double)frame->rows;
+    double near = .1;
+    double far = 100.0;
+
     osg::Matrixd projectionMatrix;
     projectionMatrix.set(
-        cameraMatrix.at<double>(0, 0) / cameraMatrix.at<double>(0, 2), 0, 0, 0,
-        0, cameraMatrix.at<double>(1, 0) / cameraMatrix.at<double>(1, 2), 0, 0,
-        0, 0, - (far + near) / (far - near), (2 * far * near) / (far - near),
-        0, 0, -1, 0);
+        2 * fx / W, 0, 0, 0, 
+        0, 2 * fy / H, 0, 0, 
+        2 * (cx / W) - 1, 2 * (cy - H) - 1, (far + near) / (far - near), 1,
+        0, 0, 2 * far * near / (near - far), 0);
+        
+    projectionMatrix.set(
+        2 * fx / W, 0, 0, 0, 
+        0, 2 * fy / H, 0, 0,
+        2 * (cx / W) - 1, 2 * (cy / H) - 1, (far + near) / (far - near), 1,
+        0, 0, 2 * far * near / (near - far), 0);
 
-    viewer.getCamera()->setProjectionMatrix(projectionMatrix);
-    
+    viewer.getCamera()->setProjectionMatrix(projectionMatrix);*/
+
 
     do
     {       
@@ -293,7 +290,7 @@ void main()
         distances.clear();
         imCalibNext.release();
         
-        //group->removeChild(pat);
+        group->removeChild(pat);
         std::cout << "recherche de mire" << std::endl;
 
         do
@@ -308,7 +305,7 @@ void main()
             break;
 
         std::cout << "mire detectee" << std::endl << std::endl;
-        //group->addChild(pat);
+        group->addChild(pat);
 
         do
         {           
@@ -317,23 +314,38 @@ void main()
             cv::Mat rotVec = trackingMire(frame, &imCalibNext, &chessCornersInit, &chessCorners3D, &cameraMatrix, &distCoeffs, &tvecs);
 
             imagePoints = dessinerPoints(frame, objectPoints, rotVec, tvecs, cameraMatrix, distCoeffs);
+            
+            cv::transpose(rotVec, Rc);
+            cv::invert(rotVec, rotVecInv);
 
-            //osg::Vec3d pos = pat->getPosition();
+            for(int i = 0; i < 3; i++)
+                C.at<double>(i, 0) = -1 * (
+                rotVecInv.at<double>(i, 0) * tvecs.at<double>(0, 0) +
+                rotVecInv.at<double>(i, 1) * tvecs.at<double>(1, 0) +
+                rotVecInv.at<double>(i, 2) * tvecs.at<double>(2, 0));
+            
+            osg::Matrixd viewMatrixR, viewMatrixT, viewMatrix90;
 
-            //pat->setPosition(osg::Vec3d(tvecs.at<double>(0, 0), tvecs.at<double>(2, 0), -tvecs.at<double>(1, 0)));
+            viewMatrixT.makeTranslate(
+                -C.at<double>(0, 0) / 100,
+                C.at<double>(1, 0) / 100,
+                C.at<double>(2, 0) / 100);
+            
+            double r11 = rotVec.at<double>(0, 0);
+            double r21 = rotVec.at<double>(1, 0);
+            double r31 = rotVec.at<double>(2, 0);
+            double r32 = rotVec.at<double>(2, 1);
+            double r33 = rotVec.at<double>(2, 2);
 
-            osg::Matrixd rotateMat;/*
-            rotateMat.set(rotVec.at<double>(0, 0), rotVec.at<double>(0, 1), rotVec.at<double>(0, 2), tvecs.at<double>(0, 0) / 100,
-                rotVec.at<double>(1, 0), rotVec.at<double>(1, 1), rotVec.at<double>(1, 2), tvecs.at<double>(2, 0) / 100,
-                rotVec.at<double>(2, 0), rotVec.at<double>(2, 1), rotVec.at<double>(2, 2), -tvecs.at<double>(1, 0) / 100,
-                0, 0, 0, 1);*/
-            rotateMat.set(
-                rotVec.at<double>(0, 0), -rotVec.at<double>(0, 2), rotVec.at<double>(0, 1), 0,
-                rotVec.at<double>(1, 0), -rotVec.at<double>(1, 2), rotVec.at<double>(1, 1), 0,
-                rotVec.at<double>(2, 0), -rotVec.at<double>(2, 2), rotVec.at<double>(2, 1), 0,
-                0, 0, 0, 1);
+            viewMatrixR.makeRotate(
+                atan2(r32, r33), osg::Vec3d(1.0, 0.0, 0.0),
+                -atan2(-r31, sqrt((r32 * r32) + (r33 * r33))), osg::Vec3d(0.0, 1.0, 0.0),
+                -atan2(r21, r11), osg::Vec3d(0.0, 0.0, 1.0));
+            
 
-            //mat->setMatrix(rotateMat);
+            viewMatrix90.makeRotate(osg::DegreesToRadians(-90.0), osg::Vec3d(1.0, 0.0, 0.0));
+            
+            viewer.getCamera()->setViewMatrix(viewMatrixT * viewMatrixR);
             
             // Calcul d'erreur de reprojection
             double moy = 0;
