@@ -190,6 +190,8 @@ void main()
 	osg::ref_ptr<osg::Group> group = new osg::Group;
 	osg::ref_ptr<osg::Geode> cam = createHUD(backgroundImage, vcap.get(CV_CAP_PROP_FRAME_WIDTH), vcap.get(CV_CAP_PROP_FRAME_HEIGHT), cameraMatrix.at<double>(0, 2), cameraMatrix.at<double>(1, 2), NEAR);
     osg::ref_ptr<osg::Node> objet3D = osgDB::readNodeFile("../rsc/objets3D/dumptruck.osgt");
+	osg::StateSet* obectStateset = objet3D->getOrCreateStateSet();
+       obectStateset->setMode(GL_DEPTH_TEST,osg::StateAttribute::OFF);
 	osg::ref_ptr<osg::MatrixTransform> mat = new osg::MatrixTransform();
 	osg::ref_ptr<osg::PositionAttitudeTransform> pat = new osg::PositionAttitudeTransform();
 
