@@ -1,41 +1,24 @@
-/* OpenSceneGraph example, osghud.
-*
-*  Permission is hereby granted, free of charge, to any person obtaining a copy
-*  of this software and associated documentation files (the "Software"), to deal
-*  in the Software without restriction, including without limitation the rights
-*  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-*  copies of the Software, and to permit persons to whom the Software is
-*  furnished to do so, subject to the following conditions:
-*
-*  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-*  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-*  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-*  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-*  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-*  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-*  THE SOFTWARE.
-*/
-
 #include <osgViewer/Viewer>
+#include <osgDB/ReadFile>
 #include <osg/Material>
 #include <osg/Geode>
 #include <osg/Geometry>
 #include <osg/Camera>
 #include <osg/Texture2D>
+#include <osg/MatrixTransform>
+#include <osg/PositionAttitudeTransform>
 #include <osg/TextureRectangle>
-#include <osgGA/TrackballManipulator>
 #include <osg/Array>
+
+#include <osgViewer/CompositeViewer>
 
 #include <opencv2/opencv.hpp>
 
 #include <stdio.h>
 
 #define COLCHESSBOARD   9
-#define ROWCHESSBOARD   5
-#define SIZEMIRE		25
-
-#define NEAR			0.1f
-#define FAR				100.0f
+#define ROWCHESSBOARD   6
+#define SIZEMIRE		26
 
 
 std::vector<cv::Point2f> dessinerPoints(cv::Mat* imCalibColor, const std::vector<cv::Point3f> & objectPoints, const cv::Mat & rotVec, const cv::Mat & tvecs, const cv::Mat & cameraMatrix, const cv::Mat & distCoeffs)
@@ -47,23 +30,6 @@ std::vector<cv::Point2f> dessinerPoints(cv::Mat* imCalibColor, const std::vector
 	// Dessin des points projetes
 	for(int m = 0; m < objectPoints.size(); m++)
 		cv::circle(*imCalibColor, cv::Point(imagePoints[m].x, imagePoints[m].y), 3, cv::Scalar(0, 0, 255), 1, 8, 0);
-
-	return imagePoints;
-}
-
-std::vector<cv::Point2f> dessinerRepere(cv::Mat* imCalibColor, const std::vector<cv::Point3f> & objectPoints, const cv::Mat & rotVec, const cv::Mat & tvecs, const cv::Mat & cameraMatrix, const cv::Mat & distCoeffs)
-{   
-	std::vector<cv::Point2f> imagePoints;
-	//Projection
-	cv::projectPoints(objectPoints, rotVec, tvecs, cameraMatrix, distCoeffs, imagePoints);
-
-	// Dessin des points projetes
-	for(int m = 0; m < objectPoints.size(); m++)
-		cv::circle(*imCalibColor, cv::Point(imagePoints[m].x, imagePoints[m].y), 3, cv::Scalar(0, 0, 255));
-
-	cv::line(*imCalibColor, imagePoints[0], imagePoints[1], cv::Scalar(0, 255, 0), 2);
-	cv::line(*imCalibColor, imagePoints[0], imagePoints[2], cv::Scalar(255, 0, 0), 2);
-	cv::line(*imCalibColor, imagePoints[0], imagePoints[3], cv::Scalar(0, 0, 255), 2);
 
 	return imagePoints;
 }
@@ -106,89 +72,15 @@ cv::Mat trackingMire(cv::Mat *imCalibColor, cv::Mat *imCalibNext, std::vector<st
 	return rotVec;
 }
 
-osg::Geode* createPyramid()
-{
-	osg::Geode* pyramidGeode­ = new osg::Geode();
-	osg::Geometry* pyramidGeometry = new osg::Geometry();
-	pyramidGeode­->addDrawable(pyramidGeometry);
-
-	// Spécification des vertices:
-	osg::Vec3Array* pyramidVertices = new osg::Vec3Array;
-	pyramidVertices->push_back(osg::Vec3(0, 0, 0)); // Devant gauche 
-	pyramidVertices->push_back(osg::Vec3(2, 0, 0)); // Devant droite 
-	pyramidVertices->push_back(osg::Vec3(2, 2, 0)); // Derrière droite 
-	pyramidVertices->push_back(osg::Vec3(0, 2, 0)); // Derrière gauche
-	pyramidVertices->push_back(osg::Vec3(1, 1, 2)); // / Sommet
-
-	// Associe cet ensemble de vertices avec pyramidGeometry lui­même
-	// associé avec pyramidGeode
-	pyramidGeometry->setVertexArray(pyramidVertices);
-
-	// Crée une primitive QUAD pour la base
-	osg::DrawElementsUInt* pyramidBase = new osg::DrawElementsUInt(osg::PrimitiveSet::QUADS, 0);
-	pyramidBase->push_back(3);
-	pyramidBase->push_back(2);
-	pyramidBase->push_back(1);
-	pyramidBase->push_back(0);
-
-	// L'ajoute à PyramidGeometry: 
-	// pyramidGeometry­>addPrimitiveSet(pyramidBase);
-	// Le code pour créer d'autres faces ici!
-	// (retiré pour raison d'espace, voir tutoriel précédent)
-
-	// Création des couleurs...
-	osg::Vec4Array* colors = new osg::Vec4Array;
-	colors->push_back(osg::Vec4(1.0f, 0.0f, 0.0f, 1.0f)); //index 0 rouge
-	colors->push_back(osg::Vec4(0.0f, 1.0f, 0.0f, 1.0f)); //index 1 vert
-	colors->push_back(osg::Vec4(0.0f, 0.0f, 1.0f, 1.0f) ); //index 2 bleu
-	colors->push_back(osg::Vec4(1.0f, 1.0f, 1.0f, 1.0f) ); //index 3 blanc
-
-	osg::TemplateIndexArray<unsigned int, osg::Array::UIntArrayType,4,4> *colorIndexArray;
-	colorIndexArray = new osg::TemplateIndexArray<unsigned int, osg::Array::UIntArrayType,4,4>;
-
-	colorIndexArray->push_back(0); // vertex 0 assigné à la couleur 0
-	colorIndexArray->push_back(1); // vertex 1 assigné à la couleur 1
-	colorIndexArray->push_back(2); // vertex 2 assigné à la couleur 2
-	colorIndexArray->push_back(3); // vertex 3 assigné à la couleur 3
-	colorIndexArray->push_back(0); // vertex 4 assigné à la couleur 0
-
-	pyramidGeometry->setColorArray(colors);
-	//pyramidGeometry->setColorIndices(colorIndexArray);
-	pyramidGeometry->setColorBinding(osg::Geometry::BIND_PER_VERTEX);
-
-	// Comme le mapping des vertices aux coordonnées de texture est 1:1,
-	// nous n'avons pas besoin d'utiliser un index de tableau pour mapper
-	// les vertices aux coordonnées de textures. On peut le faire direc­
-	// tement avec la méthode 'setTexCoordArray' de la classe Geometry.
-	// Cette méthode prend une variable qui est un tableau de vecteur de
-	// deux dimensions (osg::Vec2). Cette variable a besoin d'avoir le
-	// même nombre de vertices que dans notre Geometry. Chaque élément du
-	// tableau définit les coordonnées de textures pour correspondre aux
-	// vertices dans le tableau de vertices.
-
-	osg::Vec2Array* texcoords = new osg::Vec2Array(5);
-	(*texcoords)[0].set(0.00f,0.0f); // coord. de texture pr. vertex 0 
-	(*texcoords)[1].set(0.25f,0.0f); // coord. de texture pr. vertex 1 
-	(*texcoords)[2].set(0.50f,0.0f); // ""
-	(*texcoords)[3].set(0.75f,0.0f); // "" 
-	(*texcoords)[4].set(0.50f,1.0f); // ""
-	pyramidGeometry->setTexCoordArray(0,texcoords);
-
-	return pyramidGeode­;
-
-}
-
-
-
-osg::Geode* createHUD(osg::Image* bgImage, int camWidth, int camHeight, double cx, double cy)
+osg::Geode* createHUD(osg::Image* bgImage, int camWidth, int camHeight, double cx, double cy, double near)
 {	
 	osg::Geometry* geoQuad = new osg::Geometry; 
 
 	osg::Vec3Array* tabSommet = new osg::Vec3Array; 
-	tabSommet->push_back(osg::Vec3(-cx, NEAR, -cy)); 
-	tabSommet->push_back(osg::Vec3(camWidth - cx, NEAR, -cy)); 
-	tabSommet->push_back(osg::Vec3(camWidth - cx, NEAR, camHeight - cy)); 
-	tabSommet->push_back(osg::Vec3(-cx, NEAR, camHeight - cy)); 
+	tabSommet->push_back(osg::Vec3(-cx, near, -cy)); 
+	tabSommet->push_back(osg::Vec3(camWidth - cx, near, -cy)); 
+	tabSommet->push_back(osg::Vec3(camWidth - cx, near, camHeight - cy)); 
+	tabSommet->push_back(osg::Vec3(-cx, near, camHeight - cy)); 
 	geoQuad->setVertexArray(tabSommet); 
 
 	osg::DrawElementsUInt* primitive = new osg::DrawElementsUInt(osg::PrimitiveSet::QUADS, 0); 
@@ -228,12 +120,50 @@ osg::Geode* createHUD(osg::Image* bgImage, int camWidth, int camHeight, double c
 
 void main()
 {
-	cv::Mat cameraMatrix, distCoeffs;
+    bool patternfound = false;
+    bool reset = false;
+    bool resetAuto = false;
+    int nbImages = 0;
+    double moyFinale = 0;
+    char key = 0;
+    bool detectionMire = false;
+
+    cv::TermCriteria termcrit(CV_TERMCRIT_ITER | CV_TERMCRIT_EPS, 20, 0.03);
+    cv::Size winSize(31, 31);
+    
+    cv::Mat cameraMatrix, distCoeffs;
+    cv::Mat imCalib;
+    cv::Mat imCalibColor;
+    cv::Mat imCalibNext;
+    cv::Mat rvecs, tvecs;
+    cv::Mat Rc, C = cv::Mat(3, 1, CV_64F), rotVecInv;
+    
+    std::vector<cv::Point2f> imagePoints;
+    std::vector<cv::Point3f> objectPoints;
+    std::vector<cv::Point3f> cubeObjectPoints;
+    std::vector<std::vector<cv::Point2f>> chessCornersInit(2);
+    std::vector<cv::Point3f> chessCorners3D;
+    std::vector<double> distances;
+    double moyDistances;
+
+    // Creation des coins de la mire
+    for(int x = 0; x < COLCHESSBOARD; x++)
+        for(int y = 0; y < ROWCHESSBOARD; y++)
+            chessCorners3D.push_back(cv::Point3f(x * SIZEMIRE, y * SIZEMIRE, 0.0f));  
+
+    // Creation des points a projeter
+    for(int x = 0; x < COLCHESSBOARD; x++)
+        for(int y = 0; y < ROWCHESSBOARD; y++)
+            objectPoints.push_back(cv::Point3f(x * SIZEMIRE, y * SIZEMIRE, 0.0f));
 	
 	cv::FileStorage fs("../rsc/intrinsicMatrix.yml", cv::FileStorage::READ);
 
 	fs["cameraMatrix"] >> cameraMatrix;
 	fs["distCoeffs"] >> distCoeffs;
+
+	double NEAR = (cameraMatrix.at<double>(0, 0) + cameraMatrix.at<double>(1, 1)) / 2; // NEAR = distance focale ; si pixels carrés, fx = fy -> np 
+	//mais est généralement différent de fy donc on prend (pour l'instant) par défaut la valeur médiane
+	double FAR = 2000 * NEAR; // je sais pas pourquoi. au pif.
 
 	fs.release();
 
@@ -258,23 +188,33 @@ void main()
 
 	// read the scene from the list of file specified commandline args.
 	osg::ref_ptr<osg::Group> group = new osg::Group;
-	osg::ref_ptr<osg::Geode> cam = createHUD(backgroundImage, vcap.get(CV_CAP_PROP_FRAME_WIDTH), vcap.get(CV_CAP_PROP_FRAME_HEIGHT), cameraMatrix.at<double>(0, 2), cameraMatrix.at<double>(1, 2));
-	osg::ref_ptr<osg::Geode> pyramid = createPyramid();
+	osg::ref_ptr<osg::Geode> cam = createHUD(backgroundImage, vcap.get(CV_CAP_PROP_FRAME_WIDTH), vcap.get(CV_CAP_PROP_FRAME_HEIGHT), cameraMatrix.at<double>(0, 2), cameraMatrix.at<double>(1, 2), NEAR);
+    osg::ref_ptr<osg::Node> objet3D = osgDB::readNodeFile("../rsc/objets3D/dumptruck.osgt");
+	osg::ref_ptr<osg::MatrixTransform> mat = new osg::MatrixTransform();
+	osg::ref_ptr<osg::PositionAttitudeTransform> pat = new osg::PositionAttitudeTransform();
 
 	// construct the viewer.
-	osgViewer::Viewer viewer;
+	osgViewer::CompositeViewer compositeViewer;
+	osgViewer::View* viewer = new osgViewer::View;
+	osgViewer::View* viewer2 = new osgViewer::View;
 
 	// add the HUD subgraph.
 	group->addChild(cam);
 
+	mat->addChild(objet3D);
+	pat->addChild(mat);
+	group->addChild(pat);
+
+    pat->setScale(osg::Vec3d(5, 5, 5));
+
 	osg::Matrixd projectionMatrix;
 
 	projectionMatrix.makeFrustum(
-		-cameraMatrix.at<double>(0, 2), vcap.get(CV_CAP_PROP_FRAME_WIDTH) - cameraMatrix.at<double>(0, 2),
-		-cameraMatrix.at<double>(1, 2), vcap.get(CV_CAP_PROP_FRAME_HEIGHT) - cameraMatrix.at<double>(1, 2),
-		NEAR, FAR);
+		-cameraMatrix.at<double>(0, 2),		vcap.get(CV_CAP_PROP_FRAME_WIDTH) - cameraMatrix.at<double>(0, 2),
+		-cameraMatrix.at<double>(1, 2),		vcap.get(CV_CAP_PROP_FRAME_HEIGHT) - cameraMatrix.at<double>(1, 2),
+		NEAR,								FAR);
 
-	osg::Vec3d eye(0.0f, 0.0f, 0.0f), target(0.0f, 1.0f, 0.0f), normal(0.0f, 0.0f, 1.0f);
+	osg::Vec3d eye(0.0f, 0.0f, 0.0f), target(0.0f, FAR, 0.0f), normal(0.0f, 0.0f, 1.0f);
 
 	/*
 	std::cout << " matrice projection : " << std::endl;
@@ -310,22 +250,97 @@ void main()
 		"near : " << near << "     far : " << far << std::endl << std::endl;
 
 	std::cout << "taille de l'image : " << vcap.get(CV_CAP_PROP_FRAME_WIDTH) << " * " << vcap.get(CV_CAP_PROP_FRAME_HEIGHT) << std::endl;*/
-
+	
 	// set the scene to render
-	viewer.setSceneData(group.get());
-	viewer.setUpViewInWindow(0, 0, 1920, 1080); 
-	viewer.setUpViewOnSingleScreen();
-	viewer.getCamera()->setProjectionMatrix(projectionMatrix);
-	viewer.getCamera()->setViewMatrixAsLookAt(eye, target, normal);
-	//viewer.setCameraManipulator(new osgGA::TrackballManipulator);
-	viewer.realize();  // set up windows and associated threads.
+	viewer->setSceneData(group.get());
+	viewer->setUpViewInWindow(0, 0, 1920 / 2, 1080 / 2); 
+	viewer->getCamera()->setProjectionMatrix(projectionMatrix);
+	viewer->getCamera()->setViewMatrixAsLookAt(eye, target, normal);
 
-	do
-	{           
-		vcap >> *frame;
+	viewer2->setSceneData(group.get());
+	viewer2->setUpViewInWindow(1920 / 2, 0, 1920 / 2, 1080 / 2); 
+	viewer2->getCamera()->setProjectionMatrix(projectionMatrix);
+	osg::Vec3d eye2(4 * NEAR, 3 * NEAR / 2, 0.0f), target2(0.0f, NEAR, 0.0f), normal2(0.0f, 0.0f, 1.0f);
+	viewer2->getCamera()->setViewMatrixAsLookAt(eye2, target2, normal2);
 
-		backgroundImage->dirty();
-		viewer.frame();
-	}while(!viewer.done());
+	compositeViewer.addView(viewer);
+	compositeViewer.addView(viewer2);
 
+	compositeViewer.realize();  // set up windows and associated threads.
+
+    do
+    {       
+		group->removeChild(pat);
+        patternfound = false;
+        resetAuto = false;
+        detectionMire = false;
+            
+        imagePoints.clear();
+        chessCornersInit[0].clear();
+        chessCornersInit[1].clear();
+        moyDistances = 0;
+        distances.clear();
+        imCalibNext.release();
+        
+        std::cout << "recherche de mire" << std::endl;
+
+        do
+        {
+            vcap >> *frame;
+            backgroundImage->dirty();
+            detectionMire = detecterMire(frame, &chessCornersInit[1], &imCalibNext);
+            compositeViewer.frame();
+        }while(!detectionMire && !compositeViewer.done());
+
+        if(compositeViewer.done())
+            break;
+
+        std::cout << "mire detectee" << std::endl << std::endl;
+
+		group->addChild(pat);
+
+        do
+        {           
+            vcap >> *frame;
+            
+            cv::Mat rotVec = trackingMire(frame, &imCalibNext, &chessCornersInit, &chessCorners3D, &cameraMatrix, &distCoeffs, &tvecs);
+
+            imagePoints = dessinerPoints(frame, objectPoints, rotVec, tvecs, cameraMatrix, distCoeffs);
+            
+            double r11 = rotVec.at<double>(0, 0);
+            double r21 = rotVec.at<double>(1, 0);
+            double r31 = rotVec.at<double>(2, 0);
+            double r32 = rotVec.at<double>(2, 1);
+            double r33 = rotVec.at<double>(2, 2);
+
+			osg::Matrixd matrixR;
+            matrixR.makeRotate(
+                atan2(r32, r33), osg::Vec3d(1.0, 0.0, 0.0),
+                -atan2(-r31, sqrt((r32 * r32) + (r33 * r33))), osg::Vec3d(0.0, 0.0, 1.0),
+                atan2(r21, r11), osg::Vec3d(0.0, 1.0, 0.0));
+            
+            mat->setMatrix(matrixR);
+			pat->setPosition(osg::Vec3d(tvecs.at<double>(0, 0), tvecs.at<double>(2, 0), -tvecs.at<double>(1, 0)));
+
+            // Calcul d'erreur de reprojection
+            double moy = 0;
+            for(int j = 0; j < COLCHESSBOARD * ROWCHESSBOARD; j++)
+            {
+                double d = sqrt(pow(chessCornersInit[0][j].y - imagePoints[j].y, 2) + pow(chessCornersInit[0][j].x - imagePoints[j].x, 2));
+                distances.push_back(d);
+                moy += d;
+            }
+
+            moyDistances = moy / (COLCHESSBOARD * ROWCHESSBOARD);
+
+            if(moyDistances > 2) // si l'ecart de reproj est trop grand, reset
+                resetAuto = true;
+
+            key = cv::waitKey(33);
+
+            backgroundImage->dirty();
+            compositeViewer.frame();
+        }while(!compositeViewer.done() && !resetAuto && key != 32);
+		
+    }while(!compositeViewer.done());
 }
