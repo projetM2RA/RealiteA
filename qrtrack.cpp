@@ -1,7 +1,11 @@
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
 #include <opencv2/opencv.hpp>
 #include <iostream>
 #include <cmath>
 #include <sstream>
+#include <opencv2/nonfree/nonfree.hpp>
+#include <opencv2/nonfree/features2d.hpp>
 
 
 float cv_distance(cv::Point2f P, cv::Point2f Q)
@@ -19,11 +23,11 @@ int main()
 	cv::Mat imCalibNext;
 	cv::Mat imQR;
 	cv::vector<cv::Mat> tabQR;
-	cv::vector<cv::Point2f> corners1;
+	/*cv::vector<cv::Point2f> corners1;
 	cv::vector<cv::Point2f> corners2;
 	cv::vector<cv::Point2f> corners3;
 	cv::vector<cv::Point2f> corners4;
-	cv::vector<cv::Point2f> corners5;
+	cv::vector<cv::Point2f> corners5;*/
 
 	double qualityLevel = 0.01;
 	double minDistance = 10;
@@ -135,31 +139,50 @@ int main()
 
 			patternFound = true;
 			std::cout << "patternfound" << std::endl;
-
 			
+			cv::SiftFeatureDetector detector;
+			cv::vector<cv::KeyPoint> keypoints1, keypoints2;
+			detector.detect(tabQR[3], keypoints1);
+			detector.detect(imagecropped, keypoints2);
 
-			cv::goodFeaturesToTrack( imagecropped, corners1, maxCorners, qualityLevel, minDistance, cv::Mat(), blockSize, useHarrisDetector, k );
-			cv::goodFeaturesToTrack( tabQR[0], corners2, maxCorners, qualityLevel, minDistance, cv::Mat(), blockSize, useHarrisDetector, k );
-			cv::goodFeaturesToTrack( tabQR[1], corners3, maxCorners, qualityLevel, minDistance, cv::Mat(), blockSize, useHarrisDetector, k );
-			cv::goodFeaturesToTrack( tabQR[2], corners4, maxCorners, qualityLevel, minDistance, cv::Mat(), blockSize, useHarrisDetector, k );
-			cv::goodFeaturesToTrack( tabQR[3], corners5, maxCorners, qualityLevel, minDistance, cv::Mat(), blockSize, useHarrisDetector, k );
+			cv::Ptr<cv::DescriptorExtractor> descriptor = cv::DescriptorExtractor::create("SIFT");
+			cv::Mat descriptors1, descriptors2;
+			descriptor->compute(tabQR[3], keypoints1, descriptors1 );
+			descriptor->compute(imagecropped, keypoints2, descriptors2 );
 
-			for(int m = 0; m < corners1.size(); m++)
-				cv::circle(imagecropped, cv::Point(corners1[m].x, corners1[m].y), 3, cv::Scalar(0, 0, 255), 1, 8, 0);
+			cv::FlannBasedMatcher matcher; 
+			std::vector< cv::DMatch > matches; 
+			matcher.match( descriptors1, descriptors2, matches ); 
+			double max_dist = 0; double min_dist = 100;
 
-			for(int m = 0; m < corners2.size(); m++)
-				cv::circle(tabQR[0], cv::Point(corners2[m].x, corners2[m].y), 3, cv::Scalar(0, 0, 255), 1, 8, 0);
-			
-			for(int m = 0; m < corners3.size(); m++)
-				cv::circle(tabQR[1], cv::Point(corners3[m].x, corners3[m].y), 3, cv::Scalar(0, 0, 255), 1, 8, 0);
+			for( int i = 0; i < descriptors1.rows; i++ ) 
+			{ 
+				double dist = matches[i].distance; 
+				if( dist < min_dist ) min_dist = dist; 
+				if( dist > max_dist ) max_dist = dist; 
+			}
 
-			for(int m = 0; m < corners4.size(); m++)
-				cv::circle(tabQR[2], cv::Point(corners4[m].x, corners4[m].y), 3, cv::Scalar(0, 0, 255), 1, 8, 0);
+			std::vector< cv::DMatch > good_matches;
+			for( int i = 0; i < descriptors1.rows; i++ ) 
+				if( matches[i].distance <= 2*min_dist ) 
+					good_matches.push_back( matches[i]); 
+			cv::Mat imgout; 
+			drawMatches(tabQR[3], keypoints1, imagecropped, keypoints2, good_matches, imgout); 
 
-			for(int m = 0; m < corners5.size(); m++)
-				cv::circle(tabQR[3], cv::Point(corners5[m].x, corners5[m].y), 3, cv::Scalar(0, 0, 255), 1, 8, 0);
-			
+			std::vector<cv::Point2f> pt_img1; 
+			std::vector<cv::Point2f> pt_img2; 
+			for( int i = 0; i < (int)good_matches.size(); i++ ) 
+			{ 
+				pt_img1.push_back(keypoints1[ good_matches[i].queryIdx ].pt ); 
+				pt_img2.push_back(keypoints2[ good_matches[i].trainIdx ].pt ); 
+			}
+			cv::Mat H = findHomography( pt_img1, pt_img2, CV_RANSAC );
 
+			cv::Mat result; 
+			warpPerspective(tabQR[3],result,H,cv::Size(tabQR[3].cols+imagecropped.cols,tabQR[3].rows)); 
+			cv::Mat half(result,cv::Rect(0,0,imagecropped.cols,imagecropped.rows)); 
+			imagecropped.copyTo(half); 
+			imshow( "Result", result );
 
 			break;
 		}
