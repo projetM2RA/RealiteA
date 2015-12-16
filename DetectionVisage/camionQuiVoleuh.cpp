@@ -50,7 +50,7 @@ bool detecterMire(cv::Mat* imCalibColor, std::vector<cv::Point2f> *pointsMire, c
 	return patternFound; // normalement, si echap est presse, patternFound = false
 }
 
-bool detecterVisage(cv::Mat* imCalibColor, Chehra *chehra, std::vector<cv::Point2f> *pointsVisage, std::vector<cv::Point3f> *pointsVisage3D, std::vector<cv::Point3f> *objectPointsVisage, cv::Mat *imCalibNext)
+bool detecterVisage(cv::Mat* imCalibColor, Chehra *chehra, std::vector<cv::Point2f> *pointsVisage, std::vector<cv::Point3f> *visage, std::vector<cv::Point3f> *pointsVisage3D, cv::Mat *imCalibNext)
 {
 	bool visageFound = false;
 	cv::Mat imNB;
@@ -64,12 +64,23 @@ bool detecterVisage(cv::Mat* imCalibColor, Chehra *chehra, std::vector<cv::Point
 		*imCalibNext = imNB;
 		points = (*chehra).getTrackedPoints();
 		if (points.rows == 98) {
-			for(int i = 0; i < 49; i++) {
-				(*pointsVisage).push_back(cv::Point2f(points.at<float>(i,0),points.at<float>(i+49,0)));		
-				(*pointsVisage3D).push_back(cv::Point3f(points.at<float>(i,0),points.at<float>(i+49,0),0.f));
-				(*objectPointsVisage).push_back(cv::Point3f(points.at<float>(i,0),points.at<float>(i+49,0),0.f));
+			for(int i = 0; i < 49; i++){
+				(*visage).push_back(cv::Point3f(points.at<float>(i,0),points.at<float>(i+49,0),0));	
+				//(*pointsVisage3D).push_back(cv::Point3f(points.at<float>(i,0),points.at<float>(i+49,0),0));	
+				//(*pointsVisage).push_back(cv::Point2f(points.at<float>(i,0),points.at<float>(i+49,0)));	
 			}
 		}
+
+		(*pointsVisage).push_back(cv::Point2f((*visage)[13].x,(*visage)[13].y));	
+		(*pointsVisage).push_back(cv::Point2f((*visage)[19].x,(*visage)[19].y));
+		(*pointsVisage).push_back(cv::Point2f((*visage)[10].x,(*visage)[10].y));
+		(*pointsVisage).push_back(cv::Point2f((*visage)[28].x,(*visage)[28].y));
+		
+		(*pointsVisage3D).push_back(cv::Point3f(0,0,0));
+		(*pointsVisage3D).push_back(cv::Point3f(-1,1,0));
+		(*pointsVisage3D).push_back(cv::Point3f(0,1,0));
+		(*pointsVisage3D).push_back(cv::Point3f(1,1,0));	
+
 	}
 
 	return visageFound; // normalement, si echap est presse, patternFound = false
@@ -178,6 +189,7 @@ void main()
 	std::vector<std::vector<cv::Point2f>> pointsVisageInit(2);
     std::vector<cv::Point3f> chessCorners3D;
 	std::vector<cv::Point3f> pointsVisage3D;
+	std::vector<cv::Point3f> visage;
     std::vector<double> distances;
     double moyDistances;
 
@@ -242,7 +254,7 @@ void main()
 	pat->addChild(mat);
 	group->addChild(pat);
 
-    pat->setScale(osg::Vec3d(5, 5, 5));
+    pat->setScale(osg::Vec3d(0.1, 0.1, 0.1));
 
 	osg::Matrixd projectionMatrix;
 
@@ -285,6 +297,7 @@ void main()
 		pointsVisageInit[1].clear();
 		pointsVisage3D.clear();
 		objectPointsVisage.clear();
+		visage.clear();
         moyDistances = 0;
         distances.clear();
         imCalibNext.release();
@@ -296,7 +309,7 @@ void main()
             vcap >> *frame;
             backgroundImage->dirty();
             //detectionMire = detecterMire(frame, &chessCornersInit[1], &imCalibNext);
-			detectionVisage = detecterVisage(frame, &chehra, &pointsVisageInit[1], &pointsVisage3D, &objectPointsVisage, &imCalibNext);
+			detectionVisage = detecterVisage(frame, &chehra, &pointsVisageInit[1], &visage, &pointsVisage3D, &imCalibNext);
             compositeViewer.frame();
         }while(!detectionMire && !detectionVisage && !compositeViewer.done());
 
@@ -315,7 +328,7 @@ void main()
             //cv::Mat rotVec = trackingMire(frame, &imCalibNext, &chessCornersInit, &chessCorners3D, &cameraMatrix, &distCoeffs, &tvecs);
 
             //imagePoints = dessinerPoints(frame, objectPoints, rotVec, tvecs, cameraMatrix, distCoeffs);
-			imagePoints = dessinerPoints(frame, objectPointsVisage, rotVec, tvecs, cameraMatrix, distCoeffs);
+			imagePoints = dessinerPoints(frame, visage, rotVec, tvecs, cameraMatrix, distCoeffs);
             
             double r11 = rotVec.at<double>(0, 0);
             double r21 = rotVec.at<double>(1, 0);
@@ -332,6 +345,8 @@ void main()
             mat->setMatrix(matrixR);
 			pat->setPosition(osg::Vec3d(tvecs.at<double>(0, 0), tvecs.at<double>(2, 0), -tvecs.at<double>(1, 0)));
 
+			std::cout << "x = " << tvecs.at<double>(0, 0) << " - y = " << tvecs.at<double>(1, 0) << " - z = " << tvecs.at<double>(2, 0) << std::endl;
+
             // Calcul d'erreur de reprojection
             double moy = 0;
             for(int j = 0; j < pointsVisageInit[1].size() ; j++)
@@ -343,7 +358,7 @@ void main()
 
             moyDistances = moy / pointsVisageInit[1].size();
 
-            if(moyDistances > 8) // si l'ecart de reproj est trop grand, reset
+            if(moyDistances > 10) // si l'ecart de reproj est trop grand, reset
                 resetAuto = true;
 
             key = cv::waitKey(33);
