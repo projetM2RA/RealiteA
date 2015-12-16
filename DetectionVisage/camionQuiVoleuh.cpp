@@ -16,6 +16,7 @@
 #include <C:/Libs/Chehra/Chehra.h>
 
 #include <stdio.h>
+#include <time.h>
 
 #define COLCHESSBOARD   9
 #define ROWCHESSBOARD   6
@@ -165,6 +166,7 @@ void main()
     char key = 0;
     bool detectionMire = false;
 	bool detectionVisage = false;
+	int cpt = 0, moyCpt = 0, i = 0;
 
 	std::cout << "initialisation de Chehra..." << std::endl;
 	Chehra chehra;
@@ -183,8 +185,7 @@ void main()
     std::vector<cv::Point2f> imagePoints;
     std::vector<cv::Point3f> objectPoints;
     std::vector<cv::Point3f> cubeObjectPoints;
-	std::vector<cv::Point3f> objectPointsVisage;
-	std::vector<cv::Point3f> cubeObjectPointsVisage;
+	std::vector<cv::Point3f> dessinPointsVisage;
     std::vector<std::vector<cv::Point2f>> chessCornersInit(2);
 	std::vector<std::vector<cv::Point2f>> pointsVisageInit(2);
     std::vector<cv::Point3f> chessCorners3D;
@@ -282,6 +283,8 @@ void main()
 
 	compositeViewer.realize();  // set up windows and associated threads.
 
+
+
     do
     {       
 		group->removeChild(pat);
@@ -296,7 +299,7 @@ void main()
 		pointsVisageInit[0].clear();
 		pointsVisageInit[1].clear();
 		pointsVisage3D.clear();
-		objectPointsVisage.clear();
+		dessinPointsVisage.clear();
 		visage.clear();
         moyDistances = 0;
         distances.clear();
@@ -304,12 +307,33 @@ void main()
         
         std::cout << "recherche de pattern" << std::endl;
 
+		time_t start = clock();
+		double timer = 0;
+		
         do
         {
+			start = clock();
+
             vcap >> *frame;
-            backgroundImage->dirty();
+
+			backgroundImage->dirty();
             //detectionMire = detecterMire(frame, &chessCornersInit[1], &imCalibNext);
 			detectionVisage = detecterVisage(frame, &chehra, &pointsVisageInit[1], &visage, &pointsVisage3D, &imCalibNext);
+
+			cpt++;
+			double duree = (clock() - start)/(double) CLOCKS_PER_SEC;
+			timer += duree;
+
+			if(timer >= 1){
+				std::cout << cpt << " fps" << std::endl;
+				moyCpt += cpt;
+				timer = 0;
+				duree = 0;
+				i++;
+				cpt = 0;
+				start = clock();
+			}
+
             compositeViewer.frame();
         }while(!detectionMire && !detectionVisage && !compositeViewer.done());
 
@@ -322,13 +346,15 @@ void main()
 		
         do
         {           
+			start = clock();
+
             vcap >> *frame;
             
 			cv::Mat rotVec = trackingMire(frame, &imCalibNext, &pointsVisageInit, &pointsVisage3D, &cameraMatrix, &distCoeffs, &tvecs);
             //cv::Mat rotVec = trackingMire(frame, &imCalibNext, &chessCornersInit, &chessCorners3D, &cameraMatrix, &distCoeffs, &tvecs);
 
             //imagePoints = dessinerPoints(frame, objectPoints, rotVec, tvecs, cameraMatrix, distCoeffs);
-			imagePoints = dessinerPoints(frame, visage, rotVec, tvecs, cameraMatrix, distCoeffs);
+			imagePoints = dessinerPoints(frame, pointsVisage3D, rotVec, tvecs, cameraMatrix, distCoeffs);
             
             double r11 = rotVec.at<double>(0, 0);
             double r21 = rotVec.at<double>(1, 0);
@@ -345,7 +371,7 @@ void main()
             mat->setMatrix(matrixR);
 			pat->setPosition(osg::Vec3d(tvecs.at<double>(0, 0), tvecs.at<double>(2, 0), -tvecs.at<double>(1, 0)));
 
-			std::cout << "x = " << tvecs.at<double>(0, 0) << " - y = " << tvecs.at<double>(1, 0) << " - z = " << tvecs.at<double>(2, 0) << std::endl;
+			//std::cout << "x = " << tvecs.at<double>(0, 0) << " - y = " << tvecs.at<double>(1, 0) << " - z = " << tvecs.at<double>(2, 0) << std::endl;
 
             // Calcul d'erreur de reprojection
             double moy = 0;
@@ -358,14 +384,24 @@ void main()
 
             moyDistances = moy / pointsVisageInit[1].size();
 
-            if(moyDistances > 10) // si l'ecart de reproj est trop grand, reset
+            if(moyDistances > 2) // si l'ecart de reproj est trop grand, reset
                 resetAuto = true;
 
-            key = cv::waitKey(33);
+			double duree = (clock() - start)/(double) CLOCKS_PER_SEC;
 
+
+				std::cout << (int)(1/duree) << " fps" << std::endl;
+				moyCpt += (int)(1/duree);
+				duree = 0;
+				i++;
+			
             backgroundImage->dirty();
             compositeViewer.frame();
-        }while(!compositeViewer.done() && !resetAuto && key != 32);
+        }while(!compositeViewer.done() && !resetAuto);
 		
     }while(!compositeViewer.done());
+
+	std::cout << std::endl << "Moyenne des fps : " << moyCpt/i << std::endl;
+
+	std::system("PAUSE");
 }
