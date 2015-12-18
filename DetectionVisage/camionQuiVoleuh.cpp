@@ -78,9 +78,9 @@ bool detecterVisage(cv::Mat* imCalibColor, Chehra *chehra, std::vector<cv::Point
 		(*pointsVisage).push_back(cv::Point2f((*visage)[28].x,(*visage)[28].y));
 		
 		(*pointsVisage3D).push_back(cv::Point3f(0,0,0));
-		(*pointsVisage3D).push_back(cv::Point3f(-1,1,0));
-		(*pointsVisage3D).push_back(cv::Point3f(0,1,0));
-		(*pointsVisage3D).push_back(cv::Point3f(1,1,0));	
+		(*pointsVisage3D).push_back(cv::Point3f(-60,60,0));
+		(*pointsVisage3D).push_back(cv::Point3f(0,60,0));
+		(*pointsVisage3D).push_back(cv::Point3f(60,60,0));	
 
 	}
 
@@ -255,7 +255,7 @@ void main()
 	pat->addChild(mat);
 	group->addChild(pat);
 
-    pat->setScale(osg::Vec3d(0.1, 0.1, 0.1));
+    pat->setScale(osg::Vec3d(5, 5, 5));
 
 	osg::Matrixd projectionMatrix;
 
@@ -384,7 +384,7 @@ void main()
 
             moyDistances = moy / pointsVisageInit[1].size();
 
-            if(moyDistances > 2) // si l'ecart de reproj est trop grand, reset
+            if(moyDistances > 1) // si l'ecart de reproj est trop grand, reset
                 resetAuto = true;
 
 			double duree = (clock() - start)/(double) CLOCKS_PER_SEC;
