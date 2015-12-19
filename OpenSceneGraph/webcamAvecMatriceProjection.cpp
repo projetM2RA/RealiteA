@@ -22,7 +22,7 @@
 #define PI				3.14159265
 
 
-std::vector<cv::Point2f> dessinerPoints(cv::Mat* imCalibColor, const std::vector<cv::Point3f> & objectPoints, const cv::Mat & rotVec, const cv::Mat & tvecs, const cv::Mat & cameraMatrix, const cv::Mat & distCoeffs)
+std::vector<cv::Point2f> dessinerPoints(cv::Mat* imCalibColor, const std::vector<cv::Point3f> & objectPoints, const cv::Mat & rotVec, const cv::Mat & tvecs, const cv::Mat & cameraMatrix, const cv::Mat & distCoeffs, bool dessiner)
 {   
 	std::vector<cv::Point2f> imagePoints, repereMire;
 	std::vector<cv::Point3f> repere3D;
@@ -35,9 +35,10 @@ std::vector<cv::Point2f> dessinerPoints(cv::Mat* imCalibColor, const std::vector
 	cv::projectPoints(repere3D, rotVec, tvecs, cameraMatrix, distCoeffs, repereMire);
 
 	// Dessin des points projetes
-	//for(int m = 0; m < objectPoints.size(); m++)
-	//cv::circle(*imCalibColor, cv::Point(imagePoints[m].x, imagePoints[m].y), 3, cv::Scalar(0, 0, 255), 1, 8, 0);
-
+	if(dessiner)
+		for(int m = 0; m < objectPoints.size(); m++)
+			cv::circle(*imCalibColor, cv::Point(imagePoints[m].x, imagePoints[m].y), 3, cv::Scalar(0, 0, 255), 1, 8, 0);
+	/*
 	cv::circle(*imCalibColor, cv::Point(repereMire[0].x, repereMire[0].y), 3, cv::Scalar(0, 0, 255), 1, 8, 0);
 	cv::circle(*imCalibColor, cv::Point(repereMire[1].x, repereMire[1].y), 3, cv::Scalar(0, 255, 0), 1, 8, 0);
 	cv::circle(*imCalibColor, cv::Point(repereMire[2].x, repereMire[2].y), 3, cv::Scalar(255, 0, 0), 1, 8, 0);
@@ -46,7 +47,7 @@ std::vector<cv::Point2f> dessinerPoints(cv::Mat* imCalibColor, const std::vector
 	cv::line(*imCalibColor, repereMire[0], repereMire[1], cv::Scalar(0,255,0), 2, 8);
 	cv::line(*imCalibColor, repereMire[0], repereMire[2], cv::Scalar(255,0,0), 2, 8);
 	cv::line(*imCalibColor, repereMire[0], repereMire[3], cv::Scalar(255,0,255), 2, 8);
-	
+	*/
 	return imagePoints;
 	//return repereMire;
 }
@@ -250,27 +251,11 @@ void main()
 	// read the scene from the list of file specified commandline args.
 	osg::ref_ptr<osg::Group> group = new osg::Group;
 	osg::ref_ptr<osg::Geode> cam = createHUD(backgroundImage, vcap.get(CV_CAP_PROP_FRAME_WIDTH), vcap.get(CV_CAP_PROP_FRAME_HEIGHT), cameraMatrix.at<double>(0, 2), cameraMatrix.at<double>(1, 2), NEAR);
-	//osg::ref_ptr<osg::Node> objet3D = osgDB::readNodeFile("../rsc/objets3D/dumptruck.osgt");
-	osg::ref_ptr<osg::Node> objet3D = creerPlan();
+	osg::ref_ptr<osg::Node> objet3D = osgDB::readNodeFile("../rsc/objets3D/dumptruck.osgt");
+	//osg::ref_ptr<osg::Node> objet3D = creerPlan();
 	osg::StateSet* obectStateset = objet3D->getOrCreateStateSet();
 	obectStateset->setMode(GL_DEPTH_TEST,osg::StateAttribute::OFF);
 	osg::ref_ptr<osg::MatrixTransform> mat = new osg::MatrixTransform();
-
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////  
-	osg::Sphere* unitSphere = new osg::Sphere(osg::Vec3(0, 0, 0), 5.0);
-	osg::ShapeDrawable* unitSphereDrawable = new osg::ShapeDrawable(unitSphere);
-	osg::ref_ptr<osg::MatrixTransform> sphereXForm = new osg::MatrixTransform();
-
-	osg::Geode* unitSphereGeode = new osg::Geode();
-	group->addChild(sphereXForm);
-
-	sphereXForm->addChild(unitSphereGeode);
-	unitSphereGeode->addDrawable(unitSphereDrawable);
-	//osg::StateSet* sphereStateset = unitSphereDrawable->getOrCreateStateSet();
-	//sphereStateset->setMode(GL_DEPTH_TEST,osg::StateAttribute::OFF);
-	//sphereStateset->setMode(GL_LIGHTING, osg::StateAttribute::OFF); 
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	// construct the viewer.
 	osgViewer::CompositeViewer compositeViewer;
@@ -345,7 +330,7 @@ void main()
 
 	compositeViewer.realize();  // set up windows and associated threads.
 
-	double s = 1;
+	double s = 5;
 
 	osg::Matrixd matrixS; // scale
 	matrixS.set(
@@ -391,13 +376,11 @@ void main()
 
 			cv::Mat rotVec = trackingMire(frame, &imCalibNext, &chessCornersInit, &chessCorners3D, &cameraMatrix, &distCoeffs, &tvecs);
 
-			imagePoints = dessinerPoints(frame, objectPoints, rotVec, tvecs, cameraMatrix, distCoeffs);
-
-			//std::cout << "opencv 00 : " << imagePoints[0].x << "    " << imagePoints[1].y << std::endl;
+			imagePoints = dessinerPoints(frame, objectPoints, rotVec, tvecs, cameraMatrix, distCoeffs, false);
 
 			double t3 = tvecs.at<double>(2, 0);
 			double t1 = tvecs.at<double>(0, 0);
-			double t2 = tvecs.at<double>(1, 0) + t3 / 27; // and know, magic !
+			double t2 = tvecs.at<double>(1, 0) + t3 / 27; // and now, magic !
 
 			double r11 = rotVec.at<double>(0, 0);
 			double r12 = rotVec.at<double>(0, 1);
@@ -424,17 +407,6 @@ void main()
 			matrix90.makeRotate(osg::Quat(osg::DegreesToRadians(-90.0f), osg::Vec3d(1.0, 0.0, 0.0)));
 
 			mat->setMatrix(matrixS * matrixR * (matrixT * matrix90));
-			sphereXForm->setMatrix(matrixR * matrixT * matrix90);
-			
-			osg::Vec3d spherePos = sphereXForm->getBound().center();
-			//double X2 = r11 * spherePos.x() + r12 * spherePos.y() + r13 * spherePos.z() + t1;
-			//double Y2 = r21 * spherePos.x() + r22 * spherePos.y() + r23 * spherePos.z() + t2;
-			//double Z2 = r31 * spherePos.x() + r32 * spherePos.y() + r33 * spherePos.z() + t3;
-			//
-			//double u = cameraMatrix.at<double>(0, 0) * X2 + cameraMatrix.at<double>(0, 2) * Z2;
-			//double v = cameraMatrix.at<double>(1, 1) * Y2 + cameraMatrix.at<double>(1, 2) * Z2;
-
-			std::cout << "osg    00 : " << spherePos.x() << "    " << spherePos.y() << "    " << spherePos.z() << std::endl;
 
 			// Calcul d'erreur de reprojection
 			double moy = 0;
