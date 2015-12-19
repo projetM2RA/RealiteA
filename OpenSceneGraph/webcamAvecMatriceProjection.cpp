@@ -258,7 +258,7 @@ void main()
 
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////  
-	osg::Sphere* unitSphere = new osg::Sphere( osg::Vec3(0,0,0), 2.0);
+	osg::Sphere* unitSphere = new osg::Sphere(osg::Vec3(0, 0, 0), 5.0);
 	osg::ShapeDrawable* unitSphereDrawable = new osg::ShapeDrawable(unitSphere);
 	osg::ref_ptr<osg::MatrixTransform> sphereXForm = new osg::MatrixTransform();
 
@@ -267,6 +267,9 @@ void main()
 
 	sphereXForm->addChild(unitSphereGeode);
 	unitSphereGeode->addDrawable(unitSphereDrawable);
+	//osg::StateSet* sphereStateset = unitSphereDrawable->getOrCreateStateSet();
+	//sphereStateset->setMode(GL_DEPTH_TEST,osg::StateAttribute::OFF);
+	//sphereStateset->setMode(GL_LIGHTING, osg::StateAttribute::OFF); 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	// construct the viewer.
@@ -394,7 +397,7 @@ void main()
 
 			double t3 = tvecs.at<double>(2, 0);
 			double t1 = tvecs.at<double>(0, 0);
-			double t2 = tvecs.at<double>(1, 0) + 14000 / t3;
+			double t2 = tvecs.at<double>(1, 0) + t3 / 27; // and know, magic !
 
 			double r11 = rotVec.at<double>(0, 0);
 			double r12 = rotVec.at<double>(0, 1);
