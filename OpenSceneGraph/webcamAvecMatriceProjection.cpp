@@ -15,6 +15,8 @@
 #include <opencv2/opencv.hpp>
 
 #include <stdio.h>
+#include <iostream>
+#include <sstream>
 
 #define COLCHESSBOARD   9
 #define ROWCHESSBOARD   6
@@ -30,7 +32,8 @@ std::vector<cv::Point2f> dessinerPoints(cv::Mat* imCalibColor, const std::vector
 	repere3D.push_back(cv::Point3f(78.0f, 0.0f, 0.0f));
 	repere3D.push_back(cv::Point3f(0.0f, 78.0f, 0.0f));
 	repere3D.push_back(cv::Point3f(0.0f, 0.0f, 78.0f));
-	//Projection
+
+	// Projection des points
 	cv::projectPoints(objectPoints, rotVec, tvecs, cameraMatrix, distCoeffs, imagePoints);
 	cv::projectPoints(repere3D, rotVec, tvecs, cameraMatrix, distCoeffs, repereMire);
 
@@ -48,6 +51,7 @@ std::vector<cv::Point2f> dessinerPoints(cv::Mat* imCalibColor, const std::vector
 	cv::line(*imCalibColor, repereMire[0], repereMire[2], cv::Scalar(255,0,0), 2, 8);
 	cv::line(*imCalibColor, repereMire[0], repereMire[3], cv::Scalar(255,0,255), 2, 8);
 	*/
+
 	return imagePoints;
 	//return repereMire;
 }
@@ -59,6 +63,7 @@ bool detecterMire(cv::Mat* imCalibColor, std::vector<cv::Point2f> *pointsMire, c
 
 	cv::cvtColor(*imCalibColor, imNB, CV_BGR2GRAY);
 
+	// Détection de tous les points de la mire avec OpenCV
 	patternFound = cv::findChessboardCorners(imNB, cv::Size(ROWCHESSBOARD, COLCHESSBOARD), *pointsMire, cv::CALIB_CB_FAST_CHECK);
 
 	if(patternFound)
@@ -74,16 +79,20 @@ cv::Mat trackingMire(cv::Mat *imCalibColor, cv::Mat *imCalibNext, std::vector<st
 	(*chessCornersInit)[0] = (*chessCornersInit)[1];
 	(*chessCornersInit)[1].clear();
 
+	// Amélioration de la précision de détection des points de la mire
 	cv::cornerSubPix(imCalib, (*chessCornersInit)[0], cv::Size(5, 5), cv::Size(-1, -1), cv::TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1));
 
 	cv::cvtColor(*imCalibColor, *imCalibNext, CV_BGR2GRAY);
 
+	// Flot optique
 	std::vector<uchar> status;
 	std::vector<float> err;
 	cv::calcOpticalFlowPyrLK(imCalib, *imCalibNext, (*chessCornersInit)[0], (*chessCornersInit)[1], status, err, cv::Size(31, 31), 3, cv::TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1), 0, 0.0001);
 
+	// Calcul des matrices de calibrage
 	cv::solvePnP(*chessCorners3D, (*chessCornersInit)[0], *cameraMatrix, *distCoeffs, rvecs, *tvecs);
 
+	// Résultat final de la matrice de rotation
 	cv::Mat rotVec(3, 3, CV_64F);
 	cv::Rodrigues(rvecs, rotVec);
 
@@ -225,9 +234,13 @@ void main()
 	
 	double NEAR = (cameraMatrix.at<double>(0, 0) + cameraMatrix.at<double>(1, 1)) / 2; // NEAR = distance focale ; si pixels carrés, fx = fy -> np 
 	//mais est généralement différent de fy donc on prend (pour l'instant) par défaut la valeur médiane
-	double FAR = 2000 * NEAR; // je sais pas pourquoi. au pif.
+	double FAR = 2000 * NEAR; // je sais pas pourquoi. au pif.	
 
 	fs.release();
+
+	std::ofstream file;
+	file.open ("../rsc/translation.txt");
+	file << "t1" << "       " << "t2" << "       " << "t3" << "       " << "t3/46" << std::endl;
 
 	cv::VideoCapture vcap(0); 
 	if(!vcap.isOpened()){
@@ -290,6 +303,8 @@ void main()
 		-cameraMatrix.at<double>(0, 2),		vcap.get(CV_CAP_PROP_FRAME_WIDTH) - cameraMatrix.at<double>(0, 2),
 		-cameraMatrix.at<double>(1, 2),		vcap.get(CV_CAP_PROP_FRAME_HEIGHT) - cameraMatrix.at<double>(1, 2),
 		NEAR,								FAR);
+
+	double correcteur = (NEAR/2)/(cameraMatrix.at<double>(1, 2)-vcap.get(CV_CAP_PROP_FRAME_HEIGHT)/2);
 
 	osg::Vec3d eye(0.0f, 0.0f, 0.0f), target(0.0f, FAR, 0.0f), normal(0.0f, 0.0f, 1.0f);
 
@@ -396,7 +411,10 @@ void main()
 
 			double t3 = tvecs.at<double>(2, 0);
 			double t1 = tvecs.at<double>(0, 0);
-			double t2 = tvecs.at<double>(1, 0) + t3 / 27.5; // and now, magic !
+			double t2 = tvecs.at<double>(1, 0) + t3 / correcteur;  //and now, magic !
+
+			std::cout << "t3 = " << t3 << " ; t3/46 = " << t3/correcteur << " ; correcteur " << correcteur << std::endl;
+			file << t1 << " ; " << t2 << " ; " << t3 << " ; " << t3/46 << std::endl;
 
 			double r11 = rotVec.at<double>(0, 0);
 			double r12 = rotVec.at<double>(0, 1);
@@ -444,4 +462,6 @@ void main()
 		}while(!compositeViewer.done() && !resetAuto);
 
 	}while(!compositeViewer.done());
+
+	file.close();
 }
