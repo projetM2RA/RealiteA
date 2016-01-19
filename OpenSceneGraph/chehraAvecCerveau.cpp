@@ -12,15 +12,20 @@
 
 #include <osgViewer/CompositeViewer>
 
+#include <osg/ShapeDrawable>
+
 #include <opencv2/opencv.hpp>
-#include <C:/Libs/Chehra/Chehra.h>
+#include <Chehra.h>
 
 #include <stdio.h>
 #include <time.h>
 
-#define COLCHESSBOARD   9
-#define ROWCHESSBOARD   6
-#define SIZEMIRE		26
+#define COLCHESSBOARD			9
+#define ROWCHESSBOARD			6
+#define SIZEMIRE				26
+
+#define NBRSAVEDIMAGES			5
+#define NBRFACEPOINTSDETECTED	6
 
 
 std::vector<cv::Point2f> dessinerPoints(cv::Mat* imCalibColor, const std::vector<cv::Point3f> & objectPoints, const cv::Mat & rotVec, const cv::Mat & tvecs, const cv::Mat & cameraMatrix, const cv::Mat & distCoeffs)
@@ -36,22 +41,7 @@ std::vector<cv::Point2f> dessinerPoints(cv::Mat* imCalibColor, const std::vector
 	return imagePoints;
 }
 
-bool detecterMire(cv::Mat* imCalibColor, std::vector<cv::Point2f> *pointsMire, cv::Mat *imCalibNext)
-{
-	bool patternFound = false;
-	cv::Mat imNB;	
-
-	cv::cvtColor(*imCalibColor, imNB, CV_BGR2GRAY);
-
-	patternFound = cv::findChessboardCorners(imNB, cv::Size(ROWCHESSBOARD, COLCHESSBOARD), *pointsMire, cv::CALIB_CB_FAST_CHECK);
-
-	if(patternFound)
-		*imCalibNext = imNB;
-
-	return patternFound; // normalement, si echap est presse, patternFound = false
-}
-
-bool detecterVisage(cv::Mat* imCalibColor, Chehra *chehra, std::vector<cv::Point2f> *pointsVisage, std::vector<cv::Point3f> *visage, std::vector<cv::Point3f> *pointsVisage3D, cv::Mat *imCalibNext)
+bool detecterVisage(cv::Mat* imCalibColor, Chehra *chehra, std::vector<cv::Point2f> *pointsVisage, std::vector<cv::Point3f> *visage)
 {
 	bool visageFound = false;
 	cv::Mat imNB;
@@ -61,53 +51,22 @@ bool detecterVisage(cv::Mat* imCalibColor, Chehra *chehra, std::vector<cv::Point
 
 	visageFound = (*chehra).track(imNB);	
 
-	if(visageFound){
-		*imCalibNext = imNB;
+	if(visageFound)
+	{
 		points = (*chehra).getTrackedPoints();
-		if (points.rows == 98) {
-			for(int i = 0; i < 49; i++){
+		if (points.rows == 98)
+			for(int i = 0; i < 49; i++)
 				(*visage).push_back(cv::Point3f(points.at<float>(i,0),points.at<float>(i+49,0),0));	
-				//(*pointsVisage3D).push_back(cv::Point3f(points.at<float>(i,0),points.at<float>(i+49,0),0));	
-				//(*pointsVisage).push_back(cv::Point2f(points.at<float>(i,0),points.at<float>(i+49,0)));	
-			}
-		}
-
+		
+		(*pointsVisage).push_back(cv::Point2f((*visage)[14].x,(*visage)[14].y));
+		(*pointsVisage).push_back(cv::Point2f((*visage)[18].x,(*visage)[18].y));
 		(*pointsVisage).push_back(cv::Point2f((*visage)[13].x,(*visage)[13].y));	
 		(*pointsVisage).push_back(cv::Point2f((*visage)[19].x,(*visage)[19].y));
 		(*pointsVisage).push_back(cv::Point2f((*visage)[10].x,(*visage)[10].y));
 		(*pointsVisage).push_back(cv::Point2f((*visage)[28].x,(*visage)[28].y));
-		
-		(*pointsVisage3D).push_back(cv::Point3f(0,0,0));
-		(*pointsVisage3D).push_back(cv::Point3f(-60,60,0));
-		(*pointsVisage3D).push_back(cv::Point3f(0,60,0));
-		(*pointsVisage3D).push_back(cv::Point3f(60,60,0));	
-
 	}
 
 	return visageFound; // normalement, si echap est presse, patternFound = false
-}
-
-cv::Mat trackingMire(cv::Mat *imCalibColor, cv::Mat *imCalibNext, std::vector<std::vector<cv::Point2f>> *chessCornersInit, std::vector<cv::Point3f> *chessCorners3D, cv::Mat *cameraMatrix, cv::Mat *distCoeffs, cv::Mat *tvecs)
-{
-	cv::Mat imCalib, rvecs;
-	cv::swap(imCalib, *imCalibNext); // copie de l'ancienne image pour le flot optique
-	(*chessCornersInit)[0] = (*chessCornersInit)[1];
-	(*chessCornersInit)[1].clear();
-
-	cv::cornerSubPix(imCalib, (*chessCornersInit)[0], cv::Size(5, 5), cv::Size(-1, -1), cv::TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1));
-
-	cv::cvtColor(*imCalibColor, *imCalibNext, CV_BGR2GRAY);
-
-	std::vector<uchar> status;
-	std::vector<float> err;
-	cv::calcOpticalFlowPyrLK(imCalib, *imCalibNext, (*chessCornersInit)[0], (*chessCornersInit)[1], status, err, cv::Size(31, 31), 3, cv::TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1), 0, 0.0001);
-
-	cv::solvePnP(*chessCorners3D, (*chessCornersInit)[0], *cameraMatrix, *distCoeffs, rvecs, *tvecs);
-
-	cv::Mat rotVec(3, 3, CV_64F);
-	cv::Rodrigues(rvecs, rotVec);
-
-	return rotVec;
 }
 
 osg::Geode* createHUD(osg::Image* bgImage, int camWidth, int camHeight, double cx, double cy, double n)
@@ -158,52 +117,56 @@ osg::Geode* createHUD(osg::Image* bgImage, int camWidth, int camHeight, double c
 
 void main()
 {
-    bool patternfound = false;
-    bool reset = false;
-    bool resetAuto = false;
-    int nbImages = 0;
-    double moyFinale = 0;
-    char key = 0;
-    bool detectionMire = false;
+	bool patternfound = false;
+	bool resetAuto = false;
+	int nbImages = 0;
+	double moyFinale = 0;
 	bool detectionVisage = false;
-	int cpt = 0, moyCpt = 0, i = 0;
+
+	int nbrLoopSinceLastDetection = 0;
+	int criticalValueOfLoopWithoutDetection = 15;
 
 	std::cout << "initialisation de Chehra..." << std::endl;
 	Chehra chehra;
 	std::cout << "done" << std::endl;
 
-    cv::TermCriteria termcrit(CV_TERMCRIT_ITER | CV_TERMCRIT_EPS, 20, 0.03);
-    cv::Size winSize(31, 31);
-    
-    cv::Mat cameraMatrix, distCoeffs;
-    cv::Mat imCalib;
-    cv::Mat imCalibColor;
-    cv::Mat imCalibNext;
-    cv::Mat rvecs, tvecs;
-    cv::Mat Rc, C = cv::Mat(3, 1, CV_64F), rotVecInv;
-    
-    std::vector<cv::Point2f> imagePoints;
-    std::vector<cv::Point3f> objectPoints;
-    std::vector<cv::Point3f> cubeObjectPoints;
-	std::vector<cv::Point3f> dessinPointsVisage;
-    std::vector<std::vector<cv::Point2f>> chessCornersInit(2);
-	std::vector<std::vector<cv::Point2f>> pointsVisageInit(2);
-    std::vector<cv::Point3f> chessCorners3D;
+	cv::Mat cameraMatrix, distCoeffs;
+	cv::Mat rvecs, tvecs;
+
+	std::vector<cv::Point2f> imagePoints;
+	std::vector<cv::Point2f> pointsVisage2D;
+	std::vector<cv::Point2f> moyPointsVisage2D;
 	std::vector<cv::Point3f> pointsVisage3D;
 	std::vector<cv::Point3f> visage;
-    std::vector<double> distances;
-    double moyDistances;
+	std::vector<double> distances;
+	double moyDistances;
 
-    // Creation des coins de la mire
-    for(int x = 0; x < COLCHESSBOARD; x++)
-        for(int y = 0; y < ROWCHESSBOARD; y++)
-            chessCorners3D.push_back(cv::Point3f(x * SIZEMIRE, y * SIZEMIRE, 0.0f));  
+	std::vector<std::vector<cv::Point2f>> images;
+	std::vector<cv::Mat> frames;
 
-    // Creation des points a projeter
-    for(int x = 0; x < COLCHESSBOARD; x++)
-        for(int y = 0; y < ROWCHESSBOARD; y++)
-            objectPoints.push_back(cv::Point3f(x * SIZEMIRE, y * SIZEMIRE, 0.0f));
+	double s = 10.0f;
+
+	osg::Matrixd matrixS; // scale
+	matrixS.set(
+		s,	0,	0,	0,
+		0,	s,	0,	0,
+		0,	0,	s,	0,
+		0,	0,	0,	1);
 	
+	pointsVisage3D.push_back(cv::Point3f(90,0,-80));
+	pointsVisage3D.push_back(cv::Point3f(-90,0,-80));
+	pointsVisage3D.push_back(cv::Point3f(0,0,0));
+	pointsVisage3D.push_back(cv::Point3f(600,0,600));
+	pointsVisage3D.push_back(cv::Point3f(0,0,600));
+	pointsVisage3D.push_back(cv::Point3f(-600,0,600));
+	/*
+	pointsVisage3D.push_back(cv::Point3f(13.1, -98.1,108.3)); // exterieur narine gauche
+	pointsVisage3D.push_back(cv::Point3f(-13.1, -98.1,108.3)); // exterieur narine droite
+	pointsVisage3D.push_back(cv::Point3f(0, -87.2, 124.2)); // bout du nez
+	pointsVisage3D.push_back(cv::Point3f(44.4, -57.9, 83.7)); // exterieur oeil gauche
+	pointsVisage3D.push_back(cv::Point3f(0, 55.4, 101.4)); // haut du nez, centre des yeux
+	pointsVisage3D.push_back(cv::Point3f(-44.4, -57.9, 83.7)); // exterieur oeil droit
+	*/
 	cv::FileStorage fs("../rsc/intrinsicMatrix.yml", cv::FileStorage::READ);
 
 	fs["cameraMatrix"] >> cameraMatrix;
@@ -216,7 +179,8 @@ void main()
 	fs.release();
 
 	cv::VideoCapture vcap(0); 
-	if(!vcap.isOpened()){
+	if(!vcap.isOpened())
+	{
 		std::cout << "FAIL!" << std::endl;
 		return;
 	}
@@ -237,9 +201,30 @@ void main()
 	// read the scene from the list of file specified commandline args.
 	osg::ref_ptr<osg::Group> group = new osg::Group;
 	osg::ref_ptr<osg::Geode> cam = createHUD(backgroundImage, vcap.get(CV_CAP_PROP_FRAME_WIDTH), vcap.get(CV_CAP_PROP_FRAME_HEIGHT), cameraMatrix.at<double>(0, 2), cameraMatrix.at<double>(1, 2), f);
-    osg::ref_ptr<osg::Node> objet3D = osgDB::readNodeFile("../rsc/objets3D/dumptruck.osgt");
+
+	std::cout << "initialisation de l'objet 3D..." << std::endl;
+	osg::ref_ptr<osg::Node> objet3D = osgDB::readNodeFile("../rsc/objets3D/brain.obj");
+	//osg::ref_ptr<osg::Node> objet3D = osgDB::readNodeFile("../rsc/objets3D/dumptruck.osgt");
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////  
+	/*
+	osg::Sphere* unitSphere = new osg::Sphere(osg::Vec3(0, -1000, 1000), 100.0);
+	osg::ShapeDrawable* unitSphereDrawable = new osg::ShapeDrawable(unitSphere);
+
+	osg::Geode* objet3D = new osg::Geode();
+
+	objet3D->addDrawable(unitSphereDrawable);
+	*/
+	//osg::StateSet* sphereStateset = unitSphereDrawable->getOrCreateStateSet();
+	//sphereStateset->setMode(GL_DEPTH_TEST,osg::StateAttribute::OFF);
+	//sphereStateset->setMode(GL_LIGHTING, osg::StateAttribute::OFF); 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	std::cout << "done" << std::endl;
+
 	osg::StateSet* obectStateset = objet3D->getOrCreateStateSet();
-    obectStateset->setMode(GL_DEPTH_TEST,osg::StateAttribute::OFF);
+	obectStateset->setMode(GL_LIGHTING,osg::StateAttribute::OFF);
+	obectStateset->setMode(GL_DEPTH_TEST,osg::StateAttribute::OFF);
 	osg::ref_ptr<osg::MatrixTransform> mat = new osg::MatrixTransform();
 
 	// construct the viewer.
@@ -258,7 +243,7 @@ void main()
 	projectionMatrix.makeFrustum(
 		-cameraMatrix.at<double>(0, 2),		vcap.get(CV_CAP_PROP_FRAME_WIDTH) - cameraMatrix.at<double>(0, 2),
 		-cameraMatrix.at<double>(1, 2),		vcap.get(CV_CAP_PROP_FRAME_HEIGHT) - cameraMatrix.at<double>(1, 2),
-		f,								g);
+		f,									g);
 
 	osg::Vec3d eye(0.0f, 0.0f, 0.0f), target(0.0f, g, 0.0f), normal(0.0f, 0.0f, 1.0f);
 
@@ -279,90 +264,69 @@ void main()
 
 	compositeViewer.realize();  // set up windows and associated threads.
 
-
-	double s = 5;
-
-	osg::Matrixd matrixS; // scale
-	matrixS.set(
-		s,	0,	0,	0,
-		0,	s,	0,	0,
-		0,	0,	s,	0,
-		0,	0,	0,	1);
-
-    do
-    {       
-		group->removeChild(mat);
-        patternfound = false;
-        resetAuto = false;
-        detectionMire = false;
+	do
+	{       
+		patternfound = false;
+		resetAuto = false;
 		detectionVisage = false;
-            
-        imagePoints.clear();
-        chessCornersInit[0].clear();
-        chessCornersInit[1].clear();
-		pointsVisageInit[0].clear();
-		pointsVisageInit[1].clear();
-		pointsVisage3D.clear();
-		dessinPointsVisage.clear();
+
+		moyPointsVisage2D.clear();
+		pointsVisage2D.clear();
 		visage.clear();
-        moyDistances = 0;
-        distances.clear();
-        imCalibNext.release();
-        
-        std::cout << "recherche de pattern" << std::endl;
+		moyDistances = 0;
+		distances.clear();
 
-		time_t start = clock();
-		double timer = 0;
-		
-        do
-        {
-			start = clock();
+		std::cout << "recherche de pattern" << std::endl
+			<< "nbr images sauvegardees : " << images.size() << std::endl;
 
-            vcap >> *frame;
+		vcap >> *frame;
+		frames.push_back(*frame);
 
-			backgroundImage->dirty();
-            //detectionMire = detecterMire(frame, &chessCornersInit[1], &imCalibNext);
-			detectionVisage = detecterVisage(frame, &chehra, &pointsVisageInit[1], &visage, &pointsVisage3D, &imCalibNext);
+		detectionVisage = detecterVisage(frame, &chehra, &pointsVisage2D, &visage);
 
-			cpt++;
-			double duree = (clock() - start)/(double) CLOCKS_PER_SEC;
-			timer += duree;
+		if(detectionVisage)
+		{
+			images.push_back(pointsVisage2D);
+			nbrLoopSinceLastDetection = 0;
+			group->addChild(mat);
+		}
+		else
+			nbrLoopSinceLastDetection++;
 
-			if(timer >= 1){
-				std::cout << cpt << " fps" << std::endl;
-				moyCpt += cpt;
-				timer = 0;
-				duree = 0;
-				i++;
-				cpt = 0;
-				start = clock();
+		if((images.size() > NBRSAVEDIMAGES || nbrLoopSinceLastDetection > criticalValueOfLoopWithoutDetection) && !images.empty())
+			images.erase(images.begin());
+
+		if(images.empty())
+			group->removeChild(mat);
+
+		else
+		{
+			//cv::cornerSubPix(*frame, pointsVisage2D, cv::Size(5, 5), cv::Size(-1, -1), cv::TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1));
+
+			for(int i = 0; i < NBRFACEPOINTSDETECTED; i++)
+			{
+				cv::Point2f coordonee(0.0f, 0.0f);
+				for(int j = 0; j < images.size(); j++)
+				{
+					coordonee.x += images[j][i].x;
+					coordonee.y += images[j][i].y;
+				}
+				coordonee.x /= images.size();
+				coordonee.y /= images.size();
+
+				moyPointsVisage2D.push_back(coordonee);
 			}
 
-            compositeViewer.frame();
-        }while(!detectionMire && !detectionVisage && !compositeViewer.done());
+			cv::solvePnP(pointsVisage3D, moyPointsVisage2D, cameraMatrix, distCoeffs, rvecs, tvecs);
 
-        if(compositeViewer.done())
-            break;
-
-        std::cout << "pattern detecte" << std::endl << std::endl;
-
-		group->addChild(mat);
-		
-        do
-        {           
-			start = clock();
-
-            vcap >> *frame;
-            
-			cv::Mat rotVec = trackingMire(frame, &imCalibNext, &pointsVisageInit, &pointsVisage3D, &cameraMatrix, &distCoeffs, &tvecs);
-            //cv::Mat rotVec = trackingMire(frame, &imCalibNext, &chessCornersInit, &chessCorners3D, &cameraMatrix, &distCoeffs, &tvecs);
-
-            //imagePoints = dessinerPoints(frame, objectPoints, rotVec, tvecs, cameraMatrix, distCoeffs);
+			cv::Mat rotVec(3, 3, CV_64F);
+			cv::Rodrigues(rvecs, rotVec);
+			
 			imagePoints = dessinerPoints(frame, pointsVisage3D, rotVec, tvecs, cameraMatrix, distCoeffs);
 
 			double t3 = tvecs.at<double>(2, 0);
 			double t1 = tvecs.at<double>(0, 0);
-			double t2 = tvecs.at<double>(1, 0) + t3 / 27; // and now, magic !
+			double t2 = tvecs.at<double>(1, 0) + t3 / 27.5; // and now, magic !
 
 			double r11 = rotVec.at<double>(0, 0);
 			double r12 = rotVec.at<double>(0, 1);
@@ -388,37 +352,25 @@ void main()
 			osg::Matrixd matrix90; // rotation de repere entre opencv et osg
 			matrix90.makeRotate(osg::Quat(osg::DegreesToRadians(-90.0f), osg::Vec3d(1.0, 0.0, 0.0)));
 
-			mat->setMatrix(matrixS * matrixR * (matrixT * matrix90));
+			mat->setMatrix(matrixS * matrixR * matrixT * matrix90);
 
-            // Calcul d'erreur de reprojection
-            double moy = 0;
-            for(int j = 0; j < pointsVisageInit[1].size() ; j++)
+			// Calcul d'erreur de reprojection
+			double moy = 0;
+			for(int i = 0; i < pointsVisage2D.size(); i++)
 			{
-				double d = sqrt(pow(pointsVisageInit[0][j].y - imagePoints[j].y, 2) + pow(pointsVisageInit[0][j].x - imagePoints[j].x, 2));
+				double d = sqrt(pow(pointsVisage2D[i].y - imagePoints[i].y, 2) + pow(pointsVisage2D[i].x - imagePoints[i].x, 2));
 				distances.push_back(d);
 				moy += d;
 			}
 
-            moyDistances = moy / pointsVisageInit[1].size();
+			moyDistances = moy / pointsVisage2D.size();
 
-            if(moyDistances > 1) // si l'ecart de reproj est trop grand, reset
-                resetAuto = true;
-
-			double duree = (clock() - start)/(double) CLOCKS_PER_SEC;
-
-
-				std::cout << (int)(1/duree) << " fps" << std::endl;
-				moyCpt += (int)(1/duree);
-				duree = 0;
-				i++;
-			
-            backgroundImage->dirty();
-            compositeViewer.frame();
-        }while(!compositeViewer.done() && !resetAuto);
+			if(moyDistances > 2) // si l'ecart de reproj est trop grand, reset
+				resetAuto = true;
+		}
 		
-    }while(!compositeViewer.done());
+		backgroundImage->dirty();
+		compositeViewer.frame();
 
-	std::cout << std::endl << "Moyenne des fps : " << moyCpt/i << std::endl;
-
-	std::system("PAUSE");
+	}while(!compositeViewer.done());
 }

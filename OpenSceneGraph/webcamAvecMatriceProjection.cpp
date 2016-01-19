@@ -251,11 +251,27 @@ void main()
 	// read the scene from the list of file specified commandline args.
 	osg::ref_ptr<osg::Group> group = new osg::Group;
 	osg::ref_ptr<osg::Geode> cam = createHUD(backgroundImage, vcap.get(CV_CAP_PROP_FRAME_WIDTH), vcap.get(CV_CAP_PROP_FRAME_HEIGHT), cameraMatrix.at<double>(0, 2), cameraMatrix.at<double>(1, 2), NEAR);
-	osg::ref_ptr<osg::Node> objet3D = osgDB::readNodeFile("../rsc/objets3D/dumptruck.osgt");
-	//osg::ref_ptr<osg::Node> objet3D = creerPlan();
+	//osg::ref_ptr<osg::Node> objet3D = osgDB::readNodeFile("../rsc/objets3D/dumptruck.osgt");
+	osg::ref_ptr<osg::Node> objet3D = creerPlan();
 	osg::StateSet* obectStateset = objet3D->getOrCreateStateSet();
 	obectStateset->setMode(GL_DEPTH_TEST,osg::StateAttribute::OFF);
 	osg::ref_ptr<osg::MatrixTransform> mat = new osg::MatrixTransform();
+
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////  
+	osg::Sphere* unitSphere = new osg::Sphere(osg::Vec3(0, 0, 0), 5.0);
+	osg::ShapeDrawable* unitSphereDrawable = new osg::ShapeDrawable(unitSphere);
+	osg::ref_ptr<osg::MatrixTransform> sphereXForm = new osg::MatrixTransform();
+
+	osg::Geode* unitSphereGeode = new osg::Geode();
+	group->addChild(sphereXForm);
+
+	sphereXForm->addChild(unitSphereGeode);
+	unitSphereGeode->addDrawable(unitSphereDrawable);
+	//osg::StateSet* sphereStateset = unitSphereDrawable->getOrCreateStateSet();
+	//sphereStateset->setMode(GL_DEPTH_TEST,osg::StateAttribute::OFF);
+	//sphereStateset->setMode(GL_LIGHTING, osg::StateAttribute::OFF); 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	// construct the viewer.
 	osgViewer::CompositeViewer compositeViewer;
@@ -380,7 +396,7 @@ void main()
 
 			double t3 = tvecs.at<double>(2, 0);
 			double t1 = tvecs.at<double>(0, 0);
-			double t2 = tvecs.at<double>(1, 0) + t3 / 27; // and now, magic !
+			double t2 = tvecs.at<double>(1, 0) + t3 / 27.5; // and now, magic !
 
 			double r11 = rotVec.at<double>(0, 0);
 			double r12 = rotVec.at<double>(0, 1);
@@ -407,6 +423,7 @@ void main()
 			matrix90.makeRotate(osg::Quat(osg::DegreesToRadians(-90.0f), osg::Vec3d(1.0, 0.0, 0.0)));
 
 			mat->setMatrix(matrixS * matrixR * (matrixT * matrix90));
+			sphereXForm->setMatrix(matrixR * matrixT * matrix90);
 
 			// Calcul d'erreur de reprojection
 			double moy = 0;
