@@ -196,9 +196,11 @@ void main()
 	osg::ref_ptr<osg::Group> group = new osg::Group;
 	osg::ref_ptr<osg::Geode> cam = createHUD(backgroundImage, vcap.get(CV_CAP_PROP_FRAME_WIDTH), vcap.get(CV_CAP_PROP_FRAME_HEIGHT), cameraMatrix.at<double>(0, 2), cameraMatrix.at<double>(1, 2), f);
 
-	std::cout << "initialisation de l'objet 3D..." << std::endl;
+	std::cout << "initialisation des objets 3D..." << std::endl;
 	osg::ref_ptr<osg::Node> objet3D = osgDB::readNodeFile("../rsc/objets3D/Glasses.obj");
 	osg::ref_ptr<osg::Node> objet3D2 = osgDB::readNodeFile("../rsc/objets3D/Mustache.obj");
+	osg::ref_ptr<osg::Node> objet3D3 = osgDB::readNodeFile("../rsc/objets3D/bunny/ItmUsagiHat.obj");
+	osg::ref_ptr<osg::Node> masque = osgDB::readNodeFile("../rsc/objets3D/head.obj");
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////  
 	/*
@@ -218,6 +220,18 @@ void main()
 
 	// Paramètres Objets
 	/////////////////////////
+
+	// Masque
+	osg::StateSet* masqueStateset = masque->getOrCreateStateSet();
+	//obectStateset->setMode(GL_LIGHTING,osg::StateAttribute::OFF);
+	masqueStateset->setMode(GL_DEPTH_TEST,osg::StateAttribute::OFF);
+    osg::ref_ptr<osg::Material> material = new osg::Material;
+
+    material->setAlpha(osg::Material::FRONT_AND_BACK, 0.1); //Making alpha channel
+    masqueStateset->setAttributeAndModes( material.get(), osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
+
+	masque->getStateSet()->setMode( GL_BLEND, osg::StateAttribute::ON ); 
+	//masque->getStateSet()->setRenderingHint(osg::StateSet::TRANSPARENT_BIN); 
 
 	// Objet 1
 	osg::StateSet* obectStateset = objet3D->getOrCreateStateSet();
@@ -242,9 +256,29 @@ void main()
 	obectStateset2->setTextureAttributeAndModes(0,textureMoustache,osg::StateAttribute::ON);
 	objet3D2->setStateSet(obectStateset2);
 
+		// Objet 3
+	osg::StateSet* obectStateset3 = objet3D3->getOrCreateStateSet();
+	obectStateset3->setMode(GL_LIGHTING,osg::StateAttribute::OFF);
+	obectStateset3->setMode(GL_DEPTH_TEST,osg::StateAttribute::OFF);
+
+	osg::Texture2D* textureLapin = new osg::Texture2D;
+	textureLapin->setDataVariance(osg::Object::DYNAMIC); 
+	osg::Image* texture3ON = osgDB::readImageFile("../rsc/objets3D/bunny/earfix.bmp");
+	if (!texture3ON)
+	{
+		std::cout << " couldn't find texture, quiting." << std::endl;
+		// SORTIE
+	}
+	textureLapin->setImage(texture3ON);
+
+	obectStateset3->setTextureAttributeAndModes(0,textureLapin,osg::StateAttribute::ON);
+	objet3D3->setStateSet(obectStateset3);
+
+	osg::ref_ptr<osg::MatrixTransform> mat = new osg::MatrixTransform();
 	osg::ref_ptr<osg::MatrixTransform> mat1 = new osg::MatrixTransform();
 	osg::ref_ptr<osg::MatrixTransform> mat2 = new osg::MatrixTransform();
-
+	osg::ref_ptr<osg::MatrixTransform> mat3 = new osg::MatrixTransform();
+	
 	// construct the viewer.
 	osgViewer::CompositeViewer compositeViewer;
 	osgViewer::View* viewer = new osgViewer::View;
@@ -253,10 +287,14 @@ void main()
 	// add the HUD subgraph.
 	group->addChild(cam);
 
+	//mat->addChild(masque);
 	mat1->addChild(objet3D);
 	mat2->addChild(objet3D2);
+	mat3->addChild(objet3D3);
+	//group->addChild(mat);
 	group->addChild(mat1);
 	group->addChild(mat2);
+	group->addChild(mat3);
 
 	// Projection
 
@@ -287,6 +325,26 @@ void main()
 	compositeViewer.addView(viewer);
 
 	compositeViewer.realize();  // set up windows and associated threads.
+
+	// Placement masque
+
+	double s = 220;
+
+	osg::Matrixd matrixS; // scale
+	matrixS.set(
+		s,	0,	0,	0,
+		0,	s,	0,	0,
+		0,	0,	s,	0,
+		0,	0,	0,	1);
+
+	osg::Matrixd matrixRot;
+	matrixRot.makeRotate(osg::Quat(osg::DegreesToRadians(180.0f), osg::Vec3d(0.0, 0.0, 1.0)));
+
+	osg::Matrixd matrixRotBis;
+	matrixRotBis.makeRotate(osg::Quat(osg::DegreesToRadians(-30.0f), osg::Vec3d(1.0, 0.0, 0.0)));
+			
+	osg::Matrixd matrixTrans;
+	matrixTrans.makeTranslate(3200,0,-300);
 
 	// Placement Objet 1
 
@@ -328,6 +386,23 @@ void main()
 	osg::Matrixd matrixTrans2;
 	matrixTrans2.makeTranslate(-35,0,-860);
 
+	// Placement Objet 3
+
+	double s3 = 500;
+
+	osg::Matrixd matrixS3; // scale
+	matrixS3.set(
+		s3,	0,	0,	0,
+		0,	s3,	0,	0,
+		0,	0,	s3,	0,
+		0,	0,	0,	1);
+
+	osg::Matrixd matrixRot3;
+	matrixRot3.makeRotate(osg::Quat(osg::DegreesToRadians(-55.0f), osg::Vec3d(1.0, 0.0, 0.0)));
+			
+	osg::Matrixd matrixTrans3;
+	matrixTrans3.makeTranslate(0,0,600);
+
 	bool objectAdded = false;
 
 	do
@@ -352,8 +427,10 @@ void main()
 			nbrLoopSinceLastDetection = 0;
 			if(!objectAdded)
 			{
+				group->addChild(mat);
 				group->addChild(mat1);
 				group->addChild(mat2);
+				group->addChild(mat3);
 				objectAdded = true;
 			}
 		}
@@ -365,8 +442,10 @@ void main()
 
 		if(images.empty() && objectAdded)
 		{
+			group->removeChild(mat);
 			group->removeChild(mat1);
 			group->removeChild(mat2);
+			group->removeChild(mat3);
 			objectAdded = false;
 		}
 
@@ -406,7 +485,7 @@ void main()
 			double r31 = rotVec.at<double>(2, 0);
 			double r32 = rotVec.at<double>(2, 1);
 			double r33 = rotVec.at<double>(2, 2);
-
+			
 
 			osg::Matrixd matrixR; // rotation (transposee de rotVec)
 			matrixR.set(
@@ -421,8 +500,10 @@ void main()
 			osg::Matrixd matrix90; // rotation de repere entre opencv et osg
 			matrix90.makeRotate(osg::Quat(osg::DegreesToRadians(-90.0f), osg::Vec3d(1.0, 0.0, 0.0)));
 
+			mat->setMatrix(matrixS * matrixRot * matrixRotBis * matrixTrans * matrixR * matrixT * matrix90);
 			mat1->setMatrix(matrixS1 * matrixRot1 * matrixRot12 * matrixTrans1 * matrixR * matrixT * matrix90);
 			mat2->setMatrix(matrixS2 * matrixTrans2 * matrixR * matrixT * matrix90);
+			mat3->setMatrix(matrixS3 * matrixRot3 * matrixTrans3 * matrixR * matrixT * matrix90);
 		}
 
 		backgroundImage->dirty();
