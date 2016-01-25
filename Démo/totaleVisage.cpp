@@ -92,7 +92,9 @@ osg::Geode* createHUD(osg::Image* bgImage, int camWidth, int camHeight, double c
 	texture->setResizeNonPowerOfTwoHint(false); 
 
 	// Enfin nous activons les texture de notre objet Geometry à travers l'objet statuts. 
-	statuts->setTextureAttributeAndModes(0, texture, osg::StateAttribute::ON); 
+	statuts->setTextureAttributeAndModes(0, texture, osg::StateAttribute::ON);
+	statuts->setMode(GL_BLEND,osg::StateAttribute::ON);
+	statuts->setRenderingHint(osg::StateSet::TRANSPARENT_BIN);
 
 	return noeudGeo;
 }
@@ -103,7 +105,7 @@ osg::MatrixTransform* chargerMasque()
 	
 	osg::StateSet* masqueStateset = masque->getOrCreateStateSet();
 	//obectStateset->setMode(GL_LIGHTING,osg::StateAttribute::OFF);
-	masqueStateset->setMode(GL_DEPTH_TEST,osg::StateAttribute::OFF);
+	//masqueStateset->setMode(GL_DEPTH_TEST,osg::StateAttribute::OFF);
     //osg::ref_ptr<osg::Material> material = new osg::Material;
 
     //material->setAlpha(osg::Material::FRONT_AND_BACK, 0.1); //Making alpha channel
@@ -144,7 +146,7 @@ osg::MatrixTransform* chargerLunettes()
 	
 	osg::StateSet* obectStateset = objetGlasses->getOrCreateStateSet();
 	//obectStateset->setMode(GL_LIGHTING,osg::StateAttribute::OFF);
-	obectStateset->setMode(GL_DEPTH_TEST,osg::StateAttribute::OFF);
+	//obectStateset->setMode(GL_DEPTH_TEST,osg::StateAttribute::OFF);
 	
 	osg::MatrixTransform* mat = new osg::MatrixTransform();
 	mat->addChild(objetGlasses);
@@ -178,7 +180,7 @@ osg::MatrixTransform* chargerBunny()
 	
 	osg::StateSet* obectStateset3 = objetBunny->getOrCreateStateSet();
 	obectStateset3->setMode(GL_LIGHTING,osg::StateAttribute::OFF);
-	obectStateset3->setMode(GL_DEPTH_TEST,osg::StateAttribute::OFF);
+	//obectStateset3->setMode(GL_DEPTH_TEST,osg::StateAttribute::OFF);
 
 	osg::Texture2D* textureLapin = new osg::Texture2D;
 	textureLapin->setDataVariance(osg::Object::DYNAMIC); 
@@ -223,7 +225,7 @@ osg::MatrixTransform* chargerMoustache()
 	
 	osg::StateSet* obectStateset2 = objetMoustache->getOrCreateStateSet();
 	obectStateset2->setMode(GL_LIGHTING,osg::StateAttribute::OFF);
-	obectStateset2->setMode(GL_DEPTH_TEST,osg::StateAttribute::OFF);
+	//obectStateset2->setMode(GL_DEPTH_TEST,osg::StateAttribute::OFF);
 
 	osg::Texture2D* textureMoustache = new osg::Texture2D;
 	textureMoustache->setDataVariance(osg::Object::DYNAMIC); 
@@ -341,7 +343,9 @@ void main()
 
 	// read the scene from the list of file specified commandline args.
 	osg::ref_ptr<osg::Group> group = new osg::Group;
-	osg::ref_ptr<osg::Geode> cam = createHUD(backgroundImage, vcap.get(CV_CAP_PROP_FRAME_WIDTH), vcap.get(CV_CAP_PROP_FRAME_HEIGHT), cameraMatrix.at<double>(0, 2), cameraMatrix.at<double>(1, 2), f);
+	osg::ref_ptr<osg::Group> group2 = new osg::Group;
+	osg::ref_ptr<osg::Geode> hud = createHUD(backgroundImage, vcap.get(CV_CAP_PROP_FRAME_WIDTH), vcap.get(CV_CAP_PROP_FRAME_HEIGHT), cameraMatrix.at<double>(0, 2), cameraMatrix.at<double>(1, 2), f);
+	osg::ref_ptr<osg::Camera> cam = new osg::Camera;
 
 	std::cout << "initialisation des objets 3D..." << std::endl;
 
@@ -357,14 +361,15 @@ void main()
 	osgViewer::CompositeViewer compositeViewer;
 	osgViewer::View* viewer = new osgViewer::View;
 	osgViewer::View* viewer2 = new osgViewer::View;
+	osgViewer::View* hudView = new osgViewer::View;
+	
+	osgViewer::Viewer::Windows windows;
+	compositeViewer.getWindows(windows);
 
-	//mat->addChild(matMasque);
+	mat->addChild(matMasque);
 	mat->addChild(matGlasses);
 	mat->addChild(matMoustache);
 	mat->addChild(matBunny);
-	
-	group->addChild(cam);
-	group->addChild(mat);
 
 	// Projection
 
@@ -379,16 +384,36 @@ void main()
 
 	osg::Vec3d eye(0.0f, 0.0f, 0.0f), target(0.0f, g, 0.0f), normal(0.0f, 0.0f, 1.0f);
 
+	cam->setProjectionMatrix(projectionMatrix);
+	cam->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
+	cam->setViewMatrixAsLookAt(eye, target, normal);
+	cam->setClearMask(GL_DEPTH_BUFFER_BIT);
+	cam->setRenderOrder(osg::Camera::PRE_RENDER);
+	cam->setAllowEventFocus(false);	
+
+	cam->addChild(hud);
+	group->addChild(mat);
+	group->addChild(cam);
+
 	// Paramètres de scène
 	viewer->setSceneData(group.get());
-	viewer->setUpViewInWindow(0, 0, 1920, 1080); 
+	viewer->setUpViewInWindow(0, 0, 1920, 1080);
 	viewer->getCamera()->setProjectionMatrix(projectionMatrix);
 	viewer->getCamera()->setViewMatrixAsLookAt(eye, target, normal);
+	viewer->getCamera()->setClearMask(GL_DEPTH_BUFFER_BIT);
+	viewer->getCamera()->setRenderOrder(osg::Camera::POST_RENDER);
 
-	viewer2->setSceneData(group.get());
+	//////////////////////////////////////////////////
+	////////// truc de merde à retirer asap //////////
+	//////////////////////////////////////////////////
+	
+	group2->addChild(hud);
+	group2->addChild(mat);
+
+	viewer2->setSceneData(group2.get());
 	viewer2->setUpViewInWindow(1920 / 2, 0, 1920 / 2, 1080 / 2); 
 	viewer2->getCamera()->setProjectionMatrix(projectionMatrix);
-	osg::Vec3d eye2(10 * f, -10 * f, -5 * f), target2(0.0f, f, 0.0f), normal2(0.0f, 0.0f, 1.0f);
+	osg::Vec3d eye2(2 * f, -10 * f, -2 * f), target2(0.0f, f, 0.0f), normal2(0.0f, 0.0f, 1.0f);
 	viewer2->getCamera()->setViewMatrixAsLookAt(eye2, target2, normal2);
 
 	compositeViewer.addView(viewer2);
@@ -421,7 +446,7 @@ void main()
 			nbrLoopSinceLastDetection = 0;
 			if(!objectAdded)
 			{
-				group->addChild(mat);
+				cam->addChild(mat);
 				objectAdded = true;
 			}
 		}
@@ -433,7 +458,7 @@ void main()
 
 		if(images.empty() && objectAdded)
 		{
-			group->removeChild(mat);
+			cam->removeChild(mat);
 			objectAdded = false;
 		}
 
