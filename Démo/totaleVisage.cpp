@@ -25,21 +25,6 @@
 #define NBRSAVEDIMAGES			3
 #define NBRFACEPOINTSDETECTED	6
 
-
-std::vector<cv::Point2f> dessinerPoints(cv::Mat* imCalibColor, const std::vector<cv::Point3f> & objectPoints, const cv::Mat & rotVec, const cv::Mat & tvecs, const cv::Mat & cameraMatrix, const cv::Mat & distCoeffs, bool dessin)
-{   
-	std::vector<cv::Point2f> imagePoints;
-	//Projection
-	cv::projectPoints(objectPoints, rotVec, tvecs, cameraMatrix, distCoeffs, imagePoints);
-
-	// Dessin des points projetes
-	if(dessin)
-		for(int m = 0; m < objectPoints.size(); m++)
-			cv::circle(*imCalibColor, cv::Point(imagePoints[m].x, imagePoints[m].y), 3, cv::Scalar(255, 0, 0), 1, 8, 0);
-
-	return imagePoints;
-}
-
 bool detecterVisage(cv::Mat* imCalibColor, Chehra *chehra, std::vector<cv::Point2f> *pointsVisage)
 {
 	bool visageFound = false;
@@ -112,16 +97,185 @@ osg::Geode* createHUD(osg::Image* bgImage, int camWidth, int camHeight, double c
 	return noeudGeo;
 }
 
+osg::MatrixTransform* chargerMasque()
+{	
+	osg::ref_ptr<osg::Node> masque = osgDB::readNodeFile("../rsc/objets3D/head.obj");
+	
+	osg::StateSet* masqueStateset = masque->getOrCreateStateSet();
+	//obectStateset->setMode(GL_LIGHTING,osg::StateAttribute::OFF);
+	masqueStateset->setMode(GL_DEPTH_TEST,osg::StateAttribute::OFF);
+    //osg::ref_ptr<osg::Material> material = new osg::Material;
+
+    //material->setAlpha(osg::Material::FRONT_AND_BACK, 0.1); //Making alpha channel
+    //masqueStateset->setAttributeAndModes( material.get(), osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
+
+	//masque->getStateSet()->setMode( GL_BLEND, osg::StateAttribute::ON ); 
+	////masque->getStateSet()->setRenderingHint(osg::StateSet::TRANSPARENT_BIN); 
+	
+	osg::MatrixTransform* mat = new osg::MatrixTransform();
+	mat->addChild(masque);
+
+	double s = 220;
+
+	osg::Matrixd matrixS; // scale
+	matrixS.set(
+		s,	0,	0,	0,
+		0,	s,	0,	0,
+		0,	0,	s,	0,
+		0,	0,	0,	1);
+
+	osg::Matrixd matrixRot;
+	matrixRot.makeRotate(osg::Quat(osg::DegreesToRadians(180.0f), osg::Vec3d(0.0, 0.0, 1.0)));
+
+	osg::Matrixd matrixRotBis;
+	matrixRotBis.makeRotate(osg::Quat(osg::DegreesToRadians(-30.0f), osg::Vec3d(1.0, 0.0, 0.0)));
+			
+	osg::Matrixd matrixTrans;
+	matrixTrans.makeTranslate(0,0,0);
+
+	mat->setMatrix(matrixS * matrixRot * matrixRotBis * matrixTrans);
+
+	return mat;
+}
+
+osg::MatrixTransform* chargerLunettes()
+{
+	osg::ref_ptr<osg::Node> objetGlasses = osgDB::readNodeFile("../rsc/objets3D/Glasses.obj");
+	
+	osg::StateSet* obectStateset = objetGlasses->getOrCreateStateSet();
+	//obectStateset->setMode(GL_LIGHTING,osg::StateAttribute::OFF);
+	obectStateset->setMode(GL_DEPTH_TEST,osg::StateAttribute::OFF);
+	
+	osg::MatrixTransform* mat = new osg::MatrixTransform();
+	mat->addChild(objetGlasses);
+
+	double s = 350;
+
+	osg::Matrixd matrixS; // scale
+	matrixS.set(
+		s,	0,	0,	0,
+		0,	s,	0,	0,
+		0,	0,	s,	0,
+		0,	0,	0,	1);
+
+	osg::Matrixd matrixRot;
+	matrixRot.makeRotate(osg::Quat(osg::DegreesToRadians(90.0f), osg::Vec3d(0.0, 0.0, 1.0)));
+
+	osg::Matrixd matrixRotBis;
+	matrixRotBis.makeRotate(osg::Quat(osg::DegreesToRadians(-35.0f), osg::Vec3d(1.0, 0.0, 0.0)));
+		
+	osg::Matrixd matrixTrans;
+	matrixTrans.makeTranslate(0,0,-343);
+
+	mat->setMatrix(matrixS * matrixRot * matrixRotBis * matrixTrans);
+
+	return mat;
+}
+
+osg::MatrixTransform* chargerBunny()
+{
+	osg::ref_ptr<osg::Node> objetBunny = osgDB::readNodeFile("../rsc/objets3D/bunny/ItmUsagiHat.obj");
+	
+	osg::StateSet* obectStateset3 = objetBunny->getOrCreateStateSet();
+	obectStateset3->setMode(GL_LIGHTING,osg::StateAttribute::OFF);
+	obectStateset3->setMode(GL_DEPTH_TEST,osg::StateAttribute::OFF);
+
+	osg::Texture2D* textureLapin = new osg::Texture2D;
+	textureLapin->setDataVariance(osg::Object::DYNAMIC); 
+	osg::Image* texture3ON = osgDB::readImageFile("../rsc/objets3D/bunny/earfix.bmp");
+	if (!texture3ON)
+	{
+		std::cout << " couldn't find texture, quiting." << std::endl;
+		// SORTIE
+	}
+	else
+		textureLapin->setImage(texture3ON);
+
+	obectStateset3->setTextureAttributeAndModes(0,textureLapin,osg::StateAttribute::ON);
+	objetBunny->setStateSet(obectStateset3);
+	
+	osg::MatrixTransform* mat = new osg::MatrixTransform();
+	mat->addChild(objetBunny);
+	
+	double s = 500;
+
+	osg::Matrixd matrixS; // scale
+	matrixS.set(
+		s,	0,	0,	0,
+		0,	s,	0,	0,
+		0,	0,	s,	0,
+		0,	0,	0,	1);
+
+	osg::Matrixd matrixRot;
+	matrixRot.makeRotate(osg::Quat(osg::DegreesToRadians(-55.0f), osg::Vec3d(1.0, 0.0, 0.0)));
+			
+	osg::Matrixd matrixTrans;
+	matrixTrans.makeTranslate(0,0,600);
+
+	mat->setMatrix(matrixS * matrixRot * matrixTrans);
+
+	return mat;
+}
+
+osg::MatrixTransform* chargerMoustache()
+{
+	osg::ref_ptr<osg::Node> objetMoustache = osgDB::readNodeFile("../rsc/objets3D/Mustache.obj");
+	
+	osg::StateSet* obectStateset2 = objetMoustache->getOrCreateStateSet();
+	obectStateset2->setMode(GL_LIGHTING,osg::StateAttribute::OFF);
+	obectStateset2->setMode(GL_DEPTH_TEST,osg::StateAttribute::OFF);
+
+	osg::Texture2D* textureMoustache = new osg::Texture2D;
+	textureMoustache->setDataVariance(osg::Object::DYNAMIC); 
+	osg::Image* texture2ON = osgDB::readImageFile("../rsc/objets3D/MustacheUV-textureMap.bmp");
+	if (!texture2ON)
+	{
+		std::cout << " couldn't find texture, quiting." << std::endl;
+		// SORTIE
+	}
+	else
+		textureMoustache->setImage(texture2ON);
+
+	obectStateset2->setTextureAttributeAndModes(0,textureMoustache,osg::StateAttribute::ON);
+	objetMoustache->setStateSet(obectStateset2);
+	
+	osg::MatrixTransform* mat = new osg::MatrixTransform();
+	mat->addChild(objetMoustache);
+	
+	double s = 380;
+
+	osg::Matrixd matrixS; // scale
+	matrixS.set(
+		s,	0,	0,	0,
+		0,	s,	0,	0,
+		0,	0,	s,	0,
+		0,	0,	0,	1);
+
+	osg::Matrixd matrixRot;
+	matrixRot.makeRotate(osg::Quat(osg::DegreesToRadians(-35.0f), osg::Vec3d(1.0, 0.0, 0.0)));
+		
+	osg::Matrixd matrixTrans;
+	matrixTrans.makeTranslate(-35,0,-860);
+
+	mat->setMatrix(matrixS * matrixRot * matrixTrans);
+
+	return mat;
+}
+
 void main()
 {
+	//////////////////////////////////////////////////
+	//////////	initialisation des variables /////////
+	//////////////////////////////////////////////////
+
 	bool patternfound = false;
 	bool resetAuto = false;
 	int nbImages = 0;
 	double moyFinale = 0;
 	bool detectionVisage = false;
+	bool objectAdded = false;
 
 	int nbrLoopSinceLastDetection = 0;
-	int criticalValueOfLoopWithoutDetection = 15;
 
 	std::cout << "initialisation de Chehra..." << std::endl;
 	Chehra chehra;
@@ -138,29 +292,17 @@ void main()
 	std::vector<std::vector<cv::Point2f>> images;
 	std::vector<cv::Mat> frames;
 
-
+	pointsVisage3D.push_back(cv::Point3f(90,0,-680)); // exterieur narine gauche
+	pointsVisage3D.push_back(cv::Point3f(-90,0,-680)); // exterieur narine droite
+	pointsVisage3D.push_back(cv::Point3f(0,0,-600)); // bout du nez
+	pointsVisage3D.push_back(cv::Point3f(600,0,0)); // exterieur oeil gauche
+	pointsVisage3D.push_back(cv::Point3f(0,0,0)); // haut du nez, centre des yeux
+	pointsVisage3D.push_back(cv::Point3f(-600,0,0)); // exterieur oeil droit
 	
-	//pointsVisage3D.push_back(cv::Point3f(0,0,0)); // centre yeux
-	//pointsVisage3D.push_back(cv::Point3f(-60,0,0)); // oeil gauche
-	//pointsVisage3D.push_back(cv::Point3f(60,0,0)); // oeil droit
-	//pointsVisage3D.push_back(cv::Point3f(0,0,-40)); // nez 1
-	//pointsVisage3D.push_back(cv::Point3f(0,0,-60)); // nez 2
+	//////////////////////////////////////////////////
+	//////////	initialisation OpenCV ////////////////
+	//////////////////////////////////////////////////
 
-	pointsVisage3D.push_back(cv::Point3f(90,0,-680));
-	pointsVisage3D.push_back(cv::Point3f(-90,0,-680));	
-	pointsVisage3D.push_back(cv::Point3f(0,0,-600));
-	pointsVisage3D.push_back(cv::Point3f(600,0,0));
-	pointsVisage3D.push_back(cv::Point3f(0,0,0));
-	pointsVisage3D.push_back(cv::Point3f(-600,0,0));
-	
-	/*
-	pointsVisage3D.push_back(cv::Point3f(13.1, -98.1,108.3)); // exterieur narine gauche
-	pointsVisage3D.push_back(cv::Point3f(-13.1, -98.1,108.3)); // exterieur narine droite
-	pointsVisage3D.push_back(cv::Point3f(0, -87.2, 124.2)); // bout du nez
-	pointsVisage3D.push_back(cv::Point3f(44.4, -57.9, 83.7)); // exterieur oeil gauche
-	pointsVisage3D.push_back(cv::Point3f(0, 55.4, 101.4)); // haut du nez, centre des yeux
-	pointsVisage3D.push_back(cv::Point3f(-44.4, -57.9, 83.7)); // exterieur oeil droit
-	*/
 	cv::FileStorage fs("../rsc/intrinsicMatrix.yml", cv::FileStorage::READ);
 
 	fs["cameraMatrix"] >> cameraMatrix;
@@ -186,6 +328,11 @@ void main()
 		vcap >> *frame;
 	}while(frame->empty());
 
+
+	//////////////////////////////////////////////////
+	//////////	initialisation OpenSceneGraph ////////
+	//////////////////////////////////////////////////
+
 	osg::ref_ptr<osg::Image> backgroundImage = new osg::Image;
 	backgroundImage->setImage(frame->cols, frame->rows, 3,
 		GL_RGB, GL_BGR, GL_UNSIGNED_BYTE,
@@ -197,104 +344,27 @@ void main()
 	osg::ref_ptr<osg::Geode> cam = createHUD(backgroundImage, vcap.get(CV_CAP_PROP_FRAME_WIDTH), vcap.get(CV_CAP_PROP_FRAME_HEIGHT), cameraMatrix.at<double>(0, 2), cameraMatrix.at<double>(1, 2), f);
 
 	std::cout << "initialisation des objets 3D..." << std::endl;
-	osg::ref_ptr<osg::Node> objet3D = osgDB::readNodeFile("../rsc/objets3D/Glasses.obj");
-	osg::ref_ptr<osg::Node> objet3D2 = osgDB::readNodeFile("../rsc/objets3D/Mustache.obj");
-	osg::ref_ptr<osg::Node> objet3D3 = osgDB::readNodeFile("../rsc/objets3D/bunny/ItmUsagiHat.obj");
-	osg::ref_ptr<osg::Node> masque = osgDB::readNodeFile("../rsc/objets3D/head.obj");
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////  
-	/*
-	osg::Sphere* unitSphere = new osg::Sphere(osg::Vec3(0, -1000, 1000), 100.0);
-	osg::ShapeDrawable* unitSphereDrawable = new osg::ShapeDrawable(unitSphere);
-
-	osg::Geode* objet3D = new osg::Geode();
-
-	objet3D->addDrawable(unitSphereDrawable);
-	*/
-	//osg::StateSet* sphereStateset = unitSphereDrawable->getOrCreateStateSet();
-	//sphereStateset->setMode(GL_DEPTH_TEST,osg::StateAttribute::OFF);
-	//sphereStateset->setMode(GL_LIGHTING, osg::StateAttribute::OFF); 
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-	std::cout << "done" << std::endl;
-
-	// Paramètres Objets
-	/////////////////////////
-
-	// Masque
-	osg::StateSet* masqueStateset = masque->getOrCreateStateSet();
-	//obectStateset->setMode(GL_LIGHTING,osg::StateAttribute::OFF);
-	masqueStateset->setMode(GL_DEPTH_TEST,osg::StateAttribute::OFF);
-    osg::ref_ptr<osg::Material> material = new osg::Material;
-
-    material->setAlpha(osg::Material::FRONT_AND_BACK, 0.1); //Making alpha channel
-    masqueStateset->setAttributeAndModes( material.get(), osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
-
-	masque->getStateSet()->setMode( GL_BLEND, osg::StateAttribute::ON ); 
-	//masque->getStateSet()->setRenderingHint(osg::StateSet::TRANSPARENT_BIN); 
-
-	// Objet 1
-	osg::StateSet* obectStateset = objet3D->getOrCreateStateSet();
-	//obectStateset->setMode(GL_LIGHTING,osg::StateAttribute::OFF);
-	obectStateset->setMode(GL_DEPTH_TEST,osg::StateAttribute::OFF);
-
-	// Objet 2
-	osg::StateSet* obectStateset2 = objet3D2->getOrCreateStateSet();
-	obectStateset2->setMode(GL_LIGHTING,osg::StateAttribute::OFF);
-	obectStateset2->setMode(GL_DEPTH_TEST,osg::StateAttribute::OFF);
-
-	osg::Texture2D* textureMoustache = new osg::Texture2D;
-	textureMoustache->setDataVariance(osg::Object::DYNAMIC); 
-	osg::Image* texture2ON = osgDB::readImageFile("../rsc/objets3D/MustacheUV-textureMap.bmp");
-	if (!texture2ON)
-	{
-		std::cout << " couldn't find texture, quiting." << std::endl;
-		// SORTIE
-	}
-	textureMoustache->setImage(texture2ON);
-
-	obectStateset2->setTextureAttributeAndModes(0,textureMoustache,osg::StateAttribute::ON);
-	objet3D2->setStateSet(obectStateset2);
-
-		// Objet 3
-	osg::StateSet* obectStateset3 = objet3D3->getOrCreateStateSet();
-	obectStateset3->setMode(GL_LIGHTING,osg::StateAttribute::OFF);
-	obectStateset3->setMode(GL_DEPTH_TEST,osg::StateAttribute::OFF);
-
-	osg::Texture2D* textureLapin = new osg::Texture2D;
-	textureLapin->setDataVariance(osg::Object::DYNAMIC); 
-	osg::Image* texture3ON = osgDB::readImageFile("../rsc/objets3D/bunny/earfix.bmp");
-	if (!texture3ON)
-	{
-		std::cout << " couldn't find texture, quiting." << std::endl;
-		// SORTIE
-	}
-	textureLapin->setImage(texture3ON);
-
-	obectStateset3->setTextureAttributeAndModes(0,textureLapin,osg::StateAttribute::ON);
-	objet3D3->setStateSet(obectStateset3);
 
 	osg::ref_ptr<osg::MatrixTransform> mat = new osg::MatrixTransform();
-	osg::ref_ptr<osg::MatrixTransform> mat1 = new osg::MatrixTransform();
-	osg::ref_ptr<osg::MatrixTransform> mat2 = new osg::MatrixTransform();
-	osg::ref_ptr<osg::MatrixTransform> mat3 = new osg::MatrixTransform();
+	osg::ref_ptr<osg::MatrixTransform> matGlasses = chargerLunettes();
+	osg::ref_ptr<osg::MatrixTransform> matMoustache = chargerMoustache();
+	osg::ref_ptr<osg::MatrixTransform> matBunny = chargerBunny();
+	osg::ref_ptr<osg::MatrixTransform> matMasque = chargerMasque();
+
+	std::cout << "done" << std::endl;
 	
-	// construct the viewer.
+	// construction du viewer.
 	osgViewer::CompositeViewer compositeViewer;
 	osgViewer::View* viewer = new osgViewer::View;
 	osgViewer::View* viewer2 = new osgViewer::View;
 
-	// add the HUD subgraph.
+	//mat->addChild(matMasque);
+	mat->addChild(matGlasses);
+	mat->addChild(matMoustache);
+	mat->addChild(matBunny);
+	
 	group->addChild(cam);
-
-	//mat->addChild(masque);
-	mat1->addChild(objet3D);
-	mat2->addChild(objet3D2);
-	mat3->addChild(objet3D3);
-	//group->addChild(mat);
-	group->addChild(mat1);
-	group->addChild(mat2);
-	group->addChild(mat3);
+	group->addChild(mat);
 
 	// Projection
 
@@ -318,7 +388,7 @@ void main()
 	viewer2->setSceneData(group.get());
 	viewer2->setUpViewInWindow(1920 / 2, 0, 1920 / 2, 1080 / 2); 
 	viewer2->getCamera()->setProjectionMatrix(projectionMatrix);
-	osg::Vec3d eye2(4 * f, 3 * f / 2, 0.0f), target2(0.0f, f, 0.0f), normal2(0.0f, 0.0f, 1.0f);
+	osg::Vec3d eye2(10 * f, -10 * f, -5 * f), target2(0.0f, f, 0.0f), normal2(0.0f, 0.0f, 1.0f);
 	viewer2->getCamera()->setViewMatrixAsLookAt(eye2, target2, normal2);
 
 	compositeViewer.addView(viewer2);
@@ -326,84 +396,10 @@ void main()
 
 	compositeViewer.realize();  // set up windows and associated threads.
 
-	// Placement masque
 
-	double s = 220;
-
-	osg::Matrixd matrixS; // scale
-	matrixS.set(
-		s,	0,	0,	0,
-		0,	s,	0,	0,
-		0,	0,	s,	0,
-		0,	0,	0,	1);
-
-	osg::Matrixd matrixRot;
-	matrixRot.makeRotate(osg::Quat(osg::DegreesToRadians(180.0f), osg::Vec3d(0.0, 0.0, 1.0)));
-
-	osg::Matrixd matrixRotBis;
-	matrixRotBis.makeRotate(osg::Quat(osg::DegreesToRadians(-30.0f), osg::Vec3d(1.0, 0.0, 0.0)));
-			
-	osg::Matrixd matrixTrans;
-	matrixTrans.makeTranslate(3200,0,-300);
-
-	// Placement Objet 1
-
-	double s1 = 350;
-
-	osg::Matrixd matrixS1; // scale
-	matrixS1.set(
-		s1,	0,	0,	0,
-		0,	s1,	0,	0,
-		0,	0,	s1,	0,
-		0,	0,	0,	1);
-
-	osg::Matrixd matrixRot1;
-	matrixRot1.makeRotate(osg::Quat(osg::DegreesToRadians(90.0f), osg::Vec3d(0.0, 0.0, 1.0)));
-
-	osg::Matrixd matrixRot12;
-	matrixRot12.makeRotate(osg::Quat(osg::DegreesToRadians(-35.0f), osg::Vec3d(1.0, 0.0, 0.0)));
-		
-	osg::Matrixd matrixTrans1;
-	matrixTrans1.makeTranslate(0,0,-343);
-
-	// Placement Objet 2
-
-	double s2 = 380;
-
-	osg::Matrixd matrixS2; // scale
-	matrixS2.set(
-		s2,	0,	0,	0,
-		0,	s2,	0,	0,
-		0,	0,	s2,	0,
-		0,	0,	0,	1);
-
-	osg::Matrixd matrixRot2;
-	matrixRot2.makeRotate(osg::Quat(osg::DegreesToRadians(90.0f), osg::Vec3d(0.0, 0.0, 1.0)));
-
-	osg::Matrixd matrixRot22;
-	matrixRot22.makeRotate(osg::Quat(osg::DegreesToRadians(-35.0f), osg::Vec3d(1.0, 0.0, 0.0)));
-		
-	osg::Matrixd matrixTrans2;
-	matrixTrans2.makeTranslate(-35,0,-860);
-
-	// Placement Objet 3
-
-	double s3 = 500;
-
-	osg::Matrixd matrixS3; // scale
-	matrixS3.set(
-		s3,	0,	0,	0,
-		0,	s3,	0,	0,
-		0,	0,	s3,	0,
-		0,	0,	0,	1);
-
-	osg::Matrixd matrixRot3;
-	matrixRot3.makeRotate(osg::Quat(osg::DegreesToRadians(-55.0f), osg::Vec3d(1.0, 0.0, 0.0)));
-			
-	osg::Matrixd matrixTrans3;
-	matrixTrans3.makeTranslate(0,0,600);
-
-	bool objectAdded = false;
+	//////////////////////////////////////////////////
+	//////////	boucle principale ////////////////////
+	//////////////////////////////////////////////////
 
 	do
 	{       
@@ -416,8 +412,6 @@ void main()
 			<< "nbr images sauvegardees : " << images.size() << std::endl;
 
 		vcap >> *frame;
-		//frames.push_back(*frame);
-
 
 		detectionVisage = detecterVisage(frame, &chehra, &pointsVisage2D);
 
@@ -428,31 +422,23 @@ void main()
 			if(!objectAdded)
 			{
 				group->addChild(mat);
-				group->addChild(mat1);
-				group->addChild(mat2);
-				group->addChild(mat3);
 				objectAdded = true;
 			}
 		}
 		else
 			nbrLoopSinceLastDetection++;
 
-		if((images.size() > NBRSAVEDIMAGES || nbrLoopSinceLastDetection > criticalValueOfLoopWithoutDetection) && !images.empty())
+		if((images.size() > NBRSAVEDIMAGES || nbrLoopSinceLastDetection > NBRSAVEDIMAGES) && !images.empty())
 			images.erase(images.begin());
 
 		if(images.empty() && objectAdded)
 		{
 			group->removeChild(mat);
-			group->removeChild(mat1);
-			group->removeChild(mat2);
-			group->removeChild(mat3);
 			objectAdded = false;
 		}
 
 		else
 		{
-			//cv::cornerSubPix(*frame, pointsVisage2D, cv::Size(5, 5), cv::Size(-1, -1), cv::TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1));
-
 			for(int i = 0; i < NBRFACEPOINTSDETECTED; i++)
 			{
 				cv::Point2f coordonee(0.0f, 0.0f);
@@ -500,10 +486,7 @@ void main()
 			osg::Matrixd matrix90; // rotation de repere entre opencv et osg
 			matrix90.makeRotate(osg::Quat(osg::DegreesToRadians(-90.0f), osg::Vec3d(1.0, 0.0, 0.0)));
 
-			mat->setMatrix(matrixS * matrixRot * matrixRotBis * matrixTrans * matrixR * matrixT * matrix90);
-			mat1->setMatrix(matrixS1 * matrixRot1 * matrixRot12 * matrixTrans1 * matrixR * matrixT * matrix90);
-			mat2->setMatrix(matrixS2 * matrixTrans2 * matrixR * matrixT * matrix90);
-			mat3->setMatrix(matrixS3 * matrixRot3 * matrixTrans3 * matrixR * matrixT * matrix90);
+			mat->setMatrix(matrixR * matrixT * matrix90);
 		}
 
 		backgroundImage->dirty();

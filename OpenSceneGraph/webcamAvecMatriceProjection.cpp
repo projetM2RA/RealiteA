@@ -63,7 +63,7 @@ bool detecterMire(cv::Mat* imCalibColor, std::vector<cv::Point2f> *pointsMire, c
 
 	cv::cvtColor(*imCalibColor, imNB, CV_BGR2GRAY);
 
-	// Détection de tous les points de la mire avec OpenCV
+	// DÃ©tection de tous les points de la mire avec OpenCV
 	patternFound = cv::findChessboardCorners(imNB, cv::Size(ROWCHESSBOARD, COLCHESSBOARD), *pointsMire, cv::CALIB_CB_FAST_CHECK);
 
 	if(patternFound)
@@ -79,7 +79,7 @@ cv::Mat trackingMire(cv::Mat *imCalibColor, cv::Mat *imCalibNext, std::vector<st
 	(*chessCornersInit)[0] = (*chessCornersInit)[1];
 	(*chessCornersInit)[1].clear();
 
-	// Amélioration de la précision de détection des points de la mire
+	// AmÃ©lioration de la prÃ©cision de dÃ©tection des points de la mire
 	cv::cornerSubPix(imCalib, (*chessCornersInit)[0], cv::Size(5, 5), cv::Size(-1, -1), cv::TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1));
 
 	cv::cvtColor(*imCalibColor, *imCalibNext, CV_BGR2GRAY);
@@ -92,7 +92,7 @@ cv::Mat trackingMire(cv::Mat *imCalibColor, cv::Mat *imCalibNext, std::vector<st
 	// Calcul des matrices de calibrage
 	cv::solvePnP(*chessCorners3D, (*chessCornersInit)[0], *cameraMatrix, *distCoeffs, rvecs, *tvecs);
 
-	// Résultat final de la matrice de rotation
+	// RÃ©sultat final de la matrice de rotation
 	cv::Mat rotVec(3, 3, CV_64F);
 	cv::Rodrigues(rvecs, rotVec);
 
@@ -117,7 +117,7 @@ osg::Geode* createHUD(osg::Image* bgImage, int camWidth, int camHeight, double c
 	primitive->push_back(3); 
 	geoQuad->addPrimitiveSet(primitive); 
 
-	// Nous créons ensuite une tableau qui contiendra nos coordonnées de texture. 
+	// Nous crÃ©ons ensuite une tableau qui contiendra nos coordonnÃ©es de texture. 
 	osg::Vec2Array* coordonneeTexture = new osg::Vec2Array(4); 
 	(*coordonneeTexture)[0].set(0.0f, 1.0f); 
 	(*coordonneeTexture)[1].set(1.0f, 1.0f); 
@@ -130,14 +130,14 @@ osg::Geode* createHUD(osg::Image* bgImage, int camWidth, int camHeight, double c
 	statuts->setMode(GL_LIGHTING, osg::StateAttribute::OFF); 
 	noeudGeo->addDrawable(geoQuad); 
 
-	// Nous créons une Texture2D. 
+	// Nous crÃ©ons une Texture2D. 
 	osg::Texture2D* texture = new osg::Texture2D; 
 
-	// Nous associons notre image à notre objet Texture2D. 
+	// Nous associons notre image Ã  notre objet Texture2D. 
 	texture->setImage(bgImage); 
 	texture->setResizeNonPowerOfTwoHint(false); 
 
-	// Enfin nous activons les texture de notre objet Geometry à travers l'objet statuts. 
+	// Enfin nous activons les texture de notre objet Geometry Ã  travers l'objet statuts. 
 	statuts->setTextureAttributeAndModes(0, texture, osg::StateAttribute::ON); 
 
 	return noeudGeo;
@@ -145,10 +145,10 @@ osg::Geode* createHUD(osg::Image* bgImage, int camWidth, int camHeight, double c
 
 osg::Node* creerPlan()
 {
-	// Nous créons un objet Geometry dans lequel nous allons construire notre triangle. 
+	// Nous crÃ©ons un objet Geometry dans lequel nous allons construire notre triangle. 
 	osg::Geometry* geoTriangle = new osg::Geometry; 
 
-	// Nous créons un tableau de trois sommets. 
+	// Nous crÃ©ons un tableau de trois sommets. 
 	osg::Vec3Array* tabSommet = new osg::Vec3Array; 
 	tabSommet->push_back(osg::Vec3(0, 0, 0)); 
 	tabSommet->push_back(osg::Vec3(52, 0, 0)); 
@@ -157,7 +157,7 @@ osg::Node* creerPlan()
 	// Nous ajoutons le tableau de sommet a notre objet Geometry. 
 	geoTriangle ->setVertexArray(tabSommet); 
 
-	// Nous créons une primitive Triangle et nous ajoutons les sommets selon leur index dans le tableau tabSommet 
+	// Nous crÃ©ons une primitive Triangle et nous ajoutons les sommets selon leur index dans le tableau tabSommet 
 	osg::DrawElementsUInt* pPrimitiveSet = 
 		new osg::DrawElementsUInt( osg::PrimitiveSet::TRIANGLES, 0 ); 
 	pPrimitiveSet->push_back(0); 
@@ -167,7 +167,7 @@ osg::Node* creerPlan()
 	// Nous ajoutons notre primitive a notre objet Geometry. 
 	geoTriangle->addPrimitiveSet(pPrimitiveSet); 
 
-	// On met en place un tableau de couleurs. Dans notre exemple chaque sommet du triangle aura une couleur différente. 
+	// On met en place un tableau de couleurs. Dans notre exemple chaque sommet du triangle aura une couleur diffÃ©rente. 
 	osg::Vec4Array* tabCouleur = new osg::Vec4Array; 
 	tabCouleur->push_back(osg::Vec4(1.0f, 0.0f, 0.0f, 1.0f)); 
 	tabCouleur->push_back(osg::Vec4(0.0f, 1.0f, 0.0f, 1.0f)); 
@@ -179,10 +179,10 @@ osg::Node* creerPlan()
 
 	///////////////////////////////////////////////////////////
 
-	// Nous créons un objet Geometry dans lequel nous allons construire notre triangle. 
+	// Nous crÃ©ons un objet Geometry dans lequel nous allons construire notre triangle. 
 	osg::Geometry* geoTriangle2 = new osg::Geometry; 
 
-	// Nous créons un tableau de trois sommets. 
+	// Nous crÃ©ons un tableau de trois sommets. 
 	osg::Vec3Array* tabSommet2 = new osg::Vec3Array; 
 	tabSommet2->push_back(osg::Vec3(0, 0, 0)); 
 	tabSommet2->push_back(osg::Vec3(52, 0, 0)); 
@@ -191,7 +191,7 @@ osg::Node* creerPlan()
 	// Nous ajoutons le tableau de sommet a notre objet Geometry. 
 	geoTriangle2->setVertexArray(tabSommet2); 
 
-	// Nous créons une primitive Triangle et nous ajoutons les sommets selon leur index dans le tableau tabSommet 
+	// Nous crÃ©ons une primitive Triangle et nous ajoutons les sommets selon leur index dans le tableau tabSommet 
 	osg::DrawElementsUInt* pPrimitiveSet2 = 
 		new osg::DrawElementsUInt( osg::PrimitiveSet::TRIANGLES, 0 ); 
 	pPrimitiveSet2->push_back(0); 
@@ -201,7 +201,7 @@ osg::Node* creerPlan()
 	// Nous ajoutons notre primitive a notre objet Geometry. 
 	geoTriangle2->addPrimitiveSet(pPrimitiveSet2); 
 
-	// On met en place un tableau de couleurs. Dans notre exemple chaque sommet du triangle aura une couleur différente. 
+	// On met en place un tableau de couleurs. Dans notre exemple chaque sommet du triangle aura une couleur diffÃ©rente. 
 	osg::Vec4Array* tabCouleur2 = new osg::Vec4Array; 
 	tabCouleur2->push_back(osg::Vec4(1.0f, 0.0f, 0.0f, 1.0f)); 
 	tabCouleur2->push_back(osg::Vec4(0.0f, 1.0f, 0.0f, 1.0f)); 
@@ -213,10 +213,10 @@ osg::Node* creerPlan()
 
 	///////////////////////////////////////////////////////////
 
-	// Nous créons un objet Geometry dans lequel nous allons construire notre triangle. 
+	// Nous crÃ©ons un objet Geometry dans lequel nous allons construire notre triangle. 
 	osg::Geometry* geoTriangle3 = new osg::Geometry; 
 
-	// Nous créons un tableau de trois sommets. 
+	// Nous crÃ©ons un tableau de trois sommets. 
 	osg::Vec3Array* tabSommet3 = new osg::Vec3Array; 
 	tabSommet3->push_back(osg::Vec3(0, 0, 0)); 
 	tabSommet3->push_back(osg::Vec3(0, 52, 0)); 
@@ -225,7 +225,7 @@ osg::Node* creerPlan()
 	// Nous ajoutons le tableau de sommet a notre objet Geometry. 
 	geoTriangle3->setVertexArray(tabSommet3); 
 
-	// Nous créons une primitive Triangle et nous ajoutons les sommets selon leur index dans le tableau tabSommet 
+	// Nous crÃ©ons une primitive Triangle et nous ajoutons les sommets selon leur index dans le tableau tabSommet 
 	osg::DrawElementsUInt* pPrimitiveSet3 = 
 		new osg::DrawElementsUInt( osg::PrimitiveSet::TRIANGLES, 0 ); 
 	pPrimitiveSet3->push_back(0); 
@@ -235,7 +235,7 @@ osg::Node* creerPlan()
 	// Nous ajoutons notre primitive a notre objet Geometry. 
 	geoTriangle3->addPrimitiveSet(pPrimitiveSet3); 
 
-	// On met en place un tableau de couleurs. Dans notre exemple chaque sommet du triangle aura une couleur différente. 
+	// On met en place un tableau de couleurs. Dans notre exemple chaque sommet du triangle aura une couleur diffÃ©rente. 
 	osg::Vec4Array* tabCouleur3 = new osg::Vec4Array; 
 	tabCouleur3->push_back(osg::Vec4(1.0f, 0.0f, 0.0f, 1.0f)); 
 	tabCouleur3->push_back(osg::Vec4(0.0f, 0.0f, 1.0f, 1.0f)); 
@@ -246,7 +246,7 @@ osg::Node* creerPlan()
 	geoTriangle3->setColorBinding(osg::Geometry::BIND_PER_VERTEX); 
 
 	/*---------------------------------/!\----------------------------------*/ 
-	// Nous créons un nœud géométrique afin de stocker notre triangle et nous désactivons sa lumière. 
+	// Nous crÃ©ons un nÅ“ud gÃ©omÃ©trique afin de stocker notre triangle et nous dÃ©sactivons sa lumiÃ¨re. 
 	osg::Geode* noeudGeo = new osg::Geode; 
 	osg::StateSet* status = noeudGeo->getOrCreateStateSet(); 
 	status->setMode(GL_LIGHTING, osg::StateAttribute::OFF); 
@@ -302,8 +302,8 @@ void main()
 	fs["cameraMatrix"] >> cameraMatrix;
 	fs["distCoeffs"] >> distCoeffs;
 	
-	double NEAR = (cameraMatrix.at<double>(0, 0) + cameraMatrix.at<double>(1, 1)) / 2; // NEAR = distance focale ; si pixels carrés, fx = fy -> np 
-	//mais est généralement différent de fy donc on prend (pour l'instant) par défaut la valeur médiane
+	double NEAR = (cameraMatrix.at<double>(0, 0) + cameraMatrix.at<double>(1, 1)) / 2; // NEAR = distance focale ; si pixels carrÃ©s, fx = fy -> np 
+	//mais est gÃ©nÃ©ralement diffÃ©rent de fy donc on prend (pour l'instant) par dÃ©faut la valeur mÃ©diane
 	double FAR = 2000 * NEAR; // je sais pas pourquoi. au pif.	
 
 	fs.release();
@@ -335,16 +335,16 @@ void main()
 	osg::ref_ptr<osg::Group> group = new osg::Group;
 	osg::ref_ptr<osg::Geode> cam = createHUD(backgroundImage, vcap.get(CV_CAP_PROP_FRAME_WIDTH), vcap.get(CV_CAP_PROP_FRAME_HEIGHT), cameraMatrix.at<double>(0, 2), cameraMatrix.at<double>(1, 2), NEAR);
 	osg::ref_ptr<osg::Node> objet3D = osgDB::readNodeFile("../rsc/objets3D/avatar.osg");
-	// avatar.osg : poupée bien
+	// avatar.osg : poupÃ©e bien
 	// axes.osgt : repere tres pratique
 	// bignathan.osgt : petit bonhomme bien
 	// cessna.osg : avion sous les z -> pas bien
-	// cessnafire.osgt : avion avec particules mais mal repéré
+	// cessnafire.osgt : avion avec particules mais mal repÃ©rÃ©
 	// clock.osgt : rien -> pas bien
 	// cow.osg : vache -> pas bien
 	// cube_mapped_torus.osgt : rien
 	// dumptruck.osgt : notre beau camion -> pas bien
-	// fountain : tres bien mettre size à 0.2
+	// fountain : tres bien mettre size Ã  0.2
 	//osg::ref_ptr<osg::Node> objet3D = creerPlan();
 	osg::StateSet* obectStateset = objet3D->getOrCreateStateSet();
 	obectStateset->setMode(GL_DEPTH_TEST,osg::StateAttribute::OFF);
@@ -387,11 +387,7 @@ void main()
 		NEAR,								FAR);
 
 	double correcteur = (NEAR/2)/(cameraMatrix.at<double>(1, 2)-vcap.get(CV_CAP_PROP_FRAME_HEIGHT)/2);
-<<<<<<< HEAD
-	
-=======
 
->>>>>>> origin/master
 	osg::Vec3d eye(0.0f, 0.0f, 0.0f), target(0.0f, FAR, 0.0f), normal(0.0f, 0.0f, 1.0f);
 
 	/*
@@ -497,18 +493,7 @@ void main()
 
 			double t3 = tvecs.at<double>(2, 0);
 			double t1 = tvecs.at<double>(0, 0);
-<<<<<<< HEAD
 			double t2 = tvecs.at<double>(1, 0) + t3 / correcteur; // and now, magic !
-			
-			std::cout << "t1     : " << t1 << std::endl
-				<< "t2     : " << t2 << std::endl
-				<< "t3     : " << t3 << std::endl << std::endl;
-=======
-			double t2 = tvecs.at<double>(1, 0) + t3 / correcteur;  //and now, magic !
-
-			std::cout << "t3 = " << t3 << " ; t3/46 = " << t3/correcteur << " ; correcteur " << correcteur << std::endl;
-			file << t1 << " ; " << t2 << " ; " << t3 << " ; " << t3/46 << std::endl;
->>>>>>> origin/master
 
 			double r11 = rotVec.at<double>(0, 0);
 			double r12 = rotVec.at<double>(0, 1);
@@ -556,34 +541,4 @@ void main()
 		}while(!compositeViewer.done() && !resetAuto);
 
 	}while(!compositeViewer.done());
-}
-rixT.makeTranslate(t1, t2, t3);
-
-			osg::Matrixd matrix90; // rotation de repere entre opencv et osg
-			matrix90.makeRotate(osg::Quat(osg::DegreesToRadians(-90.0f), osg::Vec3d(1.0, 0.0, 0.0)));
-
-			mat->setMatrix(matrixS * matrixR * (matrixT * matrix90));
-			sphereXForm->setMatrix(matrixR * matrixT * matrix90);
-
-			// Calcul d'erreur de reprojection
-			double moy = 0;
-			for(int j = 0; j < COLCHESSBOARD * ROWCHESSBOARD; j++)
-			{
-				double d = sqrt(pow(chessCornersInit[0][j].y - imagePoints[j].y, 2) + pow(chessCornersInit[0][j].x - imagePoints[j].x, 2));
-				distances.push_back(d);
-				moy += d;
-			}
-
-			moyDistances = moy / (COLCHESSBOARD * ROWCHESSBOARD);
-
-			if(moyDistances > 2) // si l'ecart de reproj est trop grand, reset
-				resetAuto = true;
-
-			backgroundImage->dirty();
-			compositeViewer.frame();
-		}while(!compositeViewer.done() && !resetAuto);
-
-	}while(!compositeViewer.done());
-
-	file.close();
 }
