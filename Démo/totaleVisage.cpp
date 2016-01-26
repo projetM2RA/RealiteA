@@ -22,7 +22,7 @@
 #define ROWCHESSBOARD			6
 #define SIZEMIRE				26
 
-#define NBRSAVEDIMAGES			3
+#define NBRSAVEDIMAGES			5
 #define NBRFACEPOINTSDETECTED	6
 
 bool detecterVisage(cv::Mat* imCalibColor, Chehra *chehra, std::vector<cv::Point2f> *pointsVisage)
@@ -104,20 +104,22 @@ osg::MatrixTransform* chargerMasque()
 	osg::ref_ptr<osg::Node> masque = osgDB::readNodeFile("../rsc/objets3D/head.obj");
 	
 	osg::StateSet* masqueStateset = masque->getOrCreateStateSet();
-	//obectStateset->setMode(GL_LIGHTING,osg::StateAttribute::OFF);
+	masqueStateset->setMode(GL_LIGHTING,osg::StateAttribute::OFF);
 	//masqueStateset->setMode(GL_DEPTH_TEST,osg::StateAttribute::OFF);
-    //osg::ref_ptr<osg::Material> material = new osg::Material;
+    osg::ref_ptr<osg::Material> material = new osg::Material;
 
-    //material->setAlpha(osg::Material::FRONT_AND_BACK, 0.1); //Making alpha channel
-    //masqueStateset->setAttributeAndModes( material.get(), osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
+    material->setAlpha(osg::Material::FRONT_AND_BACK, 0.0f); //Making alpha channel
+    masqueStateset->setAttributeAndModes( material.get(), osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
 
-	//masque->getStateSet()->setMode( GL_BLEND, osg::StateAttribute::ON ); 
-	////masque->getStateSet()->setRenderingHint(osg::StateSet::TRANSPARENT_BIN); 
+	masqueStateset->setMode( GL_BLEND, osg::StateAttribute::ON ); 
+	//masqueStateset->setRenderingHint(osg::StateSet::TRANSPARENT_BIN); 
+	
+	masque->setStateSet(masqueStateset);
 	
 	osg::MatrixTransform* mat = new osg::MatrixTransform();
 	mat->addChild(masque);
 
-	double s = 220;
+	double s = 200;
 
 	osg::Matrixd matrixS; // scale
 	matrixS.set(
@@ -133,7 +135,7 @@ osg::MatrixTransform* chargerMasque()
 	matrixRotBis.makeRotate(osg::Quat(osg::DegreesToRadians(-30.0f), osg::Vec3d(1.0, 0.0, 0.0)));
 			
 	osg::Matrixd matrixTrans;
-	matrixTrans.makeTranslate(0,0,0);
+	matrixTrans.makeTranslate(0,-1300,150);
 
 	mat->setMatrix(matrixS * matrixRot * matrixRotBis * matrixTrans);
 
@@ -257,7 +259,7 @@ osg::MatrixTransform* chargerMoustache()
 	matrixRot.makeRotate(osg::Quat(osg::DegreesToRadians(-35.0f), osg::Vec3d(1.0, 0.0, 0.0)));
 		
 	osg::Matrixd matrixTrans;
-	matrixTrans.makeTranslate(-35,0,-860);
+	matrixTrans.makeTranslate(0,0,-860);
 
 	mat->setMatrix(matrixS * matrixRot * matrixTrans);
 
@@ -361,10 +363,6 @@ void main()
 	osgViewer::CompositeViewer compositeViewer;
 	osgViewer::View* viewer = new osgViewer::View;
 	osgViewer::View* viewer2 = new osgViewer::View;
-	osgViewer::View* hudView = new osgViewer::View;
-	
-	osgViewer::Viewer::Windows windows;
-	compositeViewer.getWindows(windows);
 
 	mat->addChild(matMasque);
 	mat->addChild(matGlasses);
@@ -389,7 +387,6 @@ void main()
 	cam->setViewMatrixAsLookAt(eye, target, normal);
 	cam->setClearMask(GL_DEPTH_BUFFER_BIT);
 	cam->setRenderOrder(osg::Camera::PRE_RENDER);
-	cam->setAllowEventFocus(false);	
 
 	cam->addChild(hud);
 	group->addChild(mat);
@@ -401,7 +398,6 @@ void main()
 	viewer->getCamera()->setProjectionMatrix(projectionMatrix);
 	viewer->getCamera()->setViewMatrixAsLookAt(eye, target, normal);
 	viewer->getCamera()->setClearMask(GL_DEPTH_BUFFER_BIT);
-	viewer->getCamera()->setRenderOrder(osg::Camera::POST_RENDER);
 
 	//////////////////////////////////////////////////
 	////////// truc de merde à retirer asap //////////
@@ -497,7 +493,6 @@ void main()
 			double r32 = rotVec.at<double>(2, 1);
 			double r33 = rotVec.at<double>(2, 2);
 			
-
 			osg::Matrixd matrixR; // rotation (transposee de rotVec)
 			matrixR.set(
 				r11,	r21,	r31,	0,
@@ -515,7 +510,6 @@ void main()
 		}
 
 		backgroundImage->dirty();
-
 		compositeViewer.frame();
 
 	}while(!compositeViewer.done());
