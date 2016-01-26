@@ -348,7 +348,9 @@ void main()
 	{
 		vcap >> *frame;
 	}while(frame->empty());
-
+	
+	std::ofstream file;
+	file.open ("../rsc/angles.txt");
 
 	//////////////////////////////////////////////////
 	////////// initialisation OpenSceneGraph /////////
@@ -517,6 +519,9 @@ void main()
 				r12,	r22,	r32,	0,
 				r13,	r23,	r33,	0,
 				0,		0,		0,		1);
+				
+			file << "rotX = " << (rotX*180)/PI << " ; rotY = " << (rotY*180)/PI << " ; rotZ = " << (rotZ*180)/PI << std::endl;
+			std::cout << "rotX = " << (rotX*180)/PI << " ; rotY = " << (rotY*180)/PI << " ; rotZ = " << (rotZ*180)/PI << std::endl;
 
 			osg::Matrixd matrixT; // translation
 			matrixT.makeTranslate(t1, t2, t3);
@@ -531,4 +536,6 @@ void main()
 		compositeViewer.frame();
 
 	}while(!compositeViewer.done());
+	
+	file.close();
 }
