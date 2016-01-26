@@ -109,7 +109,7 @@ osg::MatrixTransform* chargerMasque()
 	//masqueStateset->setMode(GL_DEPTH_TEST,osg::StateAttribute::OFF);
     osg::ref_ptr<osg::Material> material = new osg::Material;
 
-    material->setAlpha(osg::Material::FRONT_AND_BACK, 0.7f); //Making alpha channel
+    material->setAlpha(osg::Material::FRONT_AND_BACK, 0.1f); //Making alpha channel
     masqueStateset->setAttributeAndModes( material.get(), osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
 
 	masqueStateset->setMode( GL_BLEND, osg::StateAttribute::ON ); 
@@ -120,7 +120,7 @@ osg::MatrixTransform* chargerMasque()
 	osg::MatrixTransform* mat = new osg::MatrixTransform();
 	mat->addChild(masque);
 
-	double s = 100;
+	double s = 150;
 
 	osg::Matrixd matrixS; // scale
 	matrixS.set(
@@ -138,7 +138,7 @@ osg::MatrixTransform* chargerMasque()
 	osg::Matrixd matrixTrans;
 	matrixTrans.makeTranslate(0,-1300,150);
 
-	mat->setMatrix(matrixS * matrixRot);
+	mat->setMatrix(matrixS);
 
 	return mat;
 }
@@ -154,7 +154,7 @@ osg::MatrixTransform* chargerLunettes()
 	osg::MatrixTransform* mat = new osg::MatrixTransform();
 	mat->addChild(objetGlasses);
 
-	double s = 350;
+	double s = 175;
 
 	osg::Matrixd matrixS; // scale
 	matrixS.set(
@@ -202,7 +202,7 @@ osg::MatrixTransform* chargerBunny()
 	osg::MatrixTransform* mat = new osg::MatrixTransform();
 	mat->addChild(objetBunny);
 	
-	double s = 500;
+	double s = 300;
 
 	osg::Matrixd matrixS; // scale
 	matrixS.set(
@@ -218,9 +218,9 @@ osg::MatrixTransform* chargerBunny()
 	matrixRotBis.makeRotate(osg::Quat(osg::DegreesToRadians(180.0f), osg::Vec3d(0.0, 0.0, 1.0)));
 			
 	osg::Matrixd matrixTrans;
-	matrixTrans.makeTranslate(0,0,600);
+	matrixTrans.makeTranslate(0,1500,600);
 
-	mat->setMatrix(matrixS * matrixRot * matrixRotBis * matrixTrans);
+	mat->setMatrix(matrixS * matrixRotBis * matrixTrans);
 
 	return mat;
 }
@@ -263,7 +263,7 @@ osg::MatrixTransform* chargerMoustache()
 	matrixRot.makeRotate(osg::Quat(osg::DegreesToRadians(180.0f), osg::Vec3d(0.0, 0.0, 1.0)));
 		
 	osg::Matrixd matrixTrans;
-	matrixTrans.makeTranslate(0,0,-860);
+	matrixTrans.makeTranslate(0,0,0);
 
 	mat->setMatrix(matrixS * matrixRot * matrixTrans);
 
@@ -307,12 +307,12 @@ void main()
 	pointsVisage3D.push_back(cv::Point3f(0, -568, 250)); // haut du nez, centre des yeux
 	pointsVisage3D.push_back(cv::Point3f(343, -322, 163)); // exterieur oeil droit
 	*/
-	pointsVisage3D.push_back(cv::Point3f(-110, 0, -336)); // exterieur narine gauche
-	pointsVisage3D.push_back(cv::Point3f(110, 0, -336)); // exterieur narine droite
-	pointsVisage3D.push_back(cv::Point3f(0, 142, -258)); // bout du nez
-	pointsVisage3D.push_back(cv::Point3f(-338, -243, -70)); // exterieur oeil gauche
+	pointsVisage3D.push_back(cv::Point3f(-110, 0, -336)); // exterieur narine gauche sur l'image
+	pointsVisage3D.push_back(cv::Point3f(110, 0, -336)); // exterieur narine droite sur l'image
+	pointsVisage3D.push_back(cv::Point3f(0, -142, -258)); // bout du nez
+	pointsVisage3D.push_back(cv::Point3f(-338, 243, -70)); // exterieur oeil gauche sur l'image
 	pointsVisage3D.push_back(cv::Point3f(0, 0, 0)); // haut du nez, centre des yeux
-	pointsVisage3D.push_back(cv::Point3f(338, -243, -70)); // exterieur oeil droit
+	pointsVisage3D.push_back(cv::Point3f(338, 243, -70)); // exterieur oeil droit sur l'image
 	/*
 	pointsVisage3D.push_back(cv::Point3f(90,0,-680)); // exterieur narine gauche
 	pointsVisage3D.push_back(cv::Point3f(-90,0,-680)); // exterieur narine droite
@@ -370,7 +370,7 @@ void main()
 	osg::ref_ptr<osg::Camera> cam = new osg::Camera;
 
 	std::cout << "initialisation des objets 3D..." << std::endl;
-
+	
 	osg::ref_ptr<osg::MatrixTransform> mat = new osg::MatrixTransform();
 	osg::ref_ptr<osg::MatrixTransform> matGlasses = chargerLunettes();
 	osg::ref_ptr<osg::MatrixTransform> matMoustache = chargerMoustache();
@@ -383,7 +383,7 @@ void main()
 	osgViewer::CompositeViewer compositeViewer;
 	osgViewer::View* viewer = new osgViewer::View;
 	osgViewer::View* viewer2 = new osgViewer::View;
-
+	
 	mat->addChild(matMasque);
 	mat->addChild(matGlasses);
 	mat->addChild(matMoustache);
@@ -500,9 +500,9 @@ void main()
 			cv::Mat rotVec(3, 3, CV_64F);
 			cv::Rodrigues(rvecs, rotVec);
 
-			double t3 = tvecs.at<double>(2, 0);
-			double t1 = tvecs.at<double>(0, 0);
-			double t2 = tvecs.at<double>(1, 0);// + t3 / correcteur; // and now, magic !
+			double t3 = tvecs.at<double>(1, 0);
+			double t1 = -tvecs.at<double>(0, 0);
+			double t2 = -tvecs.at<double>(2, 0);// + t3 / correcteur; // and now, magic !
 
 			double r11 = rotVec.at<double>(0, 0);
 			double r12 = rotVec.at<double>(0, 1);
@@ -525,16 +525,23 @@ void main()
 			double rotY =  atan2(r21, r11);
             double rotZ = -atan2(-r31, sqrt((r32 * r32) + (r33 * r33)));
 				
-			file << "rotX = " << (rotX*180)/PI << " ; rotY = " << (rotY*180)/PI << " ; rotZ = " << (rotZ*180)/PI << std::endl;
-			std::cout << "rotX = " << (rotX*180)/PI << " ; rotY = " << (rotY*180)/PI << " ; rotZ = " << (rotZ*180)/PI << std::endl;
+			file << "rotX = " << (rotX*180)/PI << " ; rotY = " << (rotY*180)/PI << " ; rotZ = " << (rotZ*180)/PI << std::endl
+				<< "trX  = " << t1 << " ; trY  = " << t2 << " ; trZ  = " << t3 << std::endl << std::endl;
+			std::cout << "rotX = " << (rotX*180)/PI << " ; rotY = " << (rotY*180)/PI << " ; rotZ = " << (rotZ*180)/PI << std::endl
+				<< "trX  = " << t1 << " ; trY  = " << t3 << " ; trZ  = " << t2 << std::endl << std::endl;
+
 
 			osg::Matrixd matrixT; // translation
 			matrixT.makeTranslate(t1, t2, t3);
 
 			osg::Matrixd matrix90; // rotation de repere entre opencv et osg
-			matrix90.makeRotate(osg::Quat(osg::DegreesToRadians(-90.0f), osg::Vec3d(1.0, 0.0, 0.0)));
+			matrix90.makeRotate(osg::Quat(osg::DegreesToRadians(90.0f), osg::Vec3d(1.0, 0.0, 0.0)));
+			
 
-			mat->setMatrix(matrixR * matrixT * matrix90);
+			osg::Matrixd matrix180; // rotation de repere entre opencv et osg
+			matrix180.makeRotate(osg::Quat(osg::DegreesToRadians(180.0f), osg::Vec3d(0.0, 0.0, 1.0)));
+			
+			mat->setMatrix(matrixR * matrix90 * matrix180 * matrixT);
 		}
 
 		backgroundImage->dirty();
