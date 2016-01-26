@@ -108,7 +108,7 @@ osg::MatrixTransform* chargerMasque()
 	//masqueStateset->setMode(GL_DEPTH_TEST,osg::StateAttribute::OFF);
     osg::ref_ptr<osg::Material> material = new osg::Material;
 
-    material->setAlpha(osg::Material::FRONT_AND_BACK, 0.0f); //Making alpha channel
+    material->setAlpha(osg::Material::FRONT_AND_BACK, 0.7f); //Making alpha channel
     masqueStateset->setAttributeAndModes( material.get(), osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
 
 	masqueStateset->setMode( GL_BLEND, osg::StateAttribute::ON ); 
@@ -119,7 +119,7 @@ osg::MatrixTransform* chargerMasque()
 	osg::MatrixTransform* mat = new osg::MatrixTransform();
 	mat->addChild(masque);
 
-	double s = 200;
+	double s = 100;
 
 	osg::Matrixd matrixS; // scale
 	matrixS.set(
@@ -129,7 +129,7 @@ osg::MatrixTransform* chargerMasque()
 		0,	0,	0,	1);
 
 	osg::Matrixd matrixRot;
-	matrixRot.makeRotate(osg::Quat(osg::DegreesToRadians(180.0f), osg::Vec3d(0.0, 0.0, 1.0)));
+	matrixRot.makeRotate(osg::Quat(osg::DegreesToRadians(0.0f), osg::Vec3d(0.0, 0.0, 1.0)));
 
 	osg::Matrixd matrixRotBis;
 	matrixRotBis.makeRotate(osg::Quat(osg::DegreesToRadians(-30.0f), osg::Vec3d(1.0, 0.0, 0.0)));
@@ -137,7 +137,7 @@ osg::MatrixTransform* chargerMasque()
 	osg::Matrixd matrixTrans;
 	matrixTrans.makeTranslate(0,-1300,150);
 
-	mat->setMatrix(matrixS * matrixRot * matrixRotBis * matrixTrans);
+	mat->setMatrix(matrixS * matrixRot);
 
 	return mat;
 }
@@ -163,7 +163,7 @@ osg::MatrixTransform* chargerLunettes()
 		0,	0,	0,	1);
 
 	osg::Matrixd matrixRot;
-	matrixRot.makeRotate(osg::Quat(osg::DegreesToRadians(90.0f), osg::Vec3d(0.0, 0.0, 1.0)));
+	matrixRot.makeRotate(osg::Quat(osg::DegreesToRadians(-90.0f), osg::Vec3d(0.0, 0.0, 1.0)));
 
 	osg::Matrixd matrixRotBis;
 	matrixRotBis.makeRotate(osg::Quat(osg::DegreesToRadians(-35.0f), osg::Vec3d(1.0, 0.0, 0.0)));
@@ -171,7 +171,7 @@ osg::MatrixTransform* chargerLunettes()
 	osg::Matrixd matrixTrans;
 	matrixTrans.makeTranslate(0,0,-343);
 
-	mat->setMatrix(matrixS * matrixRot * matrixRotBis * matrixTrans);
+	mat->setMatrix(matrixS * matrixRot * matrixTrans);
 
 	return mat;
 }
@@ -212,11 +212,14 @@ osg::MatrixTransform* chargerBunny()
 
 	osg::Matrixd matrixRot;
 	matrixRot.makeRotate(osg::Quat(osg::DegreesToRadians(-55.0f), osg::Vec3d(1.0, 0.0, 0.0)));
+
+	osg::Matrixd matrixRotBis;
+	matrixRotBis.makeRotate(osg::Quat(osg::DegreesToRadians(180.0f), osg::Vec3d(0.0, 0.0, 1.0)));
 			
 	osg::Matrixd matrixTrans;
 	matrixTrans.makeTranslate(0,0,600);
 
-	mat->setMatrix(matrixS * matrixRot * matrixTrans);
+	mat->setMatrix(matrixS * matrixRot * matrixRotBis * matrixTrans);
 
 	return mat;
 }
@@ -256,7 +259,7 @@ osg::MatrixTransform* chargerMoustache()
 		0,	0,	0,	1);
 
 	osg::Matrixd matrixRot;
-	matrixRot.makeRotate(osg::Quat(osg::DegreesToRadians(-35.0f), osg::Vec3d(1.0, 0.0, 0.0)));
+	matrixRot.makeRotate(osg::Quat(osg::DegreesToRadians(180.0f), osg::Vec3d(0.0, 0.0, 1.0)));
 		
 	osg::Matrixd matrixTrans;
 	matrixTrans.makeTranslate(0,0,-860);
@@ -295,14 +298,28 @@ void main()
 
 	std::vector<std::vector<cv::Point2f>> images;
 	std::vector<cv::Mat> frames;
-
+	/*
+	pointsVisage3D.push_back(cv::Point3f(-110, -573, -104)); // exterieur narine gauche
+	pointsVisage3D.push_back(cv::Point3f(110, -573, -104)); // exterieur narine droite
+	pointsVisage3D.push_back(cv::Point3f(0, -715, 25)); // bout du nez
+	pointsVisage3D.push_back(cv::Point3f(-343, -322, 163)); // exterieur oeil gauche
+	pointsVisage3D.push_back(cv::Point3f(0, -568, 250)); // haut du nez, centre des yeux
+	pointsVisage3D.push_back(cv::Point3f(343, -322, 163)); // exterieur oeil droit
+	*/
+	pointsVisage3D.push_back(cv::Point3f(-110, 0, -336)); // exterieur narine gauche
+	pointsVisage3D.push_back(cv::Point3f(110, 0, -336)); // exterieur narine droite
+	pointsVisage3D.push_back(cv::Point3f(0, 142, -258)); // bout du nez
+	pointsVisage3D.push_back(cv::Point3f(-338, -243, -70)); // exterieur oeil gauche
+	pointsVisage3D.push_back(cv::Point3f(0, 0, 0)); // haut du nez, centre des yeux
+	pointsVisage3D.push_back(cv::Point3f(338, -243, -70)); // exterieur oeil droit
+	/*
 	pointsVisage3D.push_back(cv::Point3f(90,0,-680)); // exterieur narine gauche
 	pointsVisage3D.push_back(cv::Point3f(-90,0,-680)); // exterieur narine droite
 	pointsVisage3D.push_back(cv::Point3f(0,0,-600)); // bout du nez
 	pointsVisage3D.push_back(cv::Point3f(600,0,0)); // exterieur oeil gauche
 	pointsVisage3D.push_back(cv::Point3f(0,0,0)); // haut du nez, centre des yeux
 	pointsVisage3D.push_back(cv::Point3f(-600,0,0)); // exterieur oeil droit
-	
+	*/
 	//////////////////////////////////////////////////
 	//////////	initialisation OpenCV ////////////////
 	//////////////////////////////////////////////////
@@ -324,7 +341,7 @@ void main()
 		std::cout << "FAIL!" << std::endl;
 		return;
 	}
-
+	//vcap.set(CV_CAP_PROP_FPS, 30);
 	cv::Mat *frame = new cv::Mat(cv::Mat::zeros(vcap.get(CV_CAP_PROP_FRAME_HEIGHT), vcap.get(CV_CAP_PROP_FRAME_WIDTH), CV_8UC3));
 
 	do
@@ -334,7 +351,7 @@ void main()
 
 
 	//////////////////////////////////////////////////
-	//////////	initialisation OpenSceneGraph ////////
+	////////// initialisation OpenSceneGraph /////////
 	//////////////////////////////////////////////////
 
 	osg::ref_ptr<osg::Image> backgroundImage = new osg::Image;
@@ -394,7 +411,8 @@ void main()
 
 	// Paramètres de scène
 	viewer->setSceneData(group.get());
-	viewer->setUpViewInWindow(0, 0, 1920, 1080);
+	viewer->setUpViewOnSingleScreen();
+	//viewer->setUpViewInWindow(0, 0, 1920, 1080);
 	viewer->getCamera()->setProjectionMatrix(projectionMatrix);
 	viewer->getCamera()->setViewMatrixAsLookAt(eye, target, normal);
 	viewer->getCamera()->setClearMask(GL_DEPTH_BUFFER_BIT);
@@ -481,7 +499,7 @@ void main()
 
 			double t3 = tvecs.at<double>(2, 0);
 			double t1 = tvecs.at<double>(0, 0);
-			double t2 = tvecs.at<double>(1, 0) + t3 / correcteur; // and now, magic !
+			double t2 = tvecs.at<double>(1, 0);// + t3 / correcteur; // and now, magic !
 
 			double r11 = rotVec.at<double>(0, 0);
 			double r12 = rotVec.at<double>(0, 1);
