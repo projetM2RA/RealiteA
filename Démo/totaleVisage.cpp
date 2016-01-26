@@ -24,6 +24,7 @@
 
 #define NBRSAVEDIMAGES			5
 #define NBRFACEPOINTSDETECTED	6
+#define PI						3.14159265359
 
 bool detecterVisage(cv::Mat* imCalibColor, Chehra *chehra, std::vector<cv::Point2f> *pointsVisage)
 {
@@ -519,6 +520,10 @@ void main()
 				r12,	r22,	r32,	0,
 				r13,	r23,	r33,	0,
 				0,		0,		0,		1);
+				
+			double rotX = atan2(r32, r33);
+			double rotY =  atan2(r21, r11);
+            double rotZ = -atan2(-r31, sqrt((r32 * r32) + (r33 * r33)));
 				
 			file << "rotX = " << (rotX*180)/PI << " ; rotY = " << (rotY*180)/PI << " ; rotZ = " << (rotZ*180)/PI << std::endl;
 			std::cout << "rotX = " << (rotX*180)/PI << " ; rotY = " << (rotY*180)/PI << " ; rotZ = " << (rotZ*180)/PI << std::endl;
