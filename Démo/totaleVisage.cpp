@@ -109,7 +109,7 @@ osg::MatrixTransform* chargerMasque()
 	//masqueStateset->setMode(GL_DEPTH_TEST,osg::StateAttribute::OFF);
     osg::ref_ptr<osg::Material> material = new osg::Material;
 
-    material->setAlpha(osg::Material::FRONT_AND_BACK, 0.1f); //Making alpha channel
+    material->setAlpha(osg::Material::FRONT_AND_BACK, 0.0f); //Making alpha channel
     masqueStateset->setAttributeAndModes( material.get(), osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
 
 	masqueStateset->setMode( GL_BLEND, osg::StateAttribute::ON ); 
@@ -120,13 +120,15 @@ osg::MatrixTransform* chargerMasque()
 	osg::MatrixTransform* mat = new osg::MatrixTransform();
 	mat->addChild(masque);
 
-	double s = 150;
+	double sx = 120;
+	double sy = 80;
+	double sz = 130;
 
 	osg::Matrixd matrixS; // scale
 	matrixS.set(
-		s,	0,	0,	0,
-		0,	s,	0,	0,
-		0,	0,	s,	0,
+		sx,	0,	0,	0,
+		0,	sy,	0,	0,
+		0,	0,	sz,	0,
 		0,	0,	0,	1);
 
 	osg::Matrixd matrixRot;
@@ -136,7 +138,7 @@ osg::MatrixTransform* chargerMasque()
 	matrixRotBis.makeRotate(osg::Quat(osg::DegreesToRadians(-30.0f), osg::Vec3d(1.0, 0.0, 0.0)));
 			
 	osg::Matrixd matrixTrans;
-	matrixTrans.makeTranslate(0,-1300,150);
+	matrixTrans.makeTranslate(0,0,30);
 
 	mat->setMatrix(matrixS);
 
@@ -145,7 +147,7 @@ osg::MatrixTransform* chargerMasque()
 
 osg::MatrixTransform* chargerLunettes()
 {
-	osg::ref_ptr<osg::Node> objetGlasses = osgDB::readNodeFile("../rsc/objets3D/Glasses.obj");
+	osg::ref_ptr<osg::Node> objetGlasses = osgDB::readNodeFile("../rsc/objets3D/GlassesSwag.3DS");
 	
 	osg::StateSet* obectStateset = objetGlasses->getOrCreateStateSet();
 	//obectStateset->setMode(GL_LIGHTING,osg::StateAttribute::OFF);
@@ -154,13 +156,15 @@ osg::MatrixTransform* chargerLunettes()
 	osg::MatrixTransform* mat = new osg::MatrixTransform();
 	mat->addChild(objetGlasses);
 
-	double s = 175;
+	double sx = 45;
+	double sy = 42;
+	double sz = 42;
 
 	osg::Matrixd matrixS; // scale
 	matrixS.set(
-		s,	0,	0,	0,
-		0,	s,	0,	0,
-		0,	0,	s,	0,
+		sx,	0,	0,	0,
+		0,	sy,	0,	0,
+		0,	0,	sz,	0,
 		0,	0,	0,	1);
 
 	osg::Matrixd matrixRot;
@@ -170,9 +174,9 @@ osg::MatrixTransform* chargerLunettes()
 	matrixRotBis.makeRotate(osg::Quat(osg::DegreesToRadians(-35.0f), osg::Vec3d(1.0, 0.0, 0.0)));
 		
 	osg::Matrixd matrixTrans;
-	matrixTrans.makeTranslate(0,0,-343);
+	matrixTrans.makeTranslate(0,665,-153);
 
-	mat->setMatrix(matrixS * matrixRot * matrixTrans);
+	mat->setMatrix(matrixS * matrixTrans);
 
 	return mat;
 }
@@ -218,9 +222,9 @@ osg::MatrixTransform* chargerBunny()
 	matrixRotBis.makeRotate(osg::Quat(osg::DegreesToRadians(180.0f), osg::Vec3d(0.0, 0.0, 1.0)));
 			
 	osg::Matrixd matrixTrans;
-	matrixTrans.makeTranslate(0,1500,600);
+	matrixTrans.makeTranslate(0,800,150);
 
-	mat->setMatrix(matrixS * matrixRotBis * matrixTrans);
+	mat->setMatrix(matrixS * matrixTrans);
 
 	return mat;
 }
@@ -250,20 +254,22 @@ osg::MatrixTransform* chargerMoustache()
 	osg::MatrixTransform* mat = new osg::MatrixTransform();
 	mat->addChild(objetMoustache);
 	
-	double s = 380;
+	double sx = 230;
+	double sy = 180;
+	double sz = 160;
 
 	osg::Matrixd matrixS; // scale
 	matrixS.set(
-		s,	0,	0,	0,
-		0,	s,	0,	0,
-		0,	0,	s,	0,
+		sx,	0,	0,	0,
+		0,	sy,	0,	0,
+		0,	0,	sz,	0,
 		0,	0,	0,	1);
 
 	osg::Matrixd matrixRot;
 	matrixRot.makeRotate(osg::Quat(osg::DegreesToRadians(180.0f), osg::Vec3d(0.0, 0.0, 1.0)));
 		
 	osg::Matrixd matrixTrans;
-	matrixTrans.makeTranslate(0,0,0);
+	matrixTrans.makeTranslate(0,-100,-480);
 
 	mat->setMatrix(matrixS * matrixRot * matrixTrans);
 
@@ -350,9 +356,6 @@ void main()
 		vcap >> *frame;
 	}while(frame->empty());
 	
-	std::ofstream file;
-	file.open ("../rsc/angles.txt");
-
 	//////////////////////////////////////////////////
 	////////// initialisation OpenSceneGraph /////////
 	//////////////////////////////////////////////////
@@ -499,10 +502,10 @@ void main()
 
 			cv::Mat rotVec(3, 3, CV_64F);
 			cv::Rodrigues(rvecs, rotVec);
-
-			double t3 = tvecs.at<double>(1, 0);
+			
 			double t1 = -tvecs.at<double>(0, 0);
-			double t2 = -tvecs.at<double>(2, 0);// + t3 / correcteur; // and now, magic !
+			double t2 = -tvecs.at<double>(2, 0); // // and now, magic !
+			double t3 = tvecs.at<double>(1, 0) - t2 / correcteur;
 
 			double r11 = rotVec.at<double>(0, 0);
 			double r12 = rotVec.at<double>(0, 1);
@@ -521,22 +524,17 @@ void main()
 				r13,	r23,	r33,	0,
 				0,		0,		0,		1);
 				
-			double rotX = atan2(r32, r33);
+			// Angles de rotation
+
+			/*double rotX = atan2(r32, r33);
 			double rotY =  atan2(r21, r11);
-            double rotZ = -atan2(-r31, sqrt((r32 * r32) + (r33 * r33)));
+            double rotZ = -atan2(-r31, sqrt((r32 * r32) + (r33 * r33)));*/
 				
-			file << "rotX = " << (rotX*180)/PI << " ; rotY = " << (rotY*180)/PI << " ; rotZ = " << (rotZ*180)/PI << std::endl
-				<< "trX  = " << t1 << " ; trY  = " << t2 << " ; trZ  = " << t3 << std::endl << std::endl;
-			std::cout << "rotX = " << (rotX*180)/PI << " ; rotY = " << (rotY*180)/PI << " ; rotZ = " << (rotZ*180)/PI << std::endl
-				<< "trX  = " << t1 << " ; trY  = " << t3 << " ; trZ  = " << t2 << std::endl << std::endl;
-
-
 			osg::Matrixd matrixT; // translation
 			matrixT.makeTranslate(t1, t2, t3);
 
 			osg::Matrixd matrix90; // rotation de repere entre opencv et osg
-			matrix90.makeRotate(osg::Quat(osg::DegreesToRadians(90.0f), osg::Vec3d(1.0, 0.0, 0.0)));
-			
+			matrix90.makeRotate(osg::Quat(osg::DegreesToRadians(90.0f), osg::Vec3d(1.0, 0.0, 0.0)));			
 
 			osg::Matrixd matrix180; // rotation de repere entre opencv et osg
 			matrix180.makeRotate(osg::Quat(osg::DegreesToRadians(180.0f), osg::Vec3d(0.0, 0.0, 1.0)));
@@ -548,6 +546,4 @@ void main()
 		compositeViewer.frame();
 
 	}while(!compositeViewer.done());
-	
-	file.close();
 }
