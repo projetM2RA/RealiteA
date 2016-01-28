@@ -51,6 +51,10 @@ win32:CONFIG(release, debug|release): LIBS += -lChehra_r
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp
+        mainwindow.cpp \
+    osgwidget.cpp \
+    our3dobject.cpp
 
-HEADERS  += mainwindow.h
+HEADERS  += mainwindow.h \
+    osgwidget.h \
+    our3dobject.h

@@ -53,7 +53,7 @@ void MainWindow::setWindow()
     ////////// webcam layout /////////////////////////
     //////////////////////////////////////////////////
 
-    QPushButton *widgetTemporaire1 = new QPushButton();
+    OSGWidget *widgetTemporaire1 = new OSGWidget();
     mainLayout->addWidget(widgetTemporaire1);
 
     //////////////////////////////////////////////////
@@ -64,35 +64,60 @@ void MainWindow::setWindow()
     m_objectChoiceComboBox = new QComboBox();
     objectLayout->addWidget(m_objectChoiceComboBox);
 
-    m_objectCharacteristicsSpinBoxes = new QDoubleSpinBox*[NBR_CHARACTERISTICS];
+    QHBoxLayout* objectDispalyOptionsLayout = new QHBoxLayout();
+    m_isPrintedBox = new QCheckBox(tr("afficher l'objet"));
+    m_isPrintedBox->setChecked(true);
+    objectDispalyOptionsLayout->addWidget(m_isPrintedBox);
+    m_isMaskBox = new QCheckBox(tr("masque"));
+    objectDispalyOptionsLayout->addWidget(m_isMaskBox);
+
+    objectLayout->addLayout(objectDispalyOptionsLayout);
+
+    m_objectCharacteristicsSpinSliders = new QSlider*[NBR_CHARACTERISTICS];
     QLabel** objectCharacteristicsLabels = new QLabel*[NBR_CHARACTERISTICS];
     for(int i = 0; i < NBR_CHARACTERISTICS; i++)
     {
-        m_objectCharacteristicsSpinBoxes[i] = new QDoubleSpinBox();
+        m_objectCharacteristicsSpinSliders[i] = new QSlider();
+        m_objectCharacteristicsSpinSliders[i]->setOrientation(Qt::Horizontal);
         objectCharacteristicsLabels[i] = new QLabel();
         objectLayout->addWidget(objectCharacteristicsLabels[i]);
-        objectLayout->addWidget(m_objectCharacteristicsSpinBoxes[i]);
+        objectLayout->addWidget(m_objectCharacteristicsSpinSliders[i]);
     }
 
     objectCharacteristicsLabels[sizeX]->setText(tr("taille selon x"));
+    m_objectCharacteristicsSpinSliders[sizeX]->setRange(-1000, 1000);
+    m_objectCharacteristicsSpinSliders[sizeX]->setValue(100.0);
     objectCharacteristicsLabels[sizeY]->setText(tr("taille selon y"));
+    m_objectCharacteristicsSpinSliders[sizeY]->setRange(-1000, 1000);
+    m_objectCharacteristicsSpinSliders[sizeY]->setValue(100.0);
     objectCharacteristicsLabels[sizeZ]->setText(tr("taille selon z"));
+    m_objectCharacteristicsSpinSliders[sizeZ]->setRange(-1000, 1000);
+    m_objectCharacteristicsSpinSliders[sizeZ]->setValue(100.0);
 
     objectCharacteristicsLabels[rotX]->setText(tr("rotation selon x"));
+    m_objectCharacteristicsSpinSliders[rotX]->setRange(-180, 180);
     objectCharacteristicsLabels[rotY]->setText(tr("rotation selon y"));
+    m_objectCharacteristicsSpinSliders[rotY]->setRange(-180, 180);
     objectCharacteristicsLabels[rotZ]->setText(tr("rotation selon z"));
+    m_objectCharacteristicsSpinSliders[rotZ]->setRange(-180, 180);
 
     objectCharacteristicsLabels[transX]->setText(tr("translation selon x"));
+    m_objectCharacteristicsSpinSliders[transX]->setRange(-5000, 5000);
     objectCharacteristicsLabels[transY]->setText(tr("translation selon y"));
+    m_objectCharacteristicsSpinSliders[transY]->setRange(-5000, 5000);
     objectCharacteristicsLabels[transZ]->setText(tr("translation selon z"));
+    m_objectCharacteristicsSpinSliders[transZ]->setRange(-5000, 5000);
 
-    QPushButton *widgetTemporaire2 = new QPushButton("VISU 3D");
+    OSGWidget *widgetTemporaire2 = new OSGWidget();
     objectLayout->addWidget(widgetTemporaire2);
 
+    objectLayout->setStretchFactor(widgetTemporaire2, 2);
     mainLayout->addLayout(objectLayout);
 
     //////////////////////////////////////////////////
 
-   mainWidget->setLayout(mainLayout);
-   this->setCentralWidget(mainWidget);
+    mainLayout->setStretch(1, 6);
+    mainLayout->setStretch(2, 2);
+    mainWidget->setLayout(mainLayout);
+    this->setCentralWidget(mainWidget);
 }

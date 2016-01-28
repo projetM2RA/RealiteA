@@ -16,6 +16,11 @@
 #include <QLabel>
 #include <QDoubleSpinBox>
 
+#include "osgwidget.h"
+
+#include <QGLWidget>
+
+
 #define NBR_DETECT  3
 #define NBR_CHARACTERISTICS  9
 
@@ -42,12 +47,14 @@ private:
     QPushButton* m_3DSlicerButton;
     QPushButton* m_fullScreenButton;
 
-
+    //osgWidget* m_mainView;
 
     QComboBox* m_objectChoiceComboBox;
-    QDoubleSpinBox** m_objectCharacteristicsSpinBoxes;
+    QCheckBox* m_isMaskBox;
+    QCheckBox* m_isPrintedBox;
+    QSlider** m_objectCharacteristicsSpinSliders;
 
-    //NotreClasseDAffichage
+    //osgWidget* m_sideView;
 };
 
 #endif // MAINWINDOW_H
