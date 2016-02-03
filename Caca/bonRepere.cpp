@@ -409,12 +409,22 @@ void main()
     pointsVisage3D.push_back(cv::Point3f(0, -568, 250)); // haut du nez, centre des yeux
     pointsVisage3D.push_back(cv::Point3f(343, -322, 163)); // exterieur oeil droit
     */
-    pointsVisage3D.push_back(cv::Point3f(-110, 0, -336)); // exterieur narine gauche sur l'image
-    pointsVisage3D.push_back(cv::Point3f(110, 0, -336)); // exterieur narine droite sur l'image
-    pointsVisage3D.push_back(cv::Point3f(0, -142, -258)); // bout du nez
-    pointsVisage3D.push_back(cv::Point3f(-338, 243, -70)); // exterieur oeil gauche sur l'image
-    pointsVisage3D.push_back(cv::Point3f(0, 0, 0)); // haut du nez, centre des yeux
-    pointsVisage3D.push_back(cv::Point3f(338, 243, -70)); // exterieur oeil droit sur l'image
+//    pointsVisage3D.push_back(cv::Point3f(-110, 0, -336)); // exterieur narine gauche sur l'image
+//    pointsVisage3D.push_back(cv::Point3f(110, 0, -336)); // exterieur narine droite sur l'image
+//    pointsVisage3D.push_back(cv::Point3f(0, -142, -258)); // bout du nez
+//    pointsVisage3D.push_back(cv::Point3f(-338, 243, -70)); // exterieur oeil gauche sur l'image
+//    pointsVisage3D.push_back(cv::Point3f(0, 0, 0)); // haut du nez, centre des yeux
+//    pointsVisage3D.push_back(cv::Point3f(338, 243, -70)); // exterieur oeil droit sur l'image
+
+    double R = 676/120;
+
+    pointsVisage3D.push_back(cv::Point3f(-110/R, 0, -336/R));       // exterieur narine gauche sur l'image
+    pointsVisage3D.push_back(cv::Point3f(110/R, 0, -336/R));        // exterieur narine droite sur l'image
+    pointsVisage3D.push_back(cv::Point3f(0, -142/R, -258/R));       // bout du nez
+    pointsVisage3D.push_back(cv::Point3f(-338/R, 243/R, -70/R));    // exterieur oeil gauche sur l'image
+    pointsVisage3D.push_back(cv::Point3f(0, 0, 0));                 // haut du nez, centre des yeux
+    pointsVisage3D.push_back(cv::Point3f(338/R, 243/R, -70/R));     // exterieur oeil droit sur l'image
+
     /*
     pointsVisage3D.push_back(cv::Point3f(90,0,-680)); // exterieur narine gauche
     pointsVisage3D.push_back(cv::Point3f(-90,0,-680)); // exterieur narine droite
@@ -494,6 +504,18 @@ void main()
     mat->addChild(matBunny);
     //mat->addChild(matCerveau);
     //mat->addChild(matCerveau2);
+
+    double sx = 0.19;
+    double sy = 0.19;
+    double sz = 0.19;
+
+    osg::Matrixd matrixS; // scale
+    matrixS.set(
+        sx,	0,	0,	0,
+        0,	sy,	0,	0,
+        0,	0,	sz,	0,
+        0,	0,	0,	1);
+
 
     // Projection
 
@@ -654,7 +676,7 @@ void main()
             osg::Matrixd matrix180; // rotation de repere entre opencv et osg
             matrix180.makeRotate(osg::Quat(osg::DegreesToRadians(180.0f), osg::Vec3d(0.0, 0.0, 1.0)));
 
-            mat->setMatrix(matrixR * matrixT * matrix90 * matrix180);
+            mat->setMatrix(matrixS * matrixR * matrixT * matrix90 * matrix180);
         }
 
         backgroundImage->dirty();
