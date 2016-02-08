@@ -1,5 +1,5 @@
-#ifndef OSGWidget_h__
-#define OSGWidget_h__
+#ifndef SIDEVIEWOSGWIDET_H
+#define SIDEVIEWOSGWIDET_H
 
 #include <QGLWidget>
 
@@ -23,6 +23,7 @@
 #include <osg/MatrixTransform>
 #include <osg/TextureRectangle>
 #include <osg/Array>
+#include <osgGA/TrackballManipulator>
 
 #include <opencv2/opencv.hpp>
 
@@ -30,25 +31,22 @@
 
 #include "our3dobject.h"
 
-class OSGWidget : public QGLWidget
+
+
+class SideViewOsgWidet : public QGLWidget
 {
     Q_OBJECT
 
 public:
-    OSGWidget( cv::Mat *webcamMat, QWidget* parent = 0,
+    SideViewOsgWidet( cv::Mat *webcamMat, QWidget* parent = 0,
                const QGLWidget* shareWidget = 0);
 
-    virtual ~OSGWidget();
-
-    Our3DObject* getObject(int objectID);
-    Our3DObject* getGlobalMat() { return m_globalMat; }
+    virtual ~SideViewOsgWidet();
 
 public slots:
-    void displayObjects(bool removeObjects) { if(!removeObjects) m_mainCam->addChild(m_mainMat); else m_mainCam->removeChild(m_mainMat); }
     void updateSceneRT(cv::Mat rotVec, cv::Mat tvecs);
 
     void addObjectToScene(QString objectPath);
-    void displayObjectInScene(int objectID, bool display);
 
 protected:
     virtual void paintEvent( QPaintEvent* paintEvent );
@@ -71,12 +69,10 @@ private:
 
     osg::ref_ptr<osg::Geode> m_hud;
     osg::ref_ptr<osg::Group> m_group;
-    osg::ref_ptr<osg::MatrixTransform> m_mainMat;
-    Our3DObject* m_globalMat;
-    osg::ref_ptr<osg::Camera> m_mainCam;
-    osg::ref_ptr<osg::Camera> m_hudCam;
+    osg::ref_ptr<osg::MatrixTransform> m_mat;
 
     std::vector<Our3DObject*> m_objectsList;
+
 };
 
-#endif
+#endif // SIDEVIEWOSGWIDET_H

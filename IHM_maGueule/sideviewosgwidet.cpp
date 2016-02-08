@@ -1,6 +1,6 @@
-#include "osgwidget.h"
+#include "sideviewosgwidet.h"
 
-OSGWidget::OSGWidget(cv::Mat* webcamMat, QWidget* parent, const QGLWidget* shareWidget)
+SideViewOsgWidet::SideViewOsgWidet(cv::Mat* webcamMat, QWidget* parent, const QGLWidget* shareWidget)
     : QGLWidget( parent, shareWidget)
     , m_graphicsWindow( new osgViewer::GraphicsWindowEmbedded( this->x(),
                                                                this->y(),
@@ -18,9 +18,7 @@ OSGWidget::OSGWidget(cv::Mat* webcamMat, QWidget* parent, const QGLWidget* share
 
     fs["cameraMatrix"] >> cameraMatrix;
 
-    double NEAR_VALUE = (cameraMatrix.at<double>(0, 0) + cameraMatrix.at<double>(1, 1)) / 2; // NEAR = distance focale ; si pixels carrés, fx = fy -> np
-    //mais est généralement différent de fy donc on prend (pour l'instant) par défaut la valeur médiane
-    double FAR_VALUE = 2000 * NEAR_VALUE;
+    double NEAR_VALUE = (cameraMatrix.at<double>(0, 0) + cameraMatrix.at<double>(1, 1)) / 2;
 
     fs.release();
 
@@ -36,11 +34,8 @@ OSGWidget::OSGWidget(cv::Mat* webcamMat, QWidget* parent, const QGLWidget* share
 
     m_hud = createHUD(m_backgroundImage, webcamMat->cols, webcamMat->rows, cameraMatrix.at<double>(0, 2), cameraMatrix.at<double>(1, 2), NEAR_VALUE);
 
-    m_group = new osg::Group();
-    m_mainMat = new osg::MatrixTransform();
-    m_globalMat = new Our3DObject();
-    m_mainCam = new osg::Camera();
-    m_hudCam = new osg::Camera();
+    m_group = new osg::Group;
+    m_mat = new osg::MatrixTransform();
 
     // Projection
 
@@ -49,37 +44,24 @@ OSGWidget::OSGWidget(cv::Mat* webcamMat, QWidget* parent, const QGLWidget* share
     projectionMatrix.makeFrustum(
                 -cameraMatrix.at<double>(0, 2),		webcamMat->cols - cameraMatrix.at<double>(0, 2),
                 -cameraMatrix.at<double>(1, 2),		webcamMat->rows - cameraMatrix.at<double>(1, 2),
-                NEAR_VALUE,							FAR_VALUE);
+                NEAR_VALUE / 2,							20000*200);
 
     m_corrector = (NEAR_VALUE / 2) / (cameraMatrix.at<double>(1, 2) - webcamMat->rows / 2);
 
-    osg::Vec3d eye(0.0f, 0.0f, 0.0f), target(0.0f, FAR_VALUE, 0.0f), normal(0.0f, 0.0f, 1.0f);
+    osg::Vec3d eye(0.0f, 0.0f, 0.0f), target(0.0f, 1000.0, 0.0f), normal(0.0f, 0.0f, 1.0f);
 
-    m_hudCam->setProjectionMatrix(projectionMatrix);
-    m_hudCam->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
-    m_hudCam->setViewMatrixAsLookAt(eye, target, normal);
-    m_hudCam->setClearMask(GL_DEPTH_BUFFER_BIT);
-    m_hudCam->setRenderOrder(osg::Camera::PRE_RENDER);
-
-    m_mainCam->setProjectionMatrix(projectionMatrix);
-    m_mainCam->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
-    m_mainCam->setViewMatrixAsLookAt(eye, target, normal);
-    m_mainCam->setClearMask(GL_DEPTH_BUFFER_BIT);
-    m_mainCam->setRenderOrder(osg::Camera::POST_RENDER);
-
-    //m_mainCam->addChild(m_mainMat);
-    m_mainMat->addChild(m_globalMat);
-    m_hudCam->addChild(m_hud);
-
-    m_group->addChild(m_mainCam);
-    m_group->addChild(m_hudCam);
+    m_group->addChild(m_mat);
+    m_group->addChild(m_hud);
 
     //float aspectRatio = static_cast<float>(this->width()) / static_cast<float>( this->height() );
     m_viewer->setSceneData(m_group.get());
+
+    osgGA::TrackballManipulator* manipulator = new osgGA::TrackballManipulator;
+    manipulator->setAllowThrow( false );
+
+    m_viewer->setCameraManipulator( manipulator );
     m_viewer->getCamera()->setProjectionMatrix(projectionMatrix);
-    m_viewer->getCamera()->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
     m_viewer->getCamera()->setViewMatrixAsLookAt(eye, target, normal);
-    m_viewer->getCamera()->setClearMask(GL_DEPTH_BUFFER_BIT);
     m_viewer->getCamera()->setGraphicsContext(m_graphicsWindow);
 
     m_viewer->setThreadingModel( osgViewer::Viewer::SingleThreaded );
@@ -88,24 +70,14 @@ OSGWidget::OSGWidget(cv::Mat* webcamMat, QWidget* parent, const QGLWidget* share
     this->setAutoBufferSwap(false);
 }
 
-OSGWidget::~OSGWidget()
+SideViewOsgWidet::~SideViewOsgWidet()
 {
-}
-
-
-Our3DObject* OSGWidget::getObject(int objectID)
-{
-    if(objectID < 0 || objectID >= m_objectsList.size())
-        return NULL;
-    else
-        return m_objectsList[objectID];
 }
 
 
 
 // public slots
-
-void OSGWidget::updateSceneRT(cv::Mat rotVec, cv::Mat tvecs)
+void SideViewOsgWidet::updateSceneRT(cv::Mat rotVec, cv::Mat tvecs)
 {
     double t3 = tvecs.at<double>(1, 0);
     double t1 = -tvecs.at<double>(0, 0);
@@ -127,6 +99,7 @@ void OSGWidget::updateSceneRT(cv::Mat rotVec, cv::Mat tvecs)
                 r12,	r22,	r32,	0,
                 r13,	r23,	r33,	0,
                 0,		0,		0,		1);
+
 
     double rotX = atan2(r32, r33);
     double rotY =  atan2(r21, r11);
@@ -151,36 +124,13 @@ void OSGWidget::updateSceneRT(cv::Mat rotVec, cv::Mat tvecs)
     osg::Matrixd matrix180; // rotation de repere entre opencv et osg
     matrix180.makeRotate(osg::Quat(osg::DegreesToRadians(180.0f), osg::Vec3d(0.0, 0.0, 1.0)));
 
-    m_mainMat->setMatrix(matrixR * matrix90 * matrix180 * matrixT);
+    m_mat->setMatrix(matrixR * matrix90 * matrix180 * matrixT);
 }
 
-void OSGWidget::addObjectToScene(QString objectPath)
+void SideViewOsgWidet::addObjectToScene(QString objectPath)
 {
     m_objectsList.push_back(new Our3DObject(objectPath));
-    m_globalMat->addChild(m_objectsList[m_objectsList.size() - 1]);
-}
-
-void OSGWidget::displayObjectInScene(int objectID, bool display)
-{
-    std::cout << "ID : " << objectID << "    display : " << display << "    nbrObj : " << m_objectsList.size() << std::endl;
-    if(objectID > 0 && objectID < m_objectsList.size())
-    {
-        if(display)
-            m_globalMat->addChild(m_objectsList[objectID - 1]);
-        else
-            m_globalMat->removeChild(m_objectsList[objectID - 1]);
-        m_objectsList[objectID - 1]->printObject(display);
-    }
-    else if(objectID == 0)
-    {
-        if(display)
-            m_mainMat->addChild(m_globalMat);
-        else
-            m_mainMat->removeChild(m_globalMat);
-        m_globalMat->printObject(display);
-    }
-    else
-        return;
+    m_mat->addChild(m_objectsList[0]);
 }
 
 
@@ -188,7 +138,7 @@ void OSGWidget::displayObjectInScene(int objectID, bool display)
 
 // protected
 
-void OSGWidget::paintEvent( QPaintEvent* /* paintEvent */ )
+void SideViewOsgWidet::paintEvent( QPaintEvent* /* paintEvent */ )
 {
     this->makeCurrent();
 
@@ -203,13 +153,13 @@ void OSGWidget::paintEvent( QPaintEvent* /* paintEvent */ )
     this->doneCurrent();
 }
 
-void OSGWidget::paintGL()
+void SideViewOsgWidet::paintGL()
 {
     m_backgroundImage->dirty();
     m_viewer->frame();
 }
 
-void OSGWidget::resizeGL( int width, int height )
+void SideViewOsgWidet::resizeGL( int width, int height )
 {
     m_graphicsWindow->resized( this->x(), this->y(), width, height );
 
@@ -219,12 +169,12 @@ void OSGWidget::resizeGL( int width, int height )
 
 // private
 
-void OSGWidget::onHome()
+void SideViewOsgWidet::onHome()
 {
     m_viewer->home();
 }
 
-osg::Geode* OSGWidget::createHUD(osg::Image* bgImage, int camWidth, int camHeight, double cx, double cy, double n)
+osg::Geode* SideViewOsgWidet::createHUD(osg::Image* bgImage, int camWidth, int camHeight, double cx, double cy, double n)
 {
     osg::Geometry* geoQuad = new osg::Geometry;
 

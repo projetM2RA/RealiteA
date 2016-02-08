@@ -53,8 +53,14 @@ win32:CONFIG(release, debug|release): LIBS += -lChehra_r
 SOURCES += main.cpp\
         mainwindow.cpp \
     osgwidget.cpp \
-    our3dobject.cpp
+    our3dobject.cpp \
+    webcamdevice.cpp \
+    addobjectdialog.cpp \
+    sideviewosgwidet.cpp
 
 HEADERS  += mainwindow.h \
     osgwidget.h \
-    our3dobject.h
+    our3dobject.h \
+    webcamdevice.h \
+    addobjectdialog.h \
+    sideviewosgwidet.h
