@@ -8,13 +8,10 @@ AddObjectDialog::AddObjectDialog(QWidget *parent) :
 
     m_objectPath = new QLineEdit;
     m_objectPath->setText(tr(""));
-    //m_objectPath->setEnabled(false);
-
-    m_maskBox = new QCheckBox();
 
     QPushButton* ok = new QPushButton(tr("ok"));
     QPushButton* cancel = new QPushButton(tr("annuler"));
-    QPushButton* path = new QPushButton("");
+    QPushButton* path = new QPushButton(QIcon(":/open"), "");
 
     QHBoxLayout* pathLayout = new QHBoxLayout;
     pathLayout->addWidget(m_objectPath);
@@ -23,7 +20,6 @@ AddObjectDialog::AddObjectDialog(QWidget *parent) :
     QFormLayout* optionsLayout = new QFormLayout;
     optionsLayout->addRow(tr("nom de l'objet"), m_objectName);
     optionsLayout->addRow(tr("chemin d'acces de l'objet"), pathLayout);
-    optionsLayout->addRow(tr("objet masque"), m_maskBox);
 
     QHBoxLayout* buttonsLayout = new QHBoxLayout;
     buttonsLayout->setAlignment(Qt::AlignRight);

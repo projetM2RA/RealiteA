@@ -18,7 +18,6 @@ public:
 
     QString getObjectName() { return m_objectName->text(); }
     QString getObjectPath() { return m_objectPath->text(); }
-    bool isMask() { return m_maskBox->isChecked(); }
 
 
 signals:
@@ -31,7 +30,6 @@ private slots:
 private:
     QLineEdit *m_objectName;
     QLineEdit *m_objectPath;
-    QCheckBox *m_maskBox;
 };
 
 #endif // ADDOBJECTDIALOG_H

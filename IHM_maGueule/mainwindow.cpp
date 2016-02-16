@@ -4,7 +4,6 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
     setWindowTitle(tr("Projet M2 ISEN : application de realite augmentee"));
-
     m_webcamDevice = new WebcamDevice();
 
     setWindow();

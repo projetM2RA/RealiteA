@@ -2,6 +2,8 @@
 #define WEBCAMDEVICE_H
 
 #include <QThread>
+#include <QFileDialog>
+#include <QMessageBox>
 
 #include <opencv2/opencv.hpp>
 #include <Chehra.h>
@@ -9,6 +11,11 @@
 #define NBR_DETECTION_MODES 4
 #define NBRSAVEDIMAGES      5
 #define NBRFACEPOINTSDETECTED   6
+
+#define NBRIMAGESCALIB	20
+#define COLCHESSBOARD	9
+#define ROWCHESSBOARD	6
+#define SAVEDPATH "../rsc/mires/mire"
 
 enum detectMode{noDetection = 0, faceDetection = 1, chessDetection = 2, qrDetection = 3};
 
@@ -38,6 +45,8 @@ protected:
 private:
     // member
 
+    void calibrateCam(FileStorage *fs);
+    void calibrate();
     bool detecterVisage(std::vector<cv::Point2f> *pointsVisage);
     void faceRT();
     void chessRT();
