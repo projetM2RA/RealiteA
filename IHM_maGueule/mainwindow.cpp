@@ -3,11 +3,16 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
-    setWindowTitle(tr("Projet M2 ISEN : application de realite augmentee"));
-    m_webcamDevice = new WebcamDevice();
+    this->setWindowTitle(tr("Augmented Reality Of Neuroskeleton"));
+    this->setWindowIcon(QIcon("../rsc/icons/icon.png"));
+    _webcamDevice = new WebcamDevice(this);
+    connect(_webcamDevice, SIGNAL(shutdownSignal()), this, SLOT(close()));
 
     setWindow();
-    m_objectID = 0;
+
+    _webcamDevice->initModels();
+
+    _objectID = 0;
 
     connectAll();
 
@@ -18,32 +23,32 @@ MainWindow::~MainWindow()
 {
     for(int i = 0; i < NBR_DETECT; i++)
     {
-        delete m_detectBoxes[i];
+        delete _detectBoxes[i];
     }
-    delete m_detectBoxes;
+    delete _detectBoxes;
 
-    delete m_addObjectButton;
-    delete m_fullScreenButton;
+    delete _addObjectButton;
+    delete _fullScreenButton;
 
-    delete m_mainView;
+    delete _mainView;
 
-    delete m_objectChoiceComboBox;
-    delete m_deleteObjectButton;
-    delete m_isPrintedBox;
+    delete _objectChoiceComboBox;
+    delete _deleteObjectButton;
+    delete _isPrintedBox;
 
     for(int i = 0; i < NBR_CHARACTERISTICS; i++)
     {
-        delete m_objectCharacteristicsSpinSliders[i];
+        delete _objectCharacteristicsSpinSliders[i];
     }
 
-    delete m_objectCharacteristicsSpinSliders;
+    delete _objectCharacteristicsSpinSliders;
 
-    delete m_sideView;
+    delete _sideView;
 
     //////////////////////////////////////////////////
 
-    m_webcamDevice->stop();
-    delete m_webcamDevice;
+    _webcamDevice->stop();
+    delete _webcamDevice;
 }
 
 
@@ -62,83 +67,83 @@ void MainWindow::addObject()
 
     if(objectPath == "" || objectName == "")
     {
-        QMessageBox::warning(this, tr("erreur de chargement de l'objet"), tr("le chemin d'acces ou le nom n'ont pas ete renseigne"));
+        QMessageBox::warning(this, tr("Error loading object"), tr("The object's path and/or name have not been specified."));
         return;
     }
 
-    m_mainView->addObjectToScene(objectPath);
-    m_sideView->addObjectToScene(objectPath);
+    _mainView->addObjectToScene(objectPath);
+    _sideView->addObjectToScene(objectPath);
 
-    int nbrData = m_objectChoiceComboBox->itemText(0).mid(18).toInt();
-    m_objectChoiceComboBox->setItemText(0, "tous les objets : " + QString::number(nbrData + 1));
-    m_objectChoiceComboBox->addItem(objectName);
+    int nbrData = _objectChoiceComboBox->itemText(0).mid(18).toInt();
+    _objectChoiceComboBox->setItemText(0, "All objects : " + QString::number(nbrData + 1));
+    _objectChoiceComboBox->addItem(objectName);
 }
 
 void MainWindow::updateObjectCharacteristics(int objectID)
 {
-    if(objectID == m_objectID)
+    if(objectID == _objectID)
         return;
 
     Our3DObject* object = NULL;
 
-    if(m_objectID != 0)
-        object = m_mainView->getObject(m_objectID - 1);
+    if(_objectID != 0)
+        object = _mainView->getObject(_objectID - 1);
     else
-        object = m_mainView->getGlobalMat();
+        object = _mainView->getGlobalMat();
 
-    disconnect(m_objectCharacteristicsSpinSliders[sizeX], SIGNAL(valueChanged(int)), object, SLOT(setSizeX(int)));
-    disconnect(m_objectCharacteristicsSpinSliders[sizeY], SIGNAL(valueChanged(int)), object, SLOT(setSizeY(int)));
-    disconnect(m_objectCharacteristicsSpinSliders[sizeZ], SIGNAL(valueChanged(int)), object, SLOT(setSizeZ(int)));
+    disconnect(_objectCharacteristicsSpinSliders[sizeX], SIGNAL(valueChanged(int)), object, SLOT(setSizeX(int)));
+    disconnect(_objectCharacteristicsSpinSliders[sizeY], SIGNAL(valueChanged(int)), object, SLOT(setSizeY(int)));
+    disconnect(_objectCharacteristicsSpinSliders[sizeZ], SIGNAL(valueChanged(int)), object, SLOT(setSizeZ(int)));
 
-    disconnect(m_objectCharacteristicsSpinSliders[rotX], SIGNAL(valueChanged(int)), object, SLOT(setRotX(int)));
-    disconnect(m_objectCharacteristicsSpinSliders[rotY], SIGNAL(valueChanged(int)), object, SLOT(setRotY(int)));
-    disconnect(m_objectCharacteristicsSpinSliders[rotZ], SIGNAL(valueChanged(int)), object, SLOT(setRotZ(int)));
+    disconnect(_objectCharacteristicsSpinSliders[rotX], SIGNAL(valueChanged(int)), object, SLOT(setRotX(int)));
+    disconnect(_objectCharacteristicsSpinSliders[rotY], SIGNAL(valueChanged(int)), object, SLOT(setRotY(int)));
+    disconnect(_objectCharacteristicsSpinSliders[rotZ], SIGNAL(valueChanged(int)), object, SLOT(setRotZ(int)));
 
-    disconnect(m_objectCharacteristicsSpinSliders[transX], SIGNAL(valueChanged(int)), object, SLOT(setTransX(int)));
-    disconnect(m_objectCharacteristicsSpinSliders[transY], SIGNAL(valueChanged(int)), object, SLOT(setTransY(int)));
-    disconnect(m_objectCharacteristicsSpinSliders[transZ], SIGNAL(valueChanged(int)), object, SLOT(setTransZ(int)));
+    disconnect(_objectCharacteristicsSpinSliders[transX], SIGNAL(valueChanged(int)), object, SLOT(setTransX(int)));
+    disconnect(_objectCharacteristicsSpinSliders[transY], SIGNAL(valueChanged(int)), object, SLOT(setTransY(int)));
+    disconnect(_objectCharacteristicsSpinSliders[transZ], SIGNAL(valueChanged(int)), object, SLOT(setTransZ(int)));
 
-    disconnect(m_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object, SLOT(setAlpha(int)));
+    disconnect(_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object, SLOT(setAlpha(int)));
 
 
 
-    m_objectID = objectID;
+    _objectID = objectID;
 
-    if(m_objectID > 0)
-        object = m_mainView->getObject(objectID - 1);
+    if(_objectID > 0)
+        object = _mainView->getObject(objectID - 1);
     else
-        object = m_mainView->getGlobalMat();
+        object = _mainView->getGlobalMat();
 
 
-    m_isPrintedBox->setChecked(object->isObjectPrinted());
+    _isPrintedBox->setChecked(object->isObjectPrinted());
 
-    m_objectCharacteristicsSpinSliders[sizeX]->setValue(object->getSizeX());
-    m_objectCharacteristicsSpinSliders[sizeY]->setValue(object->getSizeY());
-    m_objectCharacteristicsSpinSliders[sizeZ]->setValue(object->getSizeZ());
+    _objectCharacteristicsSpinSliders[sizeX]->setValue(object->getSizeX());
+    _objectCharacteristicsSpinSliders[sizeY]->setValue(object->getSizeY());
+    _objectCharacteristicsSpinSliders[sizeZ]->setValue(object->getSizeZ());
 
-    m_objectCharacteristicsSpinSliders[rotX]->setValue(object->getRotX());
-    m_objectCharacteristicsSpinSliders[rotY]->setValue(object->getRotY());
-    m_objectCharacteristicsSpinSliders[rotZ]->setValue(object->getRotZ());
+    _objectCharacteristicsSpinSliders[rotX]->setValue(object->getRotX());
+    _objectCharacteristicsSpinSliders[rotY]->setValue(object->getRotY());
+    _objectCharacteristicsSpinSliders[rotZ]->setValue(object->getRotZ());
 
-    m_objectCharacteristicsSpinSliders[transX]->setValue(object->getTransX());
-    m_objectCharacteristicsSpinSliders[transY]->setValue(object->getTransY());
-    m_objectCharacteristicsSpinSliders[transZ]->setValue(object->getTransZ());
+    _objectCharacteristicsSpinSliders[transX]->setValue(object->getTransX());
+    _objectCharacteristicsSpinSliders[transY]->setValue(object->getTransY());
+    _objectCharacteristicsSpinSliders[transZ]->setValue(object->getTransZ());
 
-    m_objectCharacteristicsSpinSliders[alpha]->setValue(object->getAlpha());
+    _objectCharacteristicsSpinSliders[alpha]->setValue(object->getAlpha());
 
-    connect(m_objectCharacteristicsSpinSliders[sizeX], SIGNAL(valueChanged(int)), object, SLOT(setSizeX(int)));
-    connect(m_objectCharacteristicsSpinSliders[sizeY], SIGNAL(valueChanged(int)), object, SLOT(setSizeY(int)));
-    connect(m_objectCharacteristicsSpinSliders[sizeZ], SIGNAL(valueChanged(int)), object, SLOT(setSizeZ(int)));
+    connect(_objectCharacteristicsSpinSliders[sizeX], SIGNAL(valueChanged(int)), object, SLOT(setSizeX(int)));
+    connect(_objectCharacteristicsSpinSliders[sizeY], SIGNAL(valueChanged(int)), object, SLOT(setSizeY(int)));
+    connect(_objectCharacteristicsSpinSliders[sizeZ], SIGNAL(valueChanged(int)), object, SLOT(setSizeZ(int)));
 
-    connect(m_objectCharacteristicsSpinSliders[rotX], SIGNAL(valueChanged(int)), object, SLOT(setRotX(int)));
-    connect(m_objectCharacteristicsSpinSliders[rotY], SIGNAL(valueChanged(int)), object, SLOT(setRotY(int)));
-    connect(m_objectCharacteristicsSpinSliders[rotZ], SIGNAL(valueChanged(int)), object, SLOT(setRotZ(int)));
+    connect(_objectCharacteristicsSpinSliders[rotX], SIGNAL(valueChanged(int)), object, SLOT(setRotX(int)));
+    connect(_objectCharacteristicsSpinSliders[rotY], SIGNAL(valueChanged(int)), object, SLOT(setRotY(int)));
+    connect(_objectCharacteristicsSpinSliders[rotZ], SIGNAL(valueChanged(int)), object, SLOT(setRotZ(int)));
 
-    connect(m_objectCharacteristicsSpinSliders[transX], SIGNAL(valueChanged(int)), object, SLOT(setTransX(int)));
-    connect(m_objectCharacteristicsSpinSliders[transY], SIGNAL(valueChanged(int)), object, SLOT(setTransY(int)));
-    connect(m_objectCharacteristicsSpinSliders[transZ], SIGNAL(valueChanged(int)), object, SLOT(setTransZ(int)));
+    connect(_objectCharacteristicsSpinSliders[transX], SIGNAL(valueChanged(int)), object, SLOT(setTransX(int)));
+    connect(_objectCharacteristicsSpinSliders[transY], SIGNAL(valueChanged(int)), object, SLOT(setTransY(int)));
+    connect(_objectCharacteristicsSpinSliders[transZ], SIGNAL(valueChanged(int)), object, SLOT(setTransZ(int)));
 
-    connect(m_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object, SLOT(setAlpha(int)));
+    connect(_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object, SLOT(setAlpha(int)));
 }
 
 
@@ -156,32 +161,32 @@ void MainWindow::setWindow()
     ////////// options layout ////////////////////////
     //////////////////////////////////////////////////
 
-    m_detectGroup = new QButtonGroup();
-    m_detectBoxes = new QCheckBox*[NBR_DETECT];
+    _detectGroup = new QButtonGroup();
+    _detectBoxes = new QCheckBox*[NBR_DETECT];
     for(int i = 0; i < NBR_DETECT; i++)
     {
-        m_detectBoxes[i] = new QCheckBox();
-        m_detectGroup->addButton(m_detectBoxes[i]);
-        m_detectGroup->setId(m_detectBoxes[i], i);
-        optionsLayout->addWidget(m_detectBoxes[i]);
+        _detectBoxes[i] = new QCheckBox();
+        _detectGroup->addButton(_detectBoxes[i]);
+        _detectGroup->setId(_detectBoxes[i], i);
+        optionsLayout->addWidget(_detectBoxes[i]);
     }
 
-    m_detectBoxes[noDetect]->setText(tr("pas de detection"));
-    m_detectBoxes[noDetect]->setChecked(true);
-    m_detectBoxes[chehra]->setText(tr("detection visage"));
-    m_detectBoxes[chess]->setText(tr("detection echiquier"));
-    m_detectBoxes[chess]->setEnabled(false);
-    m_detectBoxes[QR]->setText(tr("detection QR code"));
-    m_detectBoxes[QR]->setEnabled(false);
+    _detectBoxes[noDetect]->setText(tr("No detection"));
+    _detectBoxes[noDetect]->setChecked(true);
+    _detectBoxes[chehra]->setText(tr("Face detection"));
+    _detectBoxes[chess]->setText(tr("Board detection"));
+    _detectBoxes[chess]->setEnabled(false);
+    _detectBoxes[QR]->setText(tr("Marker detection"));
+    _detectBoxes[QR]->setEnabled(false);
 
-    m_addObjectButton = new QPushButton(tr("ajouter objet a la scene"));
-    optionsLayout->addWidget(m_addObjectButton);
-    m_calibrateButton = new QPushButton(tr("calibrer camera"));
-    m_calibrateButton->setEnabled(false);
-    optionsLayout->addWidget(m_calibrateButton);
-    m_fullScreenButton = new QPushButton(tr("afficher en plein ecran"));
-    m_fullScreenButton->setEnabled(false);
-    optionsLayout->addWidget(m_fullScreenButton);
+    _addObjectButton = new QPushButton(tr("Add object to the scene"));
+    optionsLayout->addWidget(_addObjectButton);
+    _calibrateButton = new QPushButton(tr("Calibrate camera"));
+    _calibrateButton->setEnabled(false);
+    optionsLayout->addWidget(_calibrateButton);
+    _fullScreenButton = new QPushButton(tr("Full Screen"));
+    _fullScreenButton->setEnabled(false);
+    optionsLayout->addWidget(_fullScreenButton);
 
     mainLayout->addLayout(optionsLayout);
 
@@ -189,81 +194,81 @@ void MainWindow::setWindow()
     ////////// webcam layout /////////////////////////
     //////////////////////////////////////////////////
 
-    m_mainView = new OSGWidget(m_webcamDevice->getWebcam());
-    mainLayout->addWidget(m_mainView);
+    _mainView = new OSGWidget(_webcamDevice->getWebcam());
+    mainLayout->addWidget(_mainView);
 
     //////////////////////////////////////////////////
     ////////// object layout /////////////////////////
     //////////////////////////////////////////////////
 
 
-    m_objectChoiceComboBox = new QComboBox();
-    m_objectChoiceComboBox->addItem("tous les objets : 0");
-    objectLayout->addWidget(m_objectChoiceComboBox);
+    _objectChoiceComboBox = new QComboBox();
+    _objectChoiceComboBox->addItem("All objects : 0");
+    objectLayout->addWidget(_objectChoiceComboBox);
 
     QHBoxLayout* objectDispalyOptionsLayout = new QHBoxLayout();
-    m_isPrintedBox = new QCheckBox(tr("afficher l'objet"));
-    m_isPrintedBox->setChecked(true);
-    objectDispalyOptionsLayout->addWidget(m_isPrintedBox);
-    m_deleteObjectButton = new QPushButton(tr("supprimer l'objet"));
-    m_deleteObjectButton->setEnabled(false);
-    objectDispalyOptionsLayout->addWidget(m_deleteObjectButton);
+    _isPrintedBox = new QCheckBox(tr("Display object"));
+    _isPrintedBox->setChecked(true);
+    objectDispalyOptionsLayout->addWidget(_isPrintedBox);
+    _deleteObjectButton = new QPushButton(tr("Delete object"));
+    _deleteObjectButton->setEnabled(false);
+    objectDispalyOptionsLayout->addWidget(_deleteObjectButton);
 
     objectLayout->addLayout(objectDispalyOptionsLayout);
 
-    m_objectCharacteristicsSpinSliders = new QSlider*[NBR_CHARACTERISTICS];
+    _objectCharacteristicsSpinSliders = new QSlider*[NBR_CHARACTERISTICS];
     QLabel** objectCharacteristicsLabels = new QLabel*[NBR_CHARACTERISTICS];
     for(int i = 0; i < NBR_CHARACTERISTICS; i++)
     {
-        m_objectCharacteristicsSpinSliders[i] = new QSlider();
-        m_objectCharacteristicsSpinSliders[i]->setOrientation(Qt::Horizontal);
+        _objectCharacteristicsSpinSliders[i] = new QSlider();
+        _objectCharacteristicsSpinSliders[i]->setOrientation(Qt::Horizontal);
         objectCharacteristicsLabels[i] = new QLabel();
         objectLayout->addWidget(objectCharacteristicsLabels[i]);
-        objectLayout->addWidget(m_objectCharacteristicsSpinSliders[i]);
+        objectLayout->addWidget(_objectCharacteristicsSpinSliders[i]);
     }
 
-    objectCharacteristicsLabels[sizeX]->setText(tr("taille selon x"));
-    m_objectCharacteristicsSpinSliders[sizeX]->setRange(-10000, 10000);
-    m_objectCharacteristicsSpinSliders[sizeX]->setSingleStep(1);
-    m_objectCharacteristicsSpinSliders[sizeX]->setValue(100.0);
-    objectCharacteristicsLabels[sizeY]->setText(tr("taille selon y"));
-    m_objectCharacteristicsSpinSliders[sizeY]->setRange(-10000, 10000);
-    m_objectCharacteristicsSpinSliders[sizeY]->setSingleStep(1);
-    m_objectCharacteristicsSpinSliders[sizeY]->setValue(100.0);
-    objectCharacteristicsLabels[sizeZ]->setText(tr("taille selon z"));
-    m_objectCharacteristicsSpinSliders[sizeZ]->setRange(-10000, 10000);
-    m_objectCharacteristicsSpinSliders[sizeZ]->setSingleStep(1);
-    m_objectCharacteristicsSpinSliders[sizeZ]->setValue(100.0);
+    objectCharacteristicsLabels[sizeX]->setText(tr("Resize by x"));
+    _objectCharacteristicsSpinSliders[sizeX]->setRange(-10000, 10000);
+    _objectCharacteristicsSpinSliders[sizeX]->setSingleStep(1);
+    _objectCharacteristicsSpinSliders[sizeX]->setValue(100.0);
+    objectCharacteristicsLabels[sizeY]->setText(tr("Resize by y"));
+    _objectCharacteristicsSpinSliders[sizeY]->setRange(-10000, 10000);
+    _objectCharacteristicsSpinSliders[sizeY]->setSingleStep(1);
+    _objectCharacteristicsSpinSliders[sizeY]->setValue(100.0);
+    objectCharacteristicsLabels[sizeZ]->setText(tr("Resize by z"));
+    _objectCharacteristicsSpinSliders[sizeZ]->setRange(-10000, 10000);
+    _objectCharacteristicsSpinSliders[sizeZ]->setSingleStep(1);
+    _objectCharacteristicsSpinSliders[sizeZ]->setValue(100.0);
 
-    objectCharacteristicsLabels[rotX]->setText(tr("rotation selon x"));
-    m_objectCharacteristicsSpinSliders[rotX]->setRange(-180, 180);
-    m_objectCharacteristicsSpinSliders[rotX]->setSingleStep(1);
-    objectCharacteristicsLabels[rotY]->setText(tr("rotation selon y"));
-    m_objectCharacteristicsSpinSliders[rotY]->setRange(-180, 180);
-    m_objectCharacteristicsSpinSliders[rotY]->setSingleStep(1);
-    objectCharacteristicsLabels[rotZ]->setText(tr("rotation selon z"));
-    m_objectCharacteristicsSpinSliders[rotZ]->setRange(-180, 180);
-    m_objectCharacteristicsSpinSliders[rotZ]->setSingleStep(1);
+    objectCharacteristicsLabels[rotX]->setText(tr("Rotate around x"));
+    _objectCharacteristicsSpinSliders[rotX]->setRange(-180, 180);
+    _objectCharacteristicsSpinSliders[rotX]->setSingleStep(1);
+    objectCharacteristicsLabels[rotY]->setText(tr("Rotate around y"));
+    _objectCharacteristicsSpinSliders[rotY]->setRange(-180, 180);
+    _objectCharacteristicsSpinSliders[rotY]->setSingleStep(1);
+    objectCharacteristicsLabels[rotZ]->setText(tr("Rotate around z"));
+    _objectCharacteristicsSpinSliders[rotZ]->setRange(-180, 180);
+    _objectCharacteristicsSpinSliders[rotZ]->setSingleStep(1);
 
-    objectCharacteristicsLabels[transX]->setText(tr("translation selon x"));
-    m_objectCharacteristicsSpinSliders[transX]->setRange(-5000, 5000);
-    m_objectCharacteristicsSpinSliders[transX]->setSingleStep(1);
-    objectCharacteristicsLabels[transY]->setText(tr("translation selon y"));
-    m_objectCharacteristicsSpinSliders[transY]->setRange(-5000, 5000);
-    m_objectCharacteristicsSpinSliders[transY]->setSingleStep(1);
-    objectCharacteristicsLabels[transZ]->setText(tr("translation selon z"));
-    m_objectCharacteristicsSpinSliders[transZ]->setRange(-5000, 5000);
-    m_objectCharacteristicsSpinSliders[transZ]->setSingleStep(1);
+    objectCharacteristicsLabels[transX]->setText(tr("Translate across x"));
+    _objectCharacteristicsSpinSliders[transX]->setRange(-5000, 5000);
+    _objectCharacteristicsSpinSliders[transX]->setSingleStep(1);
+    objectCharacteristicsLabels[transY]->setText(tr("Translate across y"));
+    _objectCharacteristicsSpinSliders[transY]->setRange(-5000, 5000);
+    _objectCharacteristicsSpinSliders[transY]->setSingleStep(1);
+    objectCharacteristicsLabels[transZ]->setText(tr("Translate across z"));
+    _objectCharacteristicsSpinSliders[transZ]->setRange(-5000, 5000);
+    _objectCharacteristicsSpinSliders[transZ]->setSingleStep(1);
 
-    objectCharacteristicsLabels[alpha]->setText(tr("transparence"));
-    m_objectCharacteristicsSpinSliders[alpha]->setRange(0, 100);
-    m_objectCharacteristicsSpinSliders[alpha]->setSingleStep(1);
-    m_objectCharacteristicsSpinSliders[alpha]->setValue(100);
+    objectCharacteristicsLabels[alpha]->setText(tr("Transparency"));
+    _objectCharacteristicsSpinSliders[alpha]->setRange(0, 100);
+    _objectCharacteristicsSpinSliders[alpha]->setSingleStep(1);
+    _objectCharacteristicsSpinSliders[alpha]->setValue(100);
 
-    m_sideView = new SideViewOsgWidet(m_webcamDevice->getWebcam());
-    objectLayout->addWidget(m_sideView);
+    _sideView = new SideViewOsgWidet(_webcamDevice->getWebcam());
+    objectLayout->addWidget(_sideView);
 
-    objectLayout->setStretchFactor(m_sideView, 2);
+    objectLayout->setStretchFactor(_sideView, 2);
     mainLayout->addLayout(objectLayout);
 
     //////////////////////////////////////////////////
@@ -277,35 +282,35 @@ void MainWindow::setWindow()
 void MainWindow::connectAll()
 {
     qRegisterMetaType<cv::Mat>("cv::Mat");
-    connect(m_webcamDevice, SIGNAL(updateWebcam()), m_mainView, SLOT(repaint()));
-    connect(m_webcamDevice, SIGNAL(updateWebcam()), m_sideView, SLOT(repaint()));
+    connect(_webcamDevice, SIGNAL(updateWebcam()), _mainView, SLOT(repaint()));
+    connect(_webcamDevice, SIGNAL(updateWebcam()), _sideView, SLOT(repaint()));
 
-    connect(m_detectGroup, SIGNAL(buttonClicked(int)), m_webcamDevice, SLOT(switchMode(int)));
+    connect(_detectGroup, SIGNAL(buttonClicked(int)), _webcamDevice, SLOT(switchMode(int)));
 
-    connect(m_addObjectButton, SIGNAL(clicked()), this, SLOT(addObject()));
+    connect(_addObjectButton, SIGNAL(clicked()), this, SLOT(addObject()));
 
-    connect(m_detectBoxes[noDetect], SIGNAL(toggled(bool)), m_mainView, SLOT(displayObjects(bool)));
-    connect(m_isPrintedBox, SIGNAL(toggled(bool)), this, SLOT(displayObjectInScene(bool)));
+    connect(_detectBoxes[noDetect], SIGNAL(toggled(bool)), _mainView, SLOT(displayObjects(bool)));
+    connect(_isPrintedBox, SIGNAL(clicked(bool)), this, SLOT(displayObjectInScene(bool)));
 
-    connect(m_objectChoiceComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(updateObjectCharacteristics(int)));
+    connect(_objectChoiceComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(updateObjectCharacteristics(int)));
 
-    connect(m_webcamDevice, SIGNAL(updateScene(cv::Mat,cv::Mat)), m_mainView, SLOT(updateSceneRT(cv::Mat,cv::Mat)));
-    connect(m_webcamDevice, SIGNAL(updateScene(cv::Mat,cv::Mat)), m_sideView, SLOT(updateSceneRT(cv::Mat,cv::Mat)));
+    connect(_webcamDevice, SIGNAL(updateScene(cv::Mat,cv::Mat)), _mainView, SLOT(updateSceneRT(cv::Mat,cv::Mat)));
+    connect(_webcamDevice, SIGNAL(updateScene(cv::Mat,cv::Mat)), _sideView, SLOT(updateSceneRT(cv::Mat,cv::Mat)));
 
 
-    Our3DObject* object = m_mainView->getGlobalMat();
+    Our3DObject* object = _mainView->getGlobalMat();
 
-    connect(m_objectCharacteristicsSpinSliders[sizeX], SIGNAL(valueChanged(int)), object, SLOT(setSizeX(int)));
-    connect(m_objectCharacteristicsSpinSliders[sizeY], SIGNAL(valueChanged(int)), object, SLOT(setSizeY(int)));
-    connect(m_objectCharacteristicsSpinSliders[sizeZ], SIGNAL(valueChanged(int)), object, SLOT(setSizeZ(int)));
+    connect(_objectCharacteristicsSpinSliders[sizeX], SIGNAL(valueChanged(int)), object, SLOT(setSizeX(int)));
+    connect(_objectCharacteristicsSpinSliders[sizeY], SIGNAL(valueChanged(int)), object, SLOT(setSizeY(int)));
+    connect(_objectCharacteristicsSpinSliders[sizeZ], SIGNAL(valueChanged(int)), object, SLOT(setSizeZ(int)));
 
-    connect(m_objectCharacteristicsSpinSliders[rotX], SIGNAL(valueChanged(int)), object, SLOT(setRotX(int)));
-    connect(m_objectCharacteristicsSpinSliders[rotY], SIGNAL(valueChanged(int)), object, SLOT(setRotY(int)));
-    connect(m_objectCharacteristicsSpinSliders[rotZ], SIGNAL(valueChanged(int)), object, SLOT(setRotZ(int)));
+    connect(_objectCharacteristicsSpinSliders[rotX], SIGNAL(valueChanged(int)), object, SLOT(setRotX(int)));
+    connect(_objectCharacteristicsSpinSliders[rotY], SIGNAL(valueChanged(int)), object, SLOT(setRotY(int)));
+    connect(_objectCharacteristicsSpinSliders[rotZ], SIGNAL(valueChanged(int)), object, SLOT(setRotZ(int)));
 
-    connect(m_objectCharacteristicsSpinSliders[transX], SIGNAL(valueChanged(int)), object, SLOT(setTransX(int)));
-    connect(m_objectCharacteristicsSpinSliders[transY], SIGNAL(valueChanged(int)), object, SLOT(setTransY(int)));
-    connect(m_objectCharacteristicsSpinSliders[transZ], SIGNAL(valueChanged(int)), object, SLOT(setTransZ(int)));
+    connect(_objectCharacteristicsSpinSliders[transX], SIGNAL(valueChanged(int)), object, SLOT(setTransX(int)));
+    connect(_objectCharacteristicsSpinSliders[transY], SIGNAL(valueChanged(int)), object, SLOT(setTransY(int)));
+    connect(_objectCharacteristicsSpinSliders[transZ], SIGNAL(valueChanged(int)), object, SLOT(setTransZ(int)));
 
-    connect(m_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object, SLOT(setAlpha(int)));
+    connect(_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object, SLOT(setAlpha(int)));
 }

@@ -5,20 +5,52 @@
 WebcamDevice::WebcamDevice(QObject *parent) :
     QThread(parent)
 {
+    _vcap = cv::VideoCapture(0);
+    /*
+    if(!vcap.isOpened())
+    {
+        std::cout << "FAIL!" << std::endl;
+        return;
+    }
+    */
+    //vcap.set(CV_CAP_PROP_FPS, 30);
+    _frame = new cv::Mat(cv::Mat::zeros(_vcap.get(CV_CAP_PROP_FRAME_HEIGHT), _vcap.get(CV_CAP_PROP_FRAME_WIDTH), CV_8UC3));
+
+    do
+    {
+        _vcap >> *_frame;
+    }while(_frame->empty()); // on s'assure que la camera est lancé (#lenteurDuPCDeNico)
+
+    //////////////////////////////////////////////////
+
+    _isRunning = true;
+    _detect = noDetection;
+    //_corrector = (_focalePlane / 2) / (_cameraMatrix.at<double>(1, 2) - _vcap.get(CV_CAP_PROP_FRAME_HEIGHT) / 2);
+
+    this->start();
+}
+
+WebcamDevice::~WebcamDevice()
+{
+    delete _frame;
+}
+
+void WebcamDevice::initModels()
+{
     //////////////////////////////////////////////////
     ////////// initialisation variables visage ///////
     //////////////////////////////////////////////////
 
     std::cout << "initialisation de Chehra..." << std::endl;
-    m_chehra = new Chehra;
+    _chehra = new Chehra;
     std::cout << "done" << std::endl;
 
-    m_pointsVisage3D.push_back(cv::Point3f(-110, 0, -336)); // exterieur narine gauche sur l'image
-    m_pointsVisage3D.push_back(cv::Point3f(110, 0, -336)); // exterieur narine droite sur l'image
-    m_pointsVisage3D.push_back(cv::Point3f(0, -142, -258)); // bout du nez
-    m_pointsVisage3D.push_back(cv::Point3f(-338, 243, -70)); // exterieur oeil gauche sur l'image
-    m_pointsVisage3D.push_back(cv::Point3f(0, 0, 0)); // haut du nez, centre des yeux
-    m_pointsVisage3D.push_back(cv::Point3f(338, 243, -70)); // exterieur oeil droit sur l'image
+    _pointsVisage3D.push_back(cv::Point3f(-110, 0, -336)); // exterieur narine gauche sur l'image
+    _pointsVisage3D.push_back(cv::Point3f(110, 0, -336)); // exterieur narine droite sur l'image
+    _pointsVisage3D.push_back(cv::Point3f(0, -142, -258)); // bout du nez
+    _pointsVisage3D.push_back(cv::Point3f(-338, 243, -70)); // exterieur oeil gauche sur l'image
+    _pointsVisage3D.push_back(cv::Point3f(0, 0, 0)); // haut du nez, centre des yeux
+    _pointsVisage3D.push_back(cv::Point3f(338, 243, -70)); // exterieur oeil droit sur l'image
 
     //////////////////////////////////////////////////
     ////////// initialisation OpenCV /////////////////
@@ -28,42 +60,13 @@ WebcamDevice::WebcamDevice(QObject *parent) :
     while(!fs.isOpened())
         calibrateCam(&fs);
 
-    fs["cameraMatrix"] >> m_cameraMatrix;
-    fs["distCoeffs"] >> m_distCoeffs;
+    fs["cameraMatrix"] >> _cameraMatrix;
+    fs["distCoeffs"] >> _distCoeffs;
 
-    m_focalePlane = (m_cameraMatrix.at<double>(0, 0) + m_cameraMatrix.at<double>(1, 1)) / 2; // NEAR = distance focale ; si pixels carrés, fx = fy -> np
+    _focalePlane = (_cameraMatrix.at<double>(0, 0) + _cameraMatrix.at<double>(1, 1)) / 2; // NEAR = distance focale ; si pixels carrés, fx = fy -> np
     //mais est généralement différent de fy donc on prend (pour l'instant) par défaut la valeur médiane
 
     fs.release();
-
-    m_vcap = cv::VideoCapture(0);
-    /*
-    if(!vcap.isOpened())
-    {
-        std::cout << "FAIL!" << std::endl;
-        return;
-    }
-    */
-    //vcap.set(CV_CAP_PROP_FPS, 30);
-    m_frame = new cv::Mat(cv::Mat::zeros(m_vcap.get(CV_CAP_PROP_FRAME_HEIGHT), m_vcap.get(CV_CAP_PROP_FRAME_WIDTH), CV_8UC3));
-
-    do
-    {
-        m_vcap >> *m_frame;
-    }while(m_frame->empty());
-
-    //////////////////////////////////////////////////
-
-    m_isRunning = true;
-    m_detect = noDetection;
-    //m_corrector = (m_focalePlane / 2) / (m_cameraMatrix.at<double>(1, 2) - m_vcap.get(CV_CAP_PROP_FRAME_HEIGHT) / 2);
-
-    this->start();
-}
-
-WebcamDevice::~WebcamDevice()
-{
-    delete m_frame;
 }
 
 
@@ -75,34 +78,34 @@ WebcamDevice::~WebcamDevice()
 
 void WebcamDevice::run()
 {
-    while(m_isRunning)
+    while(_isRunning)
     {
-        switch(m_detect)
+        switch(_detect)
         {
         case noDetection:
-            m_vcap >> *m_frame;
+            _vcap >> *_frame;
 
             break;
         case faceDetection:
-            m_vcap >> *m_frame;
+            _vcap >> *_frame;
 
             faceRT();
 
             break;
         case chessDetection:
-            m_vcap >> *m_frame;
+            _vcap >> *_frame;
 
             chessRT();
 
             break;
         case qrDetection:
-            m_vcap >> *m_frame;
+            _vcap >> *_frame;
 
             qrRT();
 
             break;
         default:
-            m_vcap >> *m_frame;
+            _vcap >> *_frame;
 
             break;
         }
@@ -120,38 +123,39 @@ void WebcamDevice::calibrateCam(cv::FileStorage *fs)
     bool stop = false;
     do
     {
-        QMessageBox::StandardButton button = QMessageBox::critical(0, tr("matrice camera manquante"),
-                             tr("impossible de trouver la matrice camera.\nDisposez-vous deja d'une matrice de calibration ?."),
+        QMessageBox::StandardButton button = QMessageBox::critical(0, tr("Erreur"),
+                             tr("Impossible de trouver la matrice de calibration.\nDisposez-vous deja d'une matrice camera ?"),
                               QMessageBox::Yes | QMessageBox::No);
 
         switch(button)
         {
-        case QMessageBox::No:
-
-            break;
-        case QMessageBox::Yes:
-        {
-            cv::Mat test1, test2;
-            QString fsPath = QFileDialog::getOpenFileName(0, "Ouvrir la matrice camera", "../rsc/", "FileStorage (*.yml)");
-            if(fsPath != "")
-                fs->open(fsPath.toStdString(), cv::FileStorage::READ);
-            (*fs)["cameraMatrix"] >> test1;
-            (*fs)["distCoeffs"] >> test2;
-            if(test1.empty() || test2.empty())
-                QMessageBox::warning(0, tr("matrice incorrecte"), tr("La matrice indiquee n'est pas correcte"));
-            else
+            case QMessageBox::No:
+                CalibrateDialog calibrateDialog(_frame);
+                calibrateDialog.exec();
+                break;
+            case QMessageBox::Yes:
             {
-                stop = true;
+                cv::Mat test1, test2;
+                QString fsPath = QFileDialog::getOpenFileName(0, "Ouvrir la matrice camera", "../rsc/", "FileStorage (*.yml)");
+                if(fsPath != "")
+                    fs->open(fsPath.toStdString(), cv::FileStorage::READ);
+                (*fs)["cameraMatrix"] >> test1;
+                (*fs)["distCoeffs"] >> test2;
+                if(test1.empty() || test2.empty())
+                    QMessageBox::warning(0, tr("matrice incorrecte"), tr("La matrice indiquee n'est pas correcte"));
+                else
+                {
+                    stop = true;
 
-                cv::FileStorage fs2("../rsc/intrinsicMatrix.yml", cv::FileStorage::WRITE);
-                fs2 << "cameraMatrix" << test1 << "distCoeffs" << test2;
-                fs2.release();
+                    cv::FileStorage fs2("../rsc/intrinsicMatrix.yml", cv::FileStorage::WRITE);
+                    fs2 << "cameraMatrix" << test1 << "distCoeffs" << test2;
+                    fs2.release();
+                }
+                break;
             }
-            break;
-        }
-        default:
-            stop = true;
-            break;
+            default:
+                emit shutdownSignal();
+                break;
         }
     }while(!stop);
 }
@@ -225,13 +229,13 @@ bool WebcamDevice::detecterVisage(std::vector<cv::Point2f> *pointsVisage)
     cv::Mat imNB;
     cv::Mat points;
 
-    cv::cvtColor(*m_frame, imNB, CV_BGR2GRAY);
+    cv::cvtColor(*_frame, imNB, CV_BGR2GRAY);
 
-    visageFound = (*m_chehra).track(imNB);
+    visageFound = (*_chehra).track(imNB);
 
     if(visageFound)
     {
-        points = (*m_chehra).getTrackedPoints();
+        points = (*_chehra).getTrackedPoints();
         if (points.rows == 98)
             for(int i = 0; i < 49; i++)
             {
@@ -258,37 +262,37 @@ void WebcamDevice::faceRT()
 
     if(faceDetected)
     {
-        m_nbrLoopSinceLastDetection = 0;
-        m_images.push_back(pointsVisage2D);
+        _nbrLoopSinceLastDetection = 0;
+        _images.push_back(pointsVisage2D);
     }
     else
-        m_nbrLoopSinceLastDetection++;
+        _nbrLoopSinceLastDetection++;
 
-    if((m_images.size() > NBRSAVEDIMAGES || m_nbrLoopSinceLastDetection > NBRSAVEDIMAGES) && !m_images.empty())
-        m_images.erase(m_images.begin());
+    if((_images.size() > NBRSAVEDIMAGES || _nbrLoopSinceLastDetection > NBRSAVEDIMAGES) && !_images.empty())
+        _images.erase(_images.begin());
 
-    if(!m_images.empty())
+    if(!_images.empty())
     {
         for(int i = 0; i < NBRFACEPOINTSDETECTED; i++)
         {
             cv::Point2f coordonee(0.0f, 0.0f);
-            for(int j = 0; j < m_images.size(); j++)
+            for(int j = 0; j < _images.size(); j++)
             {
-                coordonee.x += m_images[j][i].x;
-                coordonee.y += m_images[j][i].y;
+                coordonee.x += _images[j][i].x;
+                coordonee.y += _images[j][i].y;
             }
-            coordonee.x /= m_images.size();
-            coordonee.y /= m_images.size();
+            coordonee.x /= _images.size();
+            coordonee.y /= _images.size();
 
             moyPointsVisage2D.push_back(coordonee);
         }
 
-        cv::solvePnP(m_pointsVisage3D, moyPointsVisage2D, m_cameraMatrix, m_distCoeffs, rvecs, m_tvecs);
+        cv::solvePnP(_pointsVisage3D, moyPointsVisage2D, _cameraMatrix, _distCoeffs, rvecs, _tvecs);
 
-        m_rotVecs = cv::Mat(3, 3, CV_64F);
-        cv::Rodrigues(rvecs, m_rotVecs);
+        _rotVecs = cv::Mat(3, 3, CV_64F);
+        cv::Rodrigues(rvecs, _rotVecs);
 
-        emit updateScene(m_rotVecs, m_tvecs);
+        emit updateScene(_rotVecs, _tvecs);
     }
 }
 

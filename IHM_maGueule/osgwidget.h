@@ -41,10 +41,10 @@ public:
     virtual ~OSGWidget();
 
     Our3DObject* getObject(int objectID);
-    Our3DObject* getGlobalMat() { return m_globalMat; }
+    Our3DObject* getGlobalMat() { return _globalMat; }
 
 public slots:
-    void displayObjects(bool removeObjects) { if(!removeObjects) m_mainCam->addChild(m_mainMat); else m_mainCam->removeChild(m_mainMat); }
+    void displayObjects(bool removeObjects) { if(!removeObjects) _mainCam->addChild(_mainMat); else _mainCam->removeChild(_mainMat); }
     void updateSceneRT(cv::Mat rotVec, cv::Mat tvecs);
 
     void addObjectToScene(QString objectPath);
@@ -63,20 +63,20 @@ private:
 
     //attributes
 
-    double m_corrector;
+    double _corrector;
 
-    osg::ref_ptr<osgViewer::GraphicsWindowEmbedded> m_graphicsWindow;
-    osg::ref_ptr<osgViewer::Viewer> m_viewer;
-    osg::ref_ptr<osg::Image> m_backgroundImage;
+    osg::ref_ptr<osgViewer::GraphicsWindowEmbedded> _graphicsWindow;
+    osg::ref_ptr<osgViewer::Viewer> _viewer;
+    osg::ref_ptr<osg::Image> _backgroundImage;
 
-    osg::ref_ptr<osg::Geode> m_hud;
-    osg::ref_ptr<osg::Group> m_group;
-    osg::ref_ptr<osg::MatrixTransform> m_mainMat;
-    Our3DObject* m_globalMat;
-    osg::ref_ptr<osg::Camera> m_mainCam;
-    osg::ref_ptr<osg::Camera> m_hudCam;
+    osg::ref_ptr<osg::Geode> _hud;
+    osg::ref_ptr<osg::Group> _group;
+    osg::ref_ptr<osg::MatrixTransform> _mainMat;
+    Our3DObject* _globalMat;
+    osg::ref_ptr<osg::Camera> _mainCam;
+    osg::ref_ptr<osg::Camera> _hudCam;
 
-    std::vector<Our3DObject*> m_objectsList;
+    std::vector<Our3DObject*> _objectsList;
 };
 
 #endif

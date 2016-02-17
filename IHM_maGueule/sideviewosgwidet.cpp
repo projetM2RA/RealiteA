@@ -2,11 +2,11 @@
 
 SideViewOsgWidet::SideViewOsgWidet(cv::Mat* webcamMat, QWidget* parent, const QGLWidget* shareWidget)
     : QGLWidget( parent, shareWidget)
-    , m_graphicsWindow( new osgViewer::GraphicsWindowEmbedded( this->x(),
+    , _graphicsWindow( new osgViewer::GraphicsWindowEmbedded( this->x(),
                                                                this->y(),
                                                                this->width(),
                                                                this->height() ) )
-    , m_viewer( new osgViewer::Viewer )
+    , _viewer( new osgViewer::Viewer )
 {
     //////////////////////////////////////////////////
     ////////// initialisation OpenCV /////////////////
@@ -26,16 +26,16 @@ SideViewOsgWidet::SideViewOsgWidet(cv::Mat* webcamMat, QWidget* parent, const QG
     ////////// initialisation OpenSceneGraph /////////
     //////////////////////////////////////////////////
 
-    m_backgroundImage = new osg::Image;
-    m_backgroundImage->setImage(webcamMat->cols, webcamMat->rows, 3,
+    _backgroundImage = new osg::Image;
+    _backgroundImage->setImage(webcamMat->cols, webcamMat->rows, 3,
                                 GL_RGB, GL_BGR, GL_UNSIGNED_BYTE,
                                 (uchar*)(webcamMat->data),
                                 osg::Image::AllocationMode::NO_DELETE, 1);
 
-    m_hud = createHUD(m_backgroundImage, webcamMat->cols, webcamMat->rows, cameraMatrix.at<double>(0, 2), cameraMatrix.at<double>(1, 2), NEAR_VALUE);
+    _hud = createHUD(_backgroundImage, webcamMat->cols, webcamMat->rows, cameraMatrix.at<double>(0, 2), cameraMatrix.at<double>(1, 2), NEAR_VALUE);
 
-    m_group = new osg::Group;
-    m_mat = new osg::MatrixTransform();
+    _group = new osg::Group;
+    _mat = new osg::MatrixTransform();
 
     // Projection
 
@@ -46,26 +46,26 @@ SideViewOsgWidet::SideViewOsgWidet(cv::Mat* webcamMat, QWidget* parent, const QG
                 -cameraMatrix.at<double>(1, 2),		webcamMat->rows - cameraMatrix.at<double>(1, 2),
                 NEAR_VALUE / 2,							20000*200);
 
-    m_corrector = (NEAR_VALUE / 2) / (cameraMatrix.at<double>(1, 2) - webcamMat->rows / 2);
+    _corrector = (NEAR_VALUE / 2) / (cameraMatrix.at<double>(1, 2) - webcamMat->rows / 2);
 
     osg::Vec3d eye(0.0f, 0.0f, 0.0f), target(0.0f, 1000.0, 0.0f), normal(0.0f, 0.0f, 1.0f);
 
-    m_group->addChild(m_mat);
-    m_group->addChild(m_hud);
+    _group->addChild(_mat);
+    _group->addChild(_hud);
 
     //float aspectRatio = static_cast<float>(this->width()) / static_cast<float>( this->height() );
-    m_viewer->setSceneData(m_group.get());
+    _viewer->setSceneData(_group.get());
 
     osgGA::TrackballManipulator* manipulator = new osgGA::TrackballManipulator;
     manipulator->setAllowThrow( false );
 
-    m_viewer->setCameraManipulator( manipulator );
-    m_viewer->getCamera()->setProjectionMatrix(projectionMatrix);
-    m_viewer->getCamera()->setViewMatrixAsLookAt(eye, target, normal);
-    m_viewer->getCamera()->setGraphicsContext(m_graphicsWindow);
+    _viewer->setCameraManipulator( manipulator );
+    _viewer->getCamera()->setProjectionMatrix(projectionMatrix);
+    _viewer->getCamera()->setViewMatrixAsLookAt(eye, target, normal);
+    _viewer->getCamera()->setGraphicsContext(_graphicsWindow);
 
-    m_viewer->setThreadingModel( osgViewer::Viewer::SingleThreaded );
-    m_viewer->realize();
+    _viewer->setThreadingModel( osgViewer::Viewer::SingleThreaded );
+    _viewer->realize();
 
     this->setAutoBufferSwap(false);
 }
@@ -81,7 +81,7 @@ void SideViewOsgWidet::updateSceneRT(cv::Mat rotVec, cv::Mat tvecs)
 {
     double t3 = tvecs.at<double>(1, 0);
     double t1 = -tvecs.at<double>(0, 0);
-    double t2 = -tvecs.at<double>(2, 0);// - t3 / m_corrector; // and now, magic !
+    double t2 = -tvecs.at<double>(2, 0);// - t3 / _corrector; // and now, magic !
 
     double r11 = rotVec.at<double>(0, 0);
     double r12 = rotVec.at<double>(0, 1);
@@ -124,13 +124,13 @@ void SideViewOsgWidet::updateSceneRT(cv::Mat rotVec, cv::Mat tvecs)
     osg::Matrixd matrix180; // rotation de repere entre opencv et osg
     matrix180.makeRotate(osg::Quat(osg::DegreesToRadians(180.0f), osg::Vec3d(0.0, 0.0, 1.0)));
 
-    m_mat->setMatrix(matrixR * matrix90 * matrix180 * matrixT);
+    _mat->setMatrix(matrixR * matrix90 * matrix180 * matrixT);
 }
 
 void SideViewOsgWidet::addObjectToScene(QString objectPath)
 {
-    m_objectsList.push_back(new Our3DObject(objectPath));
-    m_mat->addChild(m_objectsList[0]);
+    _objectsList.push_back(new Our3DObject(objectPath));
+    _mat->addChild(_objectsList[0]);
 }
 
 
@@ -155,15 +155,15 @@ void SideViewOsgWidet::paintEvent( QPaintEvent* /* paintEvent */ )
 
 void SideViewOsgWidet::paintGL()
 {
-    m_backgroundImage->dirty();
-    m_viewer->frame();
+    _backgroundImage->dirty();
+    _viewer->frame();
 }
 
 void SideViewOsgWidet::resizeGL( int width, int height )
 {
-    m_graphicsWindow->resized( this->x(), this->y(), width, height );
+    _graphicsWindow->resized( this->x(), this->y(), width, height );
 
-    m_viewer->getCamera()->setViewport( 0, 0, this->width(), this->height() );
+    _viewer->getCamera()->setViewport( 0, 0, this->width(), this->height() );
 }
 
 
@@ -171,7 +171,7 @@ void SideViewOsgWidet::resizeGL( int width, int height )
 
 void SideViewOsgWidet::onHome()
 {
-    m_viewer->home();
+    _viewer->home();
 }
 
 osg::Geode* SideViewOsgWidet::createHUD(osg::Image* bgImage, int camWidth, int camHeight, double cx, double cy, double n)

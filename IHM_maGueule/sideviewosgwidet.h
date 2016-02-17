@@ -61,17 +61,17 @@ private:
 
     //attributes
 
-    double m_corrector;
+    double _corrector;
 
-    osg::ref_ptr<osgViewer::GraphicsWindowEmbedded> m_graphicsWindow;
-    osg::ref_ptr<osgViewer::Viewer> m_viewer;
-    osg::ref_ptr<osg::Image> m_backgroundImage;
+    osg::ref_ptr<osgViewer::GraphicsWindowEmbedded> _graphicsWindow;
+    osg::ref_ptr<osgViewer::Viewer> _viewer;
+    osg::ref_ptr<osg::Image> _backgroundImage;
 
-    osg::ref_ptr<osg::Geode> m_hud;
-    osg::ref_ptr<osg::Group> m_group;
-    osg::ref_ptr<osg::MatrixTransform> m_mat;
+    osg::ref_ptr<osg::Geode> _hud;
+    osg::ref_ptr<osg::Group> _group;
+    osg::ref_ptr<osg::MatrixTransform> _mat;
 
-    std::vector<Our3DObject*> m_objectsList;
+    std::vector<Our3DObject*> _objectsList;
 
 };
 

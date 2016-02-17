@@ -61,5 +61,4 @@ HEADERS  += mainwindow.h \
     addobjectdialog.h \
     sideviewosgwidet.h
 
-RESOURCES += \
-    rscImg.qrc
+RESOURCES +=

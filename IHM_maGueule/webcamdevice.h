@@ -27,17 +27,20 @@ public:
     explicit WebcamDevice(QObject *parent = 0);
     ~WebcamDevice();
 
-    cv::Mat* getWebcam() { return m_frame; }
+    cv::Mat* getWebcam() { return _frame; }
 
-    void stop() { m_isRunning = false; }
-    void play() { m_isRunning = true; }
+    void stop() { _isRunning = false; }
+    void play() { _isRunning = true; }
+
+    void initModels();
 
 signals:
     void updateWebcam();
     void updateScene(cv::Mat, cv::Mat);
+    void shutdownSignal();
 
 public slots:
-  void switchMode(int mode) { m_detect = (detectMode)mode; }
+  void switchMode(int mode) { _detect = (detectMode)mode; }
 
 protected:
     void run();
@@ -55,27 +58,27 @@ private:
 
     // attributes
 
-    bool m_isRunning;
-    detectMode m_detect;
-    cv::VideoCapture m_vcap;
-    cv::Mat m_rotVecs;
-    cv::Mat m_tvecs;
-    cv::Mat m_cameraMatrix;
-    cv::Mat m_distCoeffs;
-    cv::Mat* m_frame;
+    bool _isRunning;
+    detectMode _detect;
+    cv::VideoCapture _vcap;
+    cv::Mat _rotVecs;
+    cv::Mat _tvecs;
+    cv::Mat _cameraMatrix;
+    cv::Mat _distCoeffs;
+    cv::Mat* _frame;
 
-    Chehra* m_chehra;
-    std::vector<cv::Point3f> m_pointsVisage3D;
-    std::vector<std::vector<cv::Point2f>> m_images;
+    Chehra* _chehra;
+    std::vector<cv::Point3f> _pointsVisage3D;
+    std::vector<std::vector<cv::Point2f>> _images;
 
 
-    int m_nbrColChess;
-    int m_nbrRowChess;
-    float m_chessSize;
+    int _nbrColChess;
+    int _nbrRowChess;
+    float _chessSize;
 
-    int m_nbrLoopSinceLastDetection;
-    double m_focalePlane;
-    //double m_corrector;
+    int _nbrLoopSinceLastDetection;
+    double _focalePlane;
+    //double _corrector;
 };
 
 #endif // WEBCAMDEVICE_H

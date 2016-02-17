@@ -1,47 +1,47 @@
 #include "our3dobject.h"
 
 Our3DObject::Our3DObject() :
-    QObject(0), m_isPrinted(true),
-    m_sizeX(100.0), m_sizeY(100.0), m_sizeZ(100.0), m_alpha(1.0),
-    m_rotX(0.0), m_rotY(0.0), m_rotZ(0.0), m_transX(0.0), m_transY(0.0), m_transZ(0.0)
+    QObject(0), _isPrinted(true),
+    _sizeX(100.0), _sizeY(100.0), _sizeZ(100.0), _alpha(1.0),
+    _rotX(0.0), _rotY(0.0), _rotZ(0.0), _transX(0.0), _transY(0.0), _transZ(0.0)
 {
-    m_object = NULL;
+    _object = NULL;
     if(0)
     {
-        m_material = new osg::Material;
+        _material = new osg::Material;
 
-        m_material->setAlpha(osg::Material::FRONT_AND_BACK, 1.0f); //Making alpha channel
-        m_object->getOrCreateStateSet()->setAttributeAndModes(m_material, osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
-        m_object->getOrCreateStateSet()->setMode( GL_BLEND, osg::StateAttribute::ON );
+        _material->setAlpha(osg::Material::FRONT_AND_BACK, 1.0f); //Making alpha channel
+        _object->getOrCreateStateSet()->setAttributeAndModes(_material, osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
+        _object->getOrCreateStateSet()->setMode( GL_BLEND, osg::StateAttribute::ON );
     }
 
     update();
 }
 
 Our3DObject::Our3DObject(QString objectPath) :
-    QObject(0), m_isPrinted(true),
-    m_sizeX(1.0), m_sizeY(1.0), m_sizeZ(1.0), m_alpha(1.0),
-    m_rotX(0.0), m_rotY(0.0), m_rotZ(0.0), m_transX(0.0), m_transY(0.0), m_transZ(0.0)
+    QObject(0), _isPrinted(true),
+    _sizeX(1.0), _sizeY(1.0), _sizeZ(1.0), _alpha(1.0),
+    _rotX(0.0), _rotY(0.0), _rotZ(0.0), _transX(0.0), _transY(0.0), _transZ(0.0)
 {
-    m_material = new osg::Material;
-    m_object = osgDB::readNodeFile(objectPath.toStdString());
+    _material = new osg::Material;
+    _object = osgDB::readNodeFile(objectPath.toStdString());
     if(0)
     {
-        m_material = new osg::Material;
+        _material = new osg::Material;
 
-        m_material->setAlpha(osg::Material::FRONT_AND_BACK, 1.0f); //Making alpha channel
-        m_object->getOrCreateStateSet()->setAttributeAndModes(m_material, osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
-        m_object->getOrCreateStateSet()->setMode( GL_BLEND, osg::StateAttribute::ON );
+        _material->setAlpha(osg::Material::FRONT_AND_BACK, 1.0f); //Making alpha channel
+        _object->getOrCreateStateSet()->setAttributeAndModes(_material, osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
+        _object->getOrCreateStateSet()->setMode( GL_BLEND, osg::StateAttribute::ON );
     }
-    this->addChild(m_object);
+    this->addChild(_object);
 
     update();
 }
 
 Our3DObject::~Our3DObject()
 {
-    if(m_isPrinted)
-        this->removeChild(m_object);
+    if(_isPrinted)
+        this->removeChild(_object);
 }
 
 bool Our3DObject::applyTexture(QString texturePath)
@@ -54,7 +54,7 @@ bool Our3DObject::applyTexture(QString texturePath)
     else
         texture->setImage(textureImage);
 
-    m_object->getOrCreateStateSet()->setTextureAttributeAndModes(0, texture, osg::StateAttribute::ON);
+    _object->getOrCreateStateSet()->setTextureAttributeAndModes(0, texture, osg::StateAttribute::ON);
     return true;
 }
 
@@ -62,42 +62,42 @@ void Our3DObject::update()
 {
     osg::Matrixd matrixS; // scale
     matrixS.set(
-        m_sizeX,0,      0,      0,
-        0,      m_sizeY,0,      0,
-        0,      0,      m_sizeZ,0,
+        _sizeX,0,      0,      0,
+        0,      _sizeY,0,      0,
+        0,      0,      _sizeZ,0,
         0,      0,      0,      1);
 
     osg::Matrixd matrixRot;
-    matrixRot.makeRotate(osg::DegreesToRadians(m_rotX), osg::Vec3d(1.0, 0.0, 0.0),
-                         osg::DegreesToRadians(m_rotY), osg::Vec3d(0.0, 1.0, 0.0),
-                         osg::DegreesToRadians(m_rotZ), osg::Vec3d(0.0, 0.0, 1.0));
+    matrixRot.makeRotate(osg::DegreesToRadians(_rotX), osg::Vec3d(1.0, 0.0, 0.0),
+                         osg::DegreesToRadians(_rotY), osg::Vec3d(0.0, 1.0, 0.0),
+                         osg::DegreesToRadians(_rotZ), osg::Vec3d(0.0, 0.0, 1.0));
 
     osg::Matrixd matrixTrans;
-    matrixTrans.makeTranslate(m_transX, m_transY, m_transZ);
+    matrixTrans.makeTranslate(_transX, _transY, _transZ);
 
     this->setMatrix(matrixS * matrixRot * matrixTrans);
 }
 
 void Our3DObject::setAlpha(int alpha)
 {
-    m_alpha = alpha / 100.0f;
-    if(m_object)
+    _alpha = alpha / 100.0f;
+    if(_object)
     {
-        m_material->setAlpha(osg::Material::FRONT_AND_BACK, m_alpha); //Making alpha channel
-        m_object->getOrCreateStateSet()->setAttributeAndModes(m_material, osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
-        m_object->getOrCreateStateSet()->setMode( GL_BLEND, osg::StateAttribute::ON );
+        _material->setAlpha(osg::Material::FRONT_AND_BACK, _alpha); //Making alpha channel
+        _object->getOrCreateStateSet()->setAttributeAndModes(_material, osg::StateAttribute::ON | osg::StateAttribute::OVERRIDE);
+        _object->getOrCreateStateSet()->setMode( GL_BLEND, osg::StateAttribute::ON );
     }
 }
 
 
 //void Our3DObject::printObject(bool print)
 //{
-//    if(m_isPrinted == print)
+//    if(_isPrinted == print)
 //        return;
 
-//    m_isPrinted = print;
-//    if(m_isPrinted)
-//        this->addChild(m_object);
+//    _isPrinted = print;
+//    if(_isPrinted)
+//        this->addChild(_object);
 //    else
-//        this->removeChild(m_object);
+//        this->removeChild(_object);
 //}

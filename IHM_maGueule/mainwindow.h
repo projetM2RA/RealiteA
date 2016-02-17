@@ -42,7 +42,7 @@ public:
 private slots:
     void addObject();
     void updateObjectCharacteristics(int objectID);
-    void displayObjectInScene(bool display) { m_mainView->displayObjectInScene(m_objectID, display); }
+    void displayObjectInScene(bool display) { _mainView->displayObjectInScene(_objectID, display); }
 
 private:
     void setWindow();
@@ -52,26 +52,26 @@ private:
     ////////// widgets graphiques ////////////////////
     //////////////////////////////////////////////////
 
-    QButtonGroup* m_detectGroup;
-    QCheckBox** m_detectBoxes;
+    QButtonGroup* _detectGroup;
+    QCheckBox** _detectBoxes;
 
-    QPushButton* m_addObjectButton;
-    QPushButton* m_calibrateButton;
-    QPushButton* m_fullScreenButton;
+    QPushButton* _addObjectButton;
+    QPushButton* _calibrateButton;
+    QPushButton* _fullScreenButton;
 
-    OSGWidget* m_mainView;
+    OSGWidget* _mainView;
 
-    QComboBox* m_objectChoiceComboBox;
-    QPushButton* m_deleteObjectButton;
-    QCheckBox* m_isPrintedBox;
-    QSlider** m_objectCharacteristicsSpinSliders;
+    QComboBox* _objectChoiceComboBox;
+    QPushButton* _deleteObjectButton;
+    QCheckBox* _isPrintedBox;
+    QSlider** _objectCharacteristicsSpinSliders;
 
-    SideViewOsgWidet* m_sideView;
+    SideViewOsgWidet* _sideView;
 
     //////////////////////////////////////////////////
 
-    WebcamDevice* m_webcamDevice;
-    int m_objectID;
+    WebcamDevice* _webcamDevice;
+    int _objectID;
 };
 
 #endif // MAINWINDOW_H
