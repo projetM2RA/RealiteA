@@ -7,8 +7,11 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 
-#include <QButtonGroup>
-#include <QCheckBox>
+#include <QMenu>
+#include <QMenuBar>
+
+#include <QActionGroup>
+#include <QAction>
 
 #include <QPushButton>
 
@@ -18,13 +21,14 @@
 
 #include <QMessageBox>
 
+#include <QShortcut>
+
 #include "osgwidget.h"
 #include "sideviewosgwidet.h"
 #include "webcamdevice.h"
 #include "addobjectdialog.h"
 
 
-#define NBR_DETECT  4
 #define NBR_CHARACTERISTICS  10
 
 enum { noDetect = 0, chehra = 1, chess = 2, QR = 3 };
@@ -40,38 +44,82 @@ public:
     ~MainWindow();
 
 private slots:
+    void updateCam() { _backgroundImage->dirty(); _mainView->repaint(); _sideView->repaint(); _fullScreenView->repaint(); }
+    void displayObjects(bool removeObjects) { if(!removeObjects) _mainMat->addChild(_objectsList[0]); else _mainMat->removeChild(_objectsList[0]); }
+    void start();
+    void calibrateCamera();
     void addObject();
     void updateObjectCharacteristics(int objectID);
-    void displayObjectInScene(bool display) { m_mainView->displayObjectInScene(m_objectID, display); }
+    void updateDetectMode();
+    void switchInput();
+    void displayObjectInScene(bool display);
+    void displayFullScreen();
+    void updateSceneRT(cv::Mat rotVec, cv::Mat tvecs);
 
 private:
-    void setWindow();
+    void setFirstWindow();
+    void setMainWindow();
     void connectAll();
+    void setShortcuts();
+    void createFullScreenWidget();
+    void initObjectsList();
 
     //////////////////////////////////////////////////
     ////////// widgets graphiques ////////////////////
     //////////////////////////////////////////////////
 
-    QButtonGroup* m_detectGroup;
-    QCheckBox** m_detectBoxes;
 
-    QPushButton* m_addObjectButton;
-    QPushButton* m_calibrateButton;
-    QPushButton* m_fullScreenButton;
+    QAction* _startAction;
+    QAction* _addObjectAction;
+    QAction* _calibrateAction;
+    QAction* _optionsAction;
+    QAction* _fullScreenAction;
 
-    OSGWidget* m_mainView;
+    QActionGroup* _detectGroup;
+    QAction** _detectActions;
 
-    QComboBox* m_objectChoiceComboBox;
-    QPushButton* m_deleteObjectButton;
-    QCheckBox* m_isPrintedBox;
-    QSlider** m_objectCharacteristicsSpinSliders;
+    QActionGroup* _webcamGroup;
+    QAction** _webcamActions;
+    QAction* _videoAction;
 
-    SideViewOsgWidet* m_sideView;
+    OSGWidget* _mainView;
+
+    QComboBox* _objectChoiceComboBox;
+    QPushButton* _deleteObjectButton;
+    QCheckBox* _isPrintedBox;
+    QSlider** _objectCharacteristicsSpinSliders;
+
+    SideViewOsgWidet* _sideView;
+
+
+    //////////////////////////////////////////////////
+    ////////// widget full screen ////////////////////
+    //////////////////////////////////////////////////
+
+
+    QWidget* _fullScreenWidget;
+    OSGWidget* _fullScreenView;
+
+
+    //////////////////////////////////////////////////
+    ////////// raccourcis clavier ////////////////////
+    //////////////////////////////////////////////////
+
+    QShortcut* _fullScreenShortcut;
+    QShortcut* _fullScreenShortcut2;
+    QShortcut* _pauseShortcut;
+    QShortcut* _pauseShortcut2;
 
     //////////////////////////////////////////////////
 
-    WebcamDevice* m_webcamDevice;
-    int m_objectID;
+    WebcamDevice* _webcamDevice;
+    std::vector<Our3DObject*> _objectsList;
+    osg::MatrixTransform *_mainMat;
+    osg::Image* _backgroundImage;
+    double _corrector;
+    int _objectID;
+    int _nbrCam;
+    bool _fullScreen;
 };
 
 #endif // MAINWINDOW_H

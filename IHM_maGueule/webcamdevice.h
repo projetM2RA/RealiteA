@@ -2,13 +2,23 @@
 #define WEBCAMDEVICE_H
 
 #include <QThread>
+#include <QFileDialog>
+#include <QMessageBox>
 
 #include <opencv2/opencv.hpp>
 #include <Chehra.h>
 
-#define NBR_DETECTION_MODES 4
-#define NBRSAVEDIMAGES      5
+#include "calibratedialog.h"
+#include "chesscaracteristicsdialog.h"
+
+#define NBR_DETECT              4
+#define NBRSAVEDIMAGES          5
 #define NBRFACEPOINTSDETECTED   6
+
+#define NBRIMAGESCALIB	20
+#define COLCHESSBOARD	9
+#define ROWCHESSBOARD	6
+#define SAVEDPATH "../rsc/mires/mire"
 
 enum detectMode{noDetection = 0, faceDetection = 1, chessDetection = 2, qrDetection = 3};
 
@@ -20,17 +30,25 @@ public:
     explicit WebcamDevice(QObject *parent = 0);
     ~WebcamDevice();
 
-    cv::Mat* getWebcam() { return m_frame; }
+    cv::Mat* getWebcam() { return _frame; }
 
-    void stop() { m_isRunning = false; }
-    void play() { m_isRunning = true; }
+    void stop() { _isRunning = false; }
+    void play() { _isRunning = true; }
+
+    void initMatrix();
+    void initModels();
+
+    static int webcamCount();
 
 signals:
     void updateWebcam();
     void updateScene(cv::Mat, cv::Mat);
 
 public slots:
-  void switchMode(int mode) { m_detect = (detectMode)mode; }
+  void switchMode(int mode);
+  void pause() { _pause = !_pause; }
+  void switchInput(int input);
+  void setOptions();
 
 protected:
     void run();
@@ -38,7 +56,9 @@ protected:
 private:
     // member
 
+    void calibrateCam(FileStorage *fs);
     bool detecterVisage(std::vector<cv::Point2f> *pointsVisage);
+    bool detectChess(std::vector<cv::Point2f> *chessPoints);
     void faceRT();
     void chessRT();
     void qrRT();
@@ -46,27 +66,35 @@ private:
 
     // attributes
 
-    bool m_isRunning;
-    detectMode m_detect;
-    cv::VideoCapture m_vcap;
-    cv::Mat m_rotVecs;
-    cv::Mat m_tvecs;
-    cv::Mat m_cameraMatrix;
-    cv::Mat m_distCoeffs;
-    cv::Mat* m_frame;
+    bool _isRunning;
+    bool _pause;
+    bool _chessCaracs;
+    bool _reset;
+    bool _chessDetected;
+    detectMode _detect;
+    cv::VideoCapture _vcap;
+    cv::Mat _rotVecs;
+    cv::Mat _tvecs;
+    cv::Mat _cameraMatrix;
+    cv::Mat _distCoeffs;
+    cv::Mat* _frame;
+    cv::Mat _nextFrame;
 
-    Chehra* m_chehra;
-    std::vector<cv::Point3f> m_pointsVisage3D;
-    std::vector<std::vector<cv::Point2f>> m_images;
+    Chehra* _chehra;
+    std::vector<cv::Point3f> _pointsVisage3D;
+    std::vector<cv::Point3f> _pointsChess3D;
+    std::vector<std::vector<cv::Point2f>> _images;
+    std::vector<std::vector<cv::Point2f>> _chessCornersInit;
 
+    ChessCaracteristicsDialog* _chessDialog;
 
-    int m_nbrColChess;
-    int m_nbrRowChess;
-    float m_chessSize;
+    int _nbrColChess;
+    int _nbrRowChess;
+    double _chessSize;
 
-    int m_nbrLoopSinceLastDetection;
-    double m_focalePlane;
-    //double m_corrector;
+    int _nbrLoopSinceLastDetection;
+    double _focalePlane;
+    //double _corrector;
 };
 
 #endif // WEBCAMDEVICE_H

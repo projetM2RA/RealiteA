@@ -3,27 +3,23 @@
 AddObjectDialog::AddObjectDialog(QWidget *parent) :
     QDialog(parent)
 {
-    m_objectName = new QLineEdit;
-    m_objectName->setText(tr("name"));
+    _objectName = new QLineEdit;
+    _objectName->setText(tr("Name"));
 
-    m_objectPath = new QLineEdit;
-    m_objectPath->setText(tr(""));
-    //m_objectPath->setEnabled(false);
+    _objectPath = new QLineEdit;
+    _objectPath->setText(tr(""));
 
-    m_maskBox = new QCheckBox();
-
-    QPushButton* ok = new QPushButton(tr("ok"));
-    QPushButton* cancel = new QPushButton(tr("annuler"));
-    QPushButton* path = new QPushButton("");
+    QPushButton* ok = new QPushButton(tr("Ok"));
+    QPushButton* cancel = new QPushButton(tr("Cancel"));
+    QPushButton* path = new QPushButton(QIcon("../rsc/icons/open-file.png"), "");
 
     QHBoxLayout* pathLayout = new QHBoxLayout;
-    pathLayout->addWidget(m_objectPath);
+    pathLayout->addWidget(_objectPath);
     pathLayout->addWidget(path);
 
     QFormLayout* optionsLayout = new QFormLayout;
-    optionsLayout->addRow(tr("nom de l'objet"), m_objectName);
-    optionsLayout->addRow(tr("chemin d'acces de l'objet"), pathLayout);
-    optionsLayout->addRow(tr("objet masque"), m_maskBox);
+    optionsLayout->addRow(tr("Object name"), _objectName);
+    optionsLayout->addRow(tr("Path of the object : "), pathLayout);
 
     QHBoxLayout* buttonsLayout = new QHBoxLayout;
     buttonsLayout->setAlignment(Qt::AlignRight);
@@ -36,7 +32,8 @@ AddObjectDialog::AddObjectDialog(QWidget *parent) :
 
     setLayout(mainLayout);
 
-    setFixedSize(300, 200);
+    setFixedSize(350, 100);
+    setWindowTitle("Add object");
 
     connect(path, SIGNAL(clicked()), this, SLOT(updatePath()));
 
@@ -46,8 +43,8 @@ AddObjectDialog::AddObjectDialog(QWidget *parent) :
 
 void AddObjectDialog::updatePath()
 {
-    QString objectPath = QFileDialog::getOpenFileName(this, "Ouvrir un objet 3D", "../rsc/objets3D/", "objets 3D (*.obj *.3ds *.stl)");
+    QString objectPath = QFileDialog::getOpenFileName(this, "Open 3D Object", "../rsc/objets3D/", "3D object (*.obj *.3ds *.stl)");
     if(objectPath != "")
-        m_objectPath->setText(objectPath);
+        _objectPath->setText(objectPath);
 
 }

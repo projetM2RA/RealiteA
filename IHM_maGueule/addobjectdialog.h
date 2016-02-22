@@ -16,9 +16,8 @@ class AddObjectDialog : public QDialog
 public:
     explicit AddObjectDialog(QWidget *parent = 0);
 
-    QString getObjectName() { return m_objectName->text(); }
-    QString getObjectPath() { return m_objectPath->text(); }
-    bool isMask() { return m_maskBox->isChecked(); }
+    QString getObjectName() { return _objectName->text(); }
+    QString getObjectPath() { return _objectPath->text(); }
 
 
 signals:
@@ -29,9 +28,8 @@ private slots:
     void updatePath();
 
 private:
-    QLineEdit *m_objectName;
-    QLineEdit *m_objectPath;
-    QCheckBox *m_maskBox;
+    QLineEdit *_objectName;
+    QLineEdit *_objectPath;
 };
 
 #endif // ADDOBJECTDIALOG_H
