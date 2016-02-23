@@ -21,8 +21,9 @@ int main()
 	cv::vector<cv::Vec4i> hierarchy;
 	cv::vector<cv::Point2f> pointQR;
 	cv::Mat imCalibNext;
-	cv::Mat imQR;
-	cv::vector<cv::Mat> tabQR;
+	cv::Mat imMQR;
+	cv::vector<cv::Mat> tabMarqueur;
+
 	/*cv::vector<cv::Point2f> corners1;
 	cv::vector<cv::Point2f> corners2;
 	cv::vector<cv::Point2f> corners3;
@@ -41,16 +42,15 @@ int main()
 	int mark;
 	bool patternFound = false;
 	
-	cv::VideoCapture vcap("../rsc/capture2.avi");
+	cv::VideoCapture vcap(0/*"../rsc/MQR2.avi"*/);
 
-	for (int i = 1; i < 5; i++)
+	for (int i = 1; i < 3; i++)
 	{
 		std::ostringstream oss;
-		oss << "../rsc/QrCodes/QR" << i << ".jpg";
-		imQR = cv::imread(oss.str());
-		cv::cvtColor(imQR, imQR, CV_BGR2GRAY);
-		std::cout<< "Bouh!!!!!!" << std::endl;
-		tabQR.push_back(imQR);
+		oss << "../rsc/QrCodes/Mqr" << i << ".png";
+		imMQR = cv::imread(oss.str());
+		cv::cvtColor(imMQR, imMQR, CV_BGR2GRAY);
+		tabMarqueur.push_back(imMQR);
 	}
 
 	do
@@ -105,18 +105,45 @@ int main()
 		if (A !=0 && B !=0 && C!=0)
 		{
 
-			cv::Mat imagecropped = imCalibColor;
-			cv::Rect ROI(280/*pointQR[0].x*/, 260/*pointQR[0].y*/, 253, 218);
-			cv::Mat croppedRef(imagecropped, ROI);
-			cv::cvtColor(croppedRef, imagecropped, CV_BGR2GRAY);
-			cv::threshold(imagecropped, imagecropped, 180, 255, CV_THRESH_BINARY);
-
 			pointQR.push_back(mc[A]);
 			cv::circle(imCalibColor, cv::Point(pointQR[0].x, pointQR[0].y), 3, cv::Scalar(0, 0, 255), 1, 8, 0);
 			pointQR.push_back(mc[B]);
 			cv::circle(imCalibColor, cv::Point(pointQR[1].x, pointQR[1].y), 3, cv::Scalar(0, 0, 255), 1, 8, 0);
 			pointQR.push_back(mc[C]);
 			cv::circle(imCalibColor, cv::Point(pointQR[2].x, pointQR[2].y), 3, cv::Scalar(0, 0, 255), 1, 8, 0);
+
+			float minDist;
+			float dist2;
+			cv::Point2f minPoint;
+
+			minDist = sqrt(pow(pointQR[0].x,2)+pow(pointQR[0].y,2));
+			minPoint = pointQR[0];
+
+			for (int i = 1; i < 3; i++)
+			{
+				dist2 = sqrt(pow(pointQR[i].x,2)+pow(pointQR[i].y,2));
+
+				if (dist2 <= minDist)
+				{
+					minDist = dist2;
+					minPoint = pointQR[i];
+				}
+			}
+
+			float distCrop;
+			std::vector<float> tabDistCrop;
+
+			for (int i = 0; i < 3; i++)
+			{
+				distCrop = sqrt(pow((pointQR[i].x - minPoint.x),2)+pow((pointQR[i].y - minPoint.y),2));
+				if (distCrop != 0)
+					tabDistCrop.push_back(distCrop);
+			}
+
+			cv::Mat imagecropped = imCalibColor;
+			cv::Rect ROI(minPoint.x, minPoint.y, tabDistCrop[1], tabDistCrop[0]);
+			cv::Mat croppedRef(imagecropped, ROI);
+			cv::cvtColor(croppedRef, imagecropped, CV_BGR2GRAY);
 
 			cv::Point2f D(0.0f,0.0f);
 			cv::Point2f E(0.0f,0.0f);
@@ -141,48 +168,63 @@ int main()
 			std::cout << "patternfound" << std::endl;
 			
 			cv::SiftFeatureDetector detector;
-			cv::vector<cv::KeyPoint> keypoints1, keypoints2;
-			detector.detect(tabQR[3], keypoints1);
-			detector.detect(imagecropped, keypoints2);
+			cv::vector<cv::KeyPoint> keypoints1, keypoints2, keypoints3;
+			detector.detect(imagecropped, keypoints1);
+			detector.detect(tabMarqueur[0], keypoints2);
+			detector.detect(tabMarqueur[1], keypoints3);
+			
 
 			cv::Ptr<cv::DescriptorExtractor> descriptor = cv::DescriptorExtractor::create("SIFT");
-			cv::Mat descriptors1, descriptors2;
-			descriptor->compute(tabQR[3], keypoints1, descriptors1 );
-			descriptor->compute(imagecropped, keypoints2, descriptors2 );
+			cv::Mat descriptors1, descriptors2, descriptors3, descriptors4, descriptors5;
+			descriptor->compute(imagecropped, keypoints1, descriptors1 );
+			descriptor->compute(tabMarqueur[0], keypoints2, descriptors2 );
+			descriptor->compute(tabMarqueur[1], keypoints3, descriptors3 );
 
+			cv::Mat imgout1; 
+			cv::Mat imgout2;  
 			cv::FlannBasedMatcher matcher; 
 			std::vector< cv::DMatch > matches; 
-			matcher.match( descriptors1, descriptors2, matches ); 
+			std::vector< cv::DMatch > good_matches1;
+			std::vector< cv::DMatch > good_matches2;
 			double max_dist = 0; double min_dist = 100;
 
-			for( int i = 0; i < descriptors1.rows; i++ ) 
+			matcher.match( descriptors2, descriptors1, matches );
+	
+			for( int i = 0; i < descriptors2.rows; i++ ) 
 			{ 
 				double dist = matches[i].distance; 
 				if( dist < min_dist ) min_dist = dist; 
 				if( dist > max_dist ) max_dist = dist; 
 			}
 
-			std::vector< cv::DMatch > good_matches;
-			for( int i = 0; i < descriptors1.rows; i++ ) 
+
+			for( int i = 0; i < descriptors2.rows; i++ ) 
 				if( matches[i].distance <= 2*min_dist ) 
-					good_matches.push_back( matches[i]); 
-			cv::Mat imgout; 
-			drawMatches(tabQR[3], keypoints1, imagecropped, keypoints2, good_matches, imgout); 
+					good_matches1.push_back( matches[i]); 
+			
+			drawMatches(tabMarqueur[0], keypoints2, imagecropped, keypoints1, good_matches1, imgout1); 
 
-			std::vector<cv::Point2f> pt_img1; 
-			std::vector<cv::Point2f> pt_img2; 
-			for( int i = 0; i < (int)good_matches.size(); i++ ) 
+
+			matcher.match( descriptors3, descriptors1, matches );
+	
+			for( int i = 0; i < descriptors3.rows; i++ ) 
 			{ 
-				pt_img1.push_back(keypoints1[ good_matches[i].queryIdx ].pt ); 
-				pt_img2.push_back(keypoints2[ good_matches[i].trainIdx ].pt ); 
+				double dist = matches[i].distance; 
+				if( dist < min_dist ) min_dist = dist; 
+				if( dist > max_dist ) max_dist = dist; 
 			}
-			cv::Mat H = findHomography( pt_img1, pt_img2, CV_RANSAC );
 
-			cv::Mat result; 
-			warpPerspective(tabQR[3],result,H,cv::Size(tabQR[3].cols+imagecropped.cols,tabQR[3].rows)); 
-			cv::Mat half(result,cv::Rect(0,0,imagecropped.cols,imagecropped.rows)); 
-			imagecropped.copyTo(half); 
-			imshow( "Result", result );
+
+			for( int i = 0; i < descriptors3.rows; i++ ) 
+				if( matches[i].distance <= 2*min_dist ) 
+					good_matches2.push_back( matches[i]); 
+			
+			drawMatches(tabMarqueur[1], keypoints3, imagecropped, keypoints1, good_matches2, imgout2); 
+
+			if(good_matches1 > good_matches2)
+				std::cout << "cerveau" << std::endl;
+			else
+				std::cout << "os" << std::endl;
 
 			break;
 		}
