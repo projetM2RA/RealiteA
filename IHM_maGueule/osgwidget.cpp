@@ -1,4 +1,4 @@
-#include "osgwidget.h"
+#include "OsgWidget.h"
 
 OSGWidget::OSGWidget(cv::Mat* webcamMat, osg::MatrixTransform *mainMat, Our3DObject* hud, QWidget* parent, const QGLWidget* shareWidget)
     : QGLWidget( parent, shareWidget)

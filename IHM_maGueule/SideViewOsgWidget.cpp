@@ -1,4 +1,4 @@
-#include "sideviewosgwidet.h"
+#include "SideViewOsgWidget.h"
 
 SideViewOsgWidet::SideViewOsgWidet(cv::Mat* webcamMat, osg::MatrixTransform *mainMat, QWidget* parent, const QGLWidget* shareWidget)
     : QGLWidget( parent, shareWidget)

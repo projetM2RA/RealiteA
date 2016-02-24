@@ -1,4 +1,4 @@
-#include "calibratedialog.h"
+#include "CalibrateDialog.h"
 
 CalibrateDialog::CalibrateDialog(cv::Mat* frame, QWidget *parent) :
     QDialog(parent)

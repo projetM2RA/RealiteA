@@ -1,4 +1,4 @@
-#include "our3dobject.h"
+#include "Our3DObject.h"
 
 Our3DObject::Our3DObject() :
     QObject(0), _printed(true),

@@ -1,4 +1,4 @@
-#include "webcamgraphicsscene.h"
+#include "WebcamGraphicsScene.h"
 
 WebcamGraphicsScene::WebcamGraphicsScene(cv::Mat *cam, QObject *parent) :
     QGraphicsScene(parent)

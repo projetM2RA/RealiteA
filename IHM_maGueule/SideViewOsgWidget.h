@@ -29,7 +29,7 @@
 
 #include <vector>
 
-#include "our3dobject.h"
+#include "Our3DObject.h"
 
 
 

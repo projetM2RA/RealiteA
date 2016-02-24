@@ -202,7 +202,7 @@ int main()
 				if( matches[i].distance <= 2*min_dist ) 
 					good_matches1.push_back( matches[i]); 
 			
-			drawMatches(tabMarqueur[0], keypoints2, imagecropped, keypoints1, good_matches1, imgout1); 
+			//drawMatches(tabMarqueur[0], keypoints2, imagecropped, keypoints1, good_matches1, imgout1); 
 
 
 			matcher.match( descriptors3, descriptors1, matches );
@@ -219,9 +219,9 @@ int main()
 				if( matches[i].distance <= 2*min_dist ) 
 					good_matches2.push_back( matches[i]); 
 			
-			drawMatches(tabMarqueur[1], keypoints3, imagecropped, keypoints1, good_matches2, imgout2); 
+			//drawMatches(tabMarqueur[1], keypoints3, imagecropped, keypoints1, good_matches2, imgout2); 
 
-			if(good_matches1 > good_matches2)
+			if(good_matches1.size() > good_matches2.size())
 				std::cout << "cerveau" << std::endl;
 			else
 				std::cout << "os" << std::endl;

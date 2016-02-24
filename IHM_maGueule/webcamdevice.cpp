@@ -1,4 +1,4 @@
-#include "webcamdevice.h"
+#include "WebcamDevice.h"
 
 // public
 
@@ -169,12 +169,12 @@ void WebcamDevice::switchInput(int input)
 
 void WebcamDevice::setOptions()
 {
-    _chessDialog = new ChessCaracteristicsDialog(_nbrColChess, _nbrRowChess, _chessSize, (QWidget*)this->parent());
-    if(_chessDialog->exec() == QDialog::Accepted)
+    _optionsDialog = new OptionsDialog(_nbrColChess, _nbrRowChess, _chessSize, (QWidget*)this->parent());
+    if(_optionsDialog->exec() == QDialog::Accepted)
     {
-        _nbrColChess = _chessDialog->getNbrCols();
-        _nbrRowChess = _chessDialog->getNbrRows();
-        _chessSize = _chessDialog->getChessSize();
+        _nbrColChess = _optionsDialog->getNbrCols();
+        _nbrRowChess = _optionsDialog->getNbrRows();
+        _chessSize = _optionsDialog->getChessSize();
         _chessDetected = false;
     }
     else
@@ -211,7 +211,7 @@ void WebcamDevice::run()
             case qrDetection:
                 _vcap >> *_frame;
 
-                qrRT();
+                markerRT();
 
                 break;
             default:
@@ -321,6 +321,52 @@ bool WebcamDevice::detectChess(std::vector<cv::Point2f> *chessPoints)
     return chessFound;
 }
 
+void WebcamDevice::trackingChess(cv::Mat *rotVecs)
+{
+    cv::Mat rvecs;
+    cv::Mat imCalib;
+
+    cv::swap(imCalib, _nextFrame);
+    _chessCornersInit[0] = _chessCornersInit[1];
+    _chessCornersInit[1].clear();
+
+    cv::cornerSubPix(imCalib, _chessCornersInit[0], cv::Size(5, 5), cv::Size(-1, -1), cv::TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1));
+
+    cv::cvtColor(*_frame, _nextFrame, CV_BGR2GRAY);
+
+    std::vector<uchar> status;
+    std::vector<float> err;
+    cv::calcOpticalFlowPyrLK(imCalib, _nextFrame, _chessCornersInit[0], _chessCornersInit[1], status, err, cv::Size(31, 31), 3, cv::TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1), 0, 0.0001);
+
+    cv::solvePnP(_pointsChess3D, _chessCornersInit[0], _cameraMatrix, _distCoeffs, rvecs, _tvecs);
+
+    _rotVecs = cv::Mat(3, 3, CV_64F);
+    cv::Rodrigues(rvecs, (*rotVecs));
+}
+
+void WebcamDevice::trackingMarker(cv::Mat *rotVecs)
+{
+    cv::Mat rvecs;
+    cv::Mat imCalib;
+
+    cv::swap(imCalib, _nextFrame);
+    _chessCornersInit[0] = _chessCornersInit[1];
+    _chessCornersInit[1].clear();
+
+    cv::cornerSubPix(imCalib, _chessCornersInit[0], cv::Size(5, 5), cv::Size(-1, -1), cv::TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1));
+
+    cv::cvtColor(*_frame, _nextFrame, CV_BGR2GRAY);
+
+    std::vector<uchar> status;
+    std::vector<float> err;
+    cv::calcOpticalFlowPyrLK(imCalib, _nextFrame, _chessCornersInit[0], _chessCornersInit[1], status, err, cv::Size(31, 31), 3, cv::TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1), 0, 0.0001);
+
+    cv::solvePnP(_pointsChess3D, _chessCornersInit[0], _cameraMatrix, _distCoeffs, rvecs, _tvecs);
+
+    _rotVecs = cv::Mat(3, 3, CV_64F);
+    cv::Rodrigues(rvecs, (*rotVecs));
+}
+
 
 
 void WebcamDevice::faceRT()
@@ -368,35 +414,19 @@ void WebcamDevice::faceRT()
 
 void WebcamDevice::chessRT()
 {
-    cv::Mat rvecs;
-    cv::Mat imCalib;
     std::vector<cv::Point2f> imagePoints;
     std::vector<double> errors;
     double meanErrors;
 
     if(_chessDetected)
     {
-        cv::swap(imCalib, _nextFrame);
-        _chessCornersInit[0] = _chessCornersInit[1];
-        _chessCornersInit[1].clear();
-
-        cv::cornerSubPix(imCalib, _chessCornersInit[0], cv::Size(5, 5), cv::Size(-1, -1), cv::TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1));
-
-        cv::cvtColor(*_frame, _nextFrame, CV_BGR2GRAY);
-
-        std::vector<uchar> status;
-        std::vector<float> err;
-        cv::calcOpticalFlowPyrLK(imCalib, _nextFrame, _chessCornersInit[0], _chessCornersInit[1], status, err, cv::Size(31, 31), 3, cv::TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1), 0, 0.0001);
-
-        cv::solvePnP(_pointsChess3D, _chessCornersInit[0], _cameraMatrix, _distCoeffs, rvecs, _tvecs);
-
-        _rotVecs = cv::Mat(3, 3, CV_64F);
-        cv::Rodrigues(rvecs, _rotVecs);
+        this->trackingChess(&_rotVecs);
 
         cv::projectPoints(_pointsChess3D, _rotVecs, _tvecs, _cameraMatrix, _distCoeffs, imagePoints);
 
-//        for(int m = 0; m < _chessCornersInit[0].size(); m++)
-//            cv::circle(*_frame, cv::Point(_chessCornersInit[0][m].x, _chessCornersInit[0][m].y), 3, cv::Scalar(0, 0, 255), 1, 8, 0);
+        // Draw chess points
+        for(int m = 0; m < _chessCornersInit[0].size(); m++)
+            cv::circle(*_frame, cv::Point(_chessCornersInit[0][m].x, _chessCornersInit[0][m].y), 3, cv::Scalar(0, 0, 255), 1, 8, 0);
 
         emit updateScene(_rotVecs, _tvecs);
 
@@ -429,7 +459,7 @@ void WebcamDevice::chessRT()
     }
 }
 
-void WebcamDevice::qrRT()
+void WebcamDevice::markerRT()
 {
 
 }

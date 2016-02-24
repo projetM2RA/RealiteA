@@ -15,7 +15,7 @@
 #include <QProgressDialog>
 
 #include "WebcamGraphicsView.h"
-#include "webcamgraphicsscene.h"
+#include "WebcamGraphicsScene.h"
 
 class CalibrateDialog : public QDialog
 {

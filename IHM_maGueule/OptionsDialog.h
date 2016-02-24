@@ -1,5 +1,5 @@
-#ifndef CHESSCARACTERISTICSDIALOG_H
-#define CHESSCARACTERISTICSDIALOG_H
+#ifndef OPTIONSDIALOG_H
+#define OPTIONSDIALOG_H
 
 #include <QDialog>
 #include <QHBoxLayout>
@@ -11,11 +11,11 @@
 #include <QGroupBox>
 #include <QCheckBox>
 
-class ChessCaracteristicsDialog : public QDialog
+class OptionsDialog : public QDialog
 {
     Q_OBJECT
 public:
-    explicit ChessCaracteristicsDialog(int nbrCols, int nbrRows, double chessSize, QWidget *parent = 0);
+    explicit OptionsDialog(int nbrCols, int nbrRows, double chessSize, QWidget *parent = 0);
 
     int getNbrCols() { return _nbrCols->value(); }
     int getNbrRows() { return _nbrRows->value(); }
@@ -41,4 +41,4 @@ private:
 
 };
 
-#endif // CHESSCARACTERISTICSDIALOG_H
+#endif // OPTIONSDIALOG_H

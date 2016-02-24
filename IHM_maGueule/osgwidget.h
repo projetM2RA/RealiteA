@@ -28,7 +28,7 @@
 
 #include <vector>
 
-#include "our3dobject.h"
+#include "Our3DObject.h"
 
 class OSGWidget : public QGLWidget
 {

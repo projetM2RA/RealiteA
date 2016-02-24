@@ -8,8 +8,8 @@
 #include <opencv2/opencv.hpp>
 #include <Chehra.h>
 
-#include "calibratedialog.h"
-#include "chesscaracteristicsdialog.h"
+#include "CalibrateDialog.h"
+#include "OptionsDialog.h"
 
 #define NBR_DETECT              4
 #define NBRSAVEDIMAGES          5
@@ -59,9 +59,11 @@ private:
     void calibrateCam(FileStorage *fs);
     bool detecterVisage(std::vector<cv::Point2f> *pointsVisage);
     bool detectChess(std::vector<cv::Point2f> *chessPoints);
+    void trackingChess(cv::Mat *rotVecs);
+    void trackingMarker(cv::Mat *rotVecs);
     void faceRT();
     void chessRT();
-    void qrRT();
+    void markerRT();
 
 
     // attributes
@@ -86,7 +88,7 @@ private:
     std::vector<std::vector<cv::Point2f>> _images;
     std::vector<std::vector<cv::Point2f>> _chessCornersInit;
 
-    ChessCaracteristicsDialog* _chessDialog;
+    OptionsDialog* _optionsDialog;
 
     int _nbrColChess;
     int _nbrRowChess;

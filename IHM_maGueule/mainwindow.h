@@ -23,10 +23,10 @@
 
 #include <QShortcut>
 
-#include "osgwidget.h"
-#include "sideviewosgwidet.h"
-#include "webcamdevice.h"
-#include "addobjectdialog.h"
+#include "OsgWidget.h"
+#include "SideViewOsgWidget.h"
+#include "WebcamDevice.h"
+#include "AddObjectDialog.h"
 
 
 #define NBR_CHARACTERISTICS  10

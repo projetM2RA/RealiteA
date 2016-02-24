@@ -1,6 +1,6 @@
-#include "chesscaracteristicsdialog.h"
+#include "OptionsDialog.h"
 
-ChessCaracteristicsDialog::ChessCaracteristicsDialog(int nbrCols, int nbrRows, double chessSize, QWidget *parent) :
+OptionsDialog::OptionsDialog(int nbrCols, int nbrRows, double chessSize, QWidget *parent) :
     QDialog(parent)
 {
     this->setWindowTitle("Options");

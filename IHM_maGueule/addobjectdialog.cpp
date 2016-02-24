@@ -1,4 +1,4 @@
-#include "addobjectdialog.h"
+#include "AddObjectDialog.h"
 
 AddObjectDialog::AddObjectDialog(QWidget *parent) :
     QDialog(parent)
