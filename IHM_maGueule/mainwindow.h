@@ -45,7 +45,7 @@ public:
 
 private slots:
     void updateCam() { _backgroundImage->dirty(); _mainView->repaint(); _sideView->repaint(); _fullScreenView->repaint(); }
-    void displayObjects(bool removeObjects) { if(!removeObjects) _mainMat->addChild(_objectsList[0]); else _mainMat->removeChild(_objectsList[0]); }
+    void displayObjects(bool removeObjects) { _objectsList[0]->setNodeMask(!removeObjects); }
     void start();
     void calibrateCamera();
     void addObject();
@@ -87,6 +87,7 @@ private:
     QComboBox* _objectChoiceComboBox;
     QPushButton* _deleteObjectButton;
     QCheckBox* _isPrintedBox;
+    QCheckBox* _isPrintedBox2;
     QSlider** _objectCharacteristicsSpinSliders;
 
     SideViewOsgWidet* _sideView;
@@ -115,6 +116,8 @@ private:
     WebcamDevice* _webcamDevice;
     std::vector<Our3DObject*> _objectsList;
     osg::MatrixTransform *_mainMat;
+    std::vector<Our3DObject*> _objectsList2;
+    osg::MatrixTransform *_mainMat2;
     osg::Image* _backgroundImage;
     double _corrector;
     int _objectID;

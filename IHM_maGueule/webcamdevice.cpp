@@ -71,17 +71,17 @@ void WebcamDevice::initModels()
 
     _chessCornersInit = std::vector<std::vector<cv::Point2f>>(2);
 
-//    std::cout << "initialisation de Chehra..." << std::endl;
-//    _chehra = new Chehra;
-//    std::cout << "done" << std::endl;
+    std::cout << "initialisation de Chehra..." << std::endl;
+    _chehra = new Chehra;
+    std::cout << "done" << std::endl;
 
     // Repere visage
-    _pointsVisage3D.push_back(cv::Point3f(-110, 0, -336)); // exterieur narine gauche sur l'image
-    _pointsVisage3D.push_back(cv::Point3f(110, 0, -336)); // exterieur narine droite sur l'image
-    _pointsVisage3D.push_back(cv::Point3f(0, -142, -258)); // bout du nez
-    _pointsVisage3D.push_back(cv::Point3f(-338, 243, -70)); // exterieur oeil gauche sur l'image
+    _pointsVisage3D.push_back(cv::Point3f(-11, -34, 0)); // exterieur narine gauche sur l'image
+    _pointsVisage3D.push_back(cv::Point3f(11, -34, 0)); // exterieur narine droite sur l'image
+    _pointsVisage3D.push_back(cv::Point3f(0, -26, -14)); // bout du nez
+    _pointsVisage3D.push_back(cv::Point3f(-34, -7, 24)); // exterieur oeil gauche sur l'image
     _pointsVisage3D.push_back(cv::Point3f(0, 0, 0)); // haut du nez, centre des yeux
-    _pointsVisage3D.push_back(cv::Point3f(338, 243, -70)); // exterieur oeil droit sur l'image
+    _pointsVisage3D.push_back(cv::Point3f(34, -7, 24)); // exterieur oeil droit sur l'image
 
     // Repere chess
     for(int x = -_nbrColChess / 2; x < _nbrColChess / 2 + _nbrColChess % 2; x++)
@@ -395,8 +395,8 @@ void WebcamDevice::chessRT()
 
         cv::projectPoints(_pointsChess3D, _rotVecs, _tvecs, _cameraMatrix, _distCoeffs, imagePoints);
 
-        for(int m = 0; m < _chessCornersInit[0].size(); m++)
-            cv::circle(*_frame, cv::Point(_chessCornersInit[0][m].x, _chessCornersInit[0][m].y), 3, cv::Scalar(0, 0, 255), 1, 8, 0);
+//        for(int m = 0; m < _chessCornersInit[0].size(); m++)
+//            cv::circle(*_frame, cv::Point(_chessCornersInit[0][m].x, _chessCornersInit[0][m].y), 3, cv::Scalar(0, 0, 255), 1, 8, 0);
 
         emit updateScene(_rotVecs, _tvecs);
 

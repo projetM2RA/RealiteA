@@ -11,7 +11,7 @@ AddObjectDialog::AddObjectDialog(QWidget *parent) :
 
     QPushButton* ok = new QPushButton(tr("Ok"));
     QPushButton* cancel = new QPushButton(tr("Cancel"));
-    QPushButton* path = new QPushButton(QIcon("../rsc/icons/open-file.png"), "");
+    QPushButton* path = new QPushButton(QIcon(":/icons/open"), "");
 
     QHBoxLayout* pathLayout = new QHBoxLayout;
     pathLayout->addWidget(_objectPath);
@@ -43,7 +43,7 @@ AddObjectDialog::AddObjectDialog(QWidget *parent) :
 
 void AddObjectDialog::updatePath()
 {
-    QString objectPath = QFileDialog::getOpenFileName(this, "Open 3D Object", "../rsc/objets3D/", "3D object (*.obj *.3ds *.stl)");
+    QString objectPath = QFileDialog::getOpenFileName(this, "Open 3D Object", "../rsc/objets3D/", "3D object (*.obj *.3ds *.stl *.osgt *.osg)");
     if(objectPath != "")
         _objectPath->setText(objectPath);
 

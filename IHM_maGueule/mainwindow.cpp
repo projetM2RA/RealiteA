@@ -4,7 +4,8 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
     this->setWindowTitle(tr("Augmented Reality Of Neuroskeleton"));
-    this->setWindowIcon(QIcon("../rsc/icons/icon.png"));
+    //this->setWindowIcon(QIcon("../rsc/icons/icon.png"));
+    this->setWindowIcon(QIcon(":/icons/icon"));
     _objectID = 0;
     _nbrCam = WebcamDevice::webcamCount(); // a mettre au debut sinon conflit avec les webcams lancees
     _webcamDevice = new WebcamDevice(this);
@@ -92,7 +93,7 @@ void MainWindow::addObject()
     _objectsList.push_back(new Our3DObject(objectPath));
     _objectsList[0]->addChild(_objectsList[_objectsList.size() - 1]);
 
-    int nbrObjects = _objectChoiceComboBox->itemText(0).mid(18).toInt();
+    int nbrObjects = _objectChoiceComboBox->itemText(0).mid(14).toInt();
     _objectChoiceComboBox->setItemText(0, "All objects : " + QString::number(nbrObjects + 1));
     _objectChoiceComboBox->addItem(objectName);
 }
@@ -146,7 +147,7 @@ void MainWindow::updateObjectCharacteristics(int objectID)
     object = _objectsList[_objectID];
 
 
-    _isPrintedBox->setChecked(object->isPrinted());
+    _isPrintedBox->setChecked(object->getNodeMask());
 
     if(_objectID == 1)
     {
@@ -173,10 +174,6 @@ void MainWindow::updateObjectCharacteristics(int objectID)
         _objectCharacteristicsSpinSliders[transX]->setEnabled(false);
         _objectCharacteristicsSpinSliders[transY]->setEnabled(false);
         _objectCharacteristicsSpinSliders[transZ]->setEnabled(false);
-
-        _objectCharacteristicsSpinSliders[alpha]->setValue(object->getAlpha());
-
-        connect(_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object, SLOT(setAlpha(int)));
     }
     else
     {
@@ -192,8 +189,6 @@ void MainWindow::updateObjectCharacteristics(int objectID)
         _objectCharacteristicsSpinSliders[transY]->setValue(object->getTransY());
         _objectCharacteristicsSpinSliders[transZ]->setValue(object->getTransZ());
 
-        _objectCharacteristicsSpinSliders[alpha]->setValue(object->getAlpha());
-
         connect(_objectCharacteristicsSpinSliders[sizeX], SIGNAL(valueChanged(int)), object, SLOT(setSizeX(int)));
         connect(_objectCharacteristicsSpinSliders[sizeY], SIGNAL(valueChanged(int)), object, SLOT(setSizeY(int)));
         connect(_objectCharacteristicsSpinSliders[sizeZ], SIGNAL(valueChanged(int)), object, SLOT(setSizeZ(int)));
@@ -205,9 +200,10 @@ void MainWindow::updateObjectCharacteristics(int objectID)
         connect(_objectCharacteristicsSpinSliders[transX], SIGNAL(valueChanged(int)), object, SLOT(setTransX(int)));
         connect(_objectCharacteristicsSpinSliders[transY], SIGNAL(valueChanged(int)), object, SLOT(setTransY(int)));
         connect(_objectCharacteristicsSpinSliders[transZ], SIGNAL(valueChanged(int)), object, SLOT(setTransZ(int)));
-
-        connect(_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object, SLOT(setAlpha(int)));
     }
+
+    _objectCharacteristicsSpinSliders[alpha]->setValue(object->getAlpha());
+    connect(_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object, SLOT(setAlpha(int)));
 }
 
 void MainWindow::updateDetectMode()
@@ -242,11 +238,9 @@ void MainWindow::displayObjectInScene(bool display)
     else
     {
         if(display)
-            _objectsList[0]->addChild(_objectsList[_objectID]);
+            _objectsList[_objectID]->setNodeMask(display);
         else
-            _objectsList[0]->removeChild(_objectsList[_objectID]);
-
-        _objectsList[_objectID]->print(display);
+            _objectsList[_objectID]->setNodeMask(display);
     }
 }
 
@@ -268,9 +262,9 @@ void MainWindow::displayFullScreen()
 
 void MainWindow::updateSceneRT(cv::Mat rotVec, cv::Mat tvecs)
 {
-    double t3 = tvecs.at<double>(1, 0);
-    double t1 = -tvecs.at<double>(0, 0);
-    double t2 = -tvecs.at<double>(2, 0) - t3 / _corrector; // and now, magic !
+    double t3 = tvecs.at<double>(2, 0);
+    double t1 = tvecs.at<double>(0, 0);
+    double t2 = tvecs.at<double>(1, 0) + t3 / _corrector; // and now, magic !
 
     double r11 = rotVec.at<double>(0, 0);
     double r12 = rotVec.at<double>(0, 1);
@@ -281,6 +275,7 @@ void MainWindow::updateSceneRT(cv::Mat rotVec, cv::Mat tvecs)
     double r31 = rotVec.at<double>(2, 0);
     double r32 = rotVec.at<double>(2, 1);
     double r33 = rotVec.at<double>(2, 2);
+
 
     osg::Matrixd matrixR; // rotation (transposee de rotVec)
     matrixR.set(
@@ -294,26 +289,23 @@ void MainWindow::updateSceneRT(cv::Mat rotVec, cv::Mat tvecs)
     double rotY =  atan2(r21, r11);
     double rotZ = -atan2(-r31, sqrt((r32 * r32) + (r33 * r33)));
 
-    std::cout << "rotations : " << std::endl
-              << "x : " << rotX << std::endl
-              << "y : " << rotY << std::endl
-              << "z : " << rotZ << std::endl << std::endl;
-    std::cout << "translations : " << std::endl
-              << "x : " << t1 << std::endl
-              << "y : " << t2 << std::endl
-              << "z : " << t3 << std::endl << std::endl << std::endl;
+    //    std::cout << "rotations : " << std::endl
+    //              << "x : " << rotX << std::endl
+    //              << "y : " << rotY << std::endl
+    //              << "z : " << rotZ << std::endl << std::endl;
+    //    std::cout << "translations : " << std::endl
+    //              << "x : " << t1 << std::endl
+    //              << "y : " << t2 << std::endl
+    //              << "z : " << t3 << std::endl << std::endl << std::endl;
 
 
     osg::Matrixd matrixT; // translation
     matrixT.makeTranslate(t1, t2, t3);
 
     osg::Matrixd matrix90; // rotation de repere entre opencv et osg
-    matrix90.makeRotate(osg::Quat(osg::DegreesToRadians(90.0f), osg::Vec3d(1.0, 0.0, 0.0)));
+    matrix90.makeRotate(osg::Quat(osg::DegreesToRadians(-90.0f), osg::Vec3d(1.0, 0.0, 0.0)));
 
-    osg::Matrixd matrix180; // rotation de repere entre opencv et osg
-    matrix180.makeRotate(osg::Quat(osg::DegreesToRadians(180.0f), osg::Vec3d(0.0, 0.0, 1.0)));
-
-    _mainMat->setMatrix(matrixR * matrix90 * matrix180 * matrixT);
+    _mainMat->setMatrix(matrixR * matrixT * matrix90);
 }
 
 
@@ -434,9 +426,13 @@ void MainWindow::setMainWindow()
     objectLayout->addWidget(_objectChoiceComboBox);
 
     QHBoxLayout* objectDispalyOptionsLayout = new QHBoxLayout();
-    _isPrintedBox = new QCheckBox(tr("Display object"));
+    _isPrintedBox = new QCheckBox(tr("Display object in main view"));
     _isPrintedBox->setChecked(true);
     objectDispalyOptionsLayout->addWidget(_isPrintedBox);
+    _isPrintedBox2 = new QCheckBox(tr("Display object in side view"));
+    _isPrintedBox2->setChecked(true);
+    _isPrintedBox2->setEnabled(false);
+    objectDispalyOptionsLayout->addWidget(_isPrintedBox2);
     _deleteObjectButton = new QPushButton(tr("Delete object"));
     _deleteObjectButton->setEnabled(false);
     objectDispalyOptionsLayout->addWidget(_deleteObjectButton);
@@ -451,7 +447,7 @@ void MainWindow::setMainWindow()
     }
 
     QFormLayout *resizeLayout = new QFormLayout;
-    QGroupBox *resizeGroup = new QGroupBox(tr("Resize object"));
+    QGroupBox *resizeGroup = new QGroupBox(tr(" Resize object "));
 
     _objectCharacteristicsSpinSliders[sizeX]->setRange(-100, 100);
     _objectCharacteristicsSpinSliders[sizeX]->setSingleStep(1);
@@ -470,7 +466,7 @@ void MainWindow::setMainWindow()
     objectLayout->addWidget(resizeGroup);
 
     QFormLayout *rotateLayout = new QFormLayout;
-    QGroupBox *rotateGroup = new QGroupBox(tr("Rotate object"));
+    QGroupBox *rotateGroup = new QGroupBox(tr(" Rotate object "));
 
     _objectCharacteristicsSpinSliders[rotX]->setRange(-180, 180);
     _objectCharacteristicsSpinSliders[rotX]->setSingleStep(1);
@@ -486,7 +482,7 @@ void MainWindow::setMainWindow()
     objectLayout->addWidget(rotateGroup);
 
     QFormLayout *translateLayout = new QFormLayout;
-    QGroupBox *translateGroup = new QGroupBox(tr("Translate object"));
+    QGroupBox *translateGroup = new QGroupBox(tr(" Translate object "));
 
     _objectCharacteristicsSpinSliders[transX]->setRange(-500, 500);
     _objectCharacteristicsSpinSliders[transX]->setSingleStep(1);
@@ -502,7 +498,7 @@ void MainWindow::setMainWindow()
     objectLayout->addWidget(translateGroup);
 
     QFormLayout *alphaLayout = new QFormLayout;
-    QGroupBox *alphaGroup = new QGroupBox(tr("Transparency"));
+    QGroupBox *alphaGroup = new QGroupBox(tr(" Transparency "));
 
     _objectCharacteristicsSpinSliders[alpha]->setRange(0, 100);
     _objectCharacteristicsSpinSliders[alpha]->setSingleStep(1);
@@ -647,6 +643,13 @@ void MainWindow::initObjectsList()
     _objectsList.push_back(new Our3DObject()); // globalMat en _objectsList[0]
     _mainMat = new osg::MatrixTransform();
     _mainMat->addChild(_objectsList[0]);
+    _objectsList[0]->setNodeMask(0);
+
+    _objectsList2.push_back(new Our3DObject()); // globalMat en _objectsList[0]
+    _mainMat2 = new osg::MatrixTransform();
+    _mainMat2->addChild(_objectsList2[0]);
+    _objectsList2[0]->setNodeMask(0);
+
     _backgroundImage = new osg::Image;
 
     cv::Mat *webcamMat = _webcamDevice->getWebcam();
@@ -689,10 +692,10 @@ void MainWindow::initObjectsList()
 
     // Nous créons ensuite une tableau qui contiendra nos coordonnées de texture.
     osg::Vec2Array* coordonneeTexture = new osg::Vec2Array(4);
-    (*coordonneeTexture)[0].set(1.0f, 1.0f);
-    (*coordonneeTexture)[1].set(0.0f, 1.0f);
-    (*coordonneeTexture)[2].set(0.0f, 0.0f);
-    (*coordonneeTexture)[3].set(1.0f, 0.0f);
+    (*coordonneeTexture)[0].set(0.0f, 1.0f);
+    (*coordonneeTexture)[1].set(1.0f, 1.0f);
+    (*coordonneeTexture)[2].set(1.0f, 0.0f);
+    (*coordonneeTexture)[3].set(0.0f, 0.0f);
     geoQuad->setTexCoordArray(0, coordonneeTexture);
 
     osg::Geode* noeudGeo = new osg::Geode;
@@ -713,4 +716,6 @@ void MainWindow::initObjectsList()
     statuts->setRenderingHint(osg::StateSet::TRANSPARENT_BIN);
 
     _objectsList.push_back(new Our3DObject(noeudGeo)); // mat en _objectsList[1] qui contient le hud
+    _objectsList2.push_back(new Our3DObject(noeudGeo)); // mat en _objectsList[1] qui contient le hud
+    _objectsList2[0]->addChild(_objectsList2[1]);
 }

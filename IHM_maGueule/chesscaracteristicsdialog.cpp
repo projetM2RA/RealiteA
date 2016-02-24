@@ -20,7 +20,8 @@ ChessCaracteristicsDialog::ChessCaracteristicsDialog(int nbrCols, int nbrRows, d
     _chessSize->setValue(chessSize);
     _chessSize->setSuffix(" mm");
 
-    _chehra = new QCheckBox("Activate face detection");
+    _chehra = new QCheckBox("Activate face detection (might take up to 1min to load)");
+    _chehra->setChecked(true);
     _chehra->setEnabled(false);
 
     _ok = new QPushButton(tr("Ok"));
