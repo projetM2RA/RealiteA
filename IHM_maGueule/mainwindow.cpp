@@ -14,7 +14,7 @@ MainWindow::MainWindow(QWidget *parent)
     setFirstWindow();
 
 
-    this->resize(1200, 800);
+    this->resize(QDesktopWidget().availableGeometry(this).size() * 0.65);
 }
 
 MainWindow::~MainWindow()
@@ -59,8 +59,10 @@ void MainWindow::start()
     this->initObjectsList();
 
     this->setMainWindow();
-
+    this->setCursor(QCursor(Qt::WaitCursor));
     _webcamDevice->initModels();
+    this->setCursor(QCursor(Qt::ArrowCursor));
+
     this->createFullScreenWidget();
 
     this->connectAll();
@@ -124,6 +126,8 @@ void MainWindow::updateObjectCharacteristics(int objectID)
         disconnect(_objectCharacteristicsSpinSliders[transY], SIGNAL(valueChanged(int)), object, SLOT(setTransY(int)));
         disconnect(_objectCharacteristicsSpinSliders[transZ], SIGNAL(valueChanged(int)), object, SLOT(setTransZ(int)));
 
+        disconnect(_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object, SLOT(setAlpha(int)));
+
         //////////////////////////////////////////////////
 
         disconnect(_objectCharacteristicsSpinSliders[sizeX], SIGNAL(valueChanged(int)), object2, SLOT(setSizeX(int)));
@@ -155,7 +159,6 @@ void MainWindow::updateObjectCharacteristics(int objectID)
         _isPrintedBox->setEnabled(true);
     }
 
-    disconnect(_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object, SLOT(setAlpha(int)));
     disconnect(_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object2, SLOT(setAlpha(int)));
 
 
@@ -196,6 +199,9 @@ void MainWindow::updateObjectCharacteristics(int objectID)
         _objectCharacteristicsSpinSliders[transZ]->setEnabled(false);
 
         _isPrintedBox->setEnabled(false);
+
+        _objectCharacteristicsSpinSliders[alpha]->setValue(object2->getAlpha());
+        connect(_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object2, SLOT(setAlpha(int)));
     }
     else
     {
@@ -223,6 +229,9 @@ void MainWindow::updateObjectCharacteristics(int objectID)
         connect(_objectCharacteristicsSpinSliders[transY], SIGNAL(valueChanged(int)), object, SLOT(setTransY(int)));
         connect(_objectCharacteristicsSpinSliders[transZ], SIGNAL(valueChanged(int)), object, SLOT(setTransZ(int)));
 
+        _objectCharacteristicsSpinSliders[alpha]->setValue(object->getAlpha());
+        connect(_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object, SLOT(setAlpha(int)));
+
         //////////////////////////////////////////////////
 
         connect(_objectCharacteristicsSpinSliders[sizeX], SIGNAL(valueChanged(int)), object2, SLOT(setSizeX(int)));
@@ -236,11 +245,9 @@ void MainWindow::updateObjectCharacteristics(int objectID)
         connect(_objectCharacteristicsSpinSliders[transX], SIGNAL(valueChanged(int)), object2, SLOT(setTransX(int)));
         connect(_objectCharacteristicsSpinSliders[transY], SIGNAL(valueChanged(int)), object2, SLOT(setTransY(int)));
         connect(_objectCharacteristicsSpinSliders[transZ], SIGNAL(valueChanged(int)), object2, SLOT(setTransZ(int)));
-    }
 
-    _objectCharacteristicsSpinSliders[alpha]->setValue(object->getAlpha());
-    connect(_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object, SLOT(setAlpha(int)));
-    connect(_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object2, SLOT(setAlpha(int)));
+        connect(_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object2, SLOT(setAlpha(int)));
+    }
 }
 
 void MainWindow::updateDetectMode()
@@ -356,6 +363,7 @@ void MainWindow::updateSceneRT(cv::Mat rotVec, cv::Mat tvecs)
     matrix90.makeRotate(osg::Quat(osg::DegreesToRadians(-90.0f), osg::Vec3d(1.0, 0.0, 0.0)));
 
     _mainMat->setMatrix(matrixR * matrixT * matrix90);
+    _mainMat2->setMatrix(matrixR * matrixT * matrix90);
 }
 
 
@@ -557,7 +565,7 @@ void MainWindow::setMainWindow()
     alphaGroup->setLayout(alphaLayout);
     objectLayout->addWidget(alphaGroup);
 
-    _sideView = new SideViewOsgWidet(_webcamDevice->getWebcam(), _mainMat2, this);
+    _sideView = new SideViewOsgWidet(_webcamDevice->getWebcam(), _mainMat2, _objectsList2[1], this);
     objectLayout->addWidget(_sideView);
 
     objectLayout->setStretchFactor(_sideView, 2);
@@ -586,9 +594,9 @@ void MainWindow::connectAll()
 
     connect(_detectActions[noDetect], SIGNAL(toggled(bool)), this, SLOT(displayObjects(bool)));
     connect(_isPrintedBox, SIGNAL(clicked(bool)), this, SLOT(displayObjectInScene(bool)));
-    //connect(_isPrintedBox2, SIGNAL(clicked(bool)), this, SLOT(displayObjectInSideView(bool))); // #truanderie
+    connect(_isPrintedBox2, SIGNAL(clicked(bool)), this, SLOT(displayObjectInSideView(bool))); // #truanderie
 
-    //connect(_objectChoiceComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(updateObjectCharacteristics(int)));
+    connect(_objectChoiceComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(updateObjectCharacteristics(int)));
 
     connect(_webcamDevice, SIGNAL(updateScene(cv::Mat, cv::Mat)), this, SLOT(updateSceneRT(cv::Mat, cv::Mat)));
 
@@ -609,21 +617,21 @@ void MainWindow::connectAll()
 
     connect(_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object, SLOT(setAlpha(int)));
 
-//    object = _objectsList2[0]; // #truaderie
+    object = _objectsList2[0];
 
-//    connect(_objectCharacteristicsSpinSliders[sizeX], SIGNAL(valueChanged(int)), object, SLOT(setSizeX(int)));
-//    connect(_objectCharacteristicsSpinSliders[sizeY], SIGNAL(valueChanged(int)), object, SLOT(setSizeY(int)));
-//    connect(_objectCharacteristicsSpinSliders[sizeZ], SIGNAL(valueChanged(int)), object, SLOT(setSizeZ(int)));
+    connect(_objectCharacteristicsSpinSliders[sizeX], SIGNAL(valueChanged(int)), object, SLOT(setSizeX(int)));
+    connect(_objectCharacteristicsSpinSliders[sizeY], SIGNAL(valueChanged(int)), object, SLOT(setSizeY(int)));
+    connect(_objectCharacteristicsSpinSliders[sizeZ], SIGNAL(valueChanged(int)), object, SLOT(setSizeZ(int)));
 
-//    connect(_objectCharacteristicsSpinSliders[rotX], SIGNAL(valueChanged(int)), object, SLOT(setRotX(int)));
-//    connect(_objectCharacteristicsSpinSliders[rotY], SIGNAL(valueChanged(int)), object, SLOT(setRotY(int)));
-//    connect(_objectCharacteristicsSpinSliders[rotZ], SIGNAL(valueChanged(int)), object, SLOT(setRotZ(int)));
+    connect(_objectCharacteristicsSpinSliders[rotX], SIGNAL(valueChanged(int)), object, SLOT(setRotX(int)));
+    connect(_objectCharacteristicsSpinSliders[rotY], SIGNAL(valueChanged(int)), object, SLOT(setRotY(int)));
+    connect(_objectCharacteristicsSpinSliders[rotZ], SIGNAL(valueChanged(int)), object, SLOT(setRotZ(int)));
 
-//    connect(_objectCharacteristicsSpinSliders[transX], SIGNAL(valueChanged(int)), object, SLOT(setTransX(int)));
-//    connect(_objectCharacteristicsSpinSliders[transY], SIGNAL(valueChanged(int)), object, SLOT(setTransY(int)));
-//    connect(_objectCharacteristicsSpinSliders[transZ], SIGNAL(valueChanged(int)), object, SLOT(setTransZ(int)));
+    connect(_objectCharacteristicsSpinSliders[transX], SIGNAL(valueChanged(int)), object, SLOT(setTransX(int)));
+    connect(_objectCharacteristicsSpinSliders[transY], SIGNAL(valueChanged(int)), object, SLOT(setTransY(int)));
+    connect(_objectCharacteristicsSpinSliders[transZ], SIGNAL(valueChanged(int)), object, SLOT(setTransZ(int)));
 
-//    connect(_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object, SLOT(setAlpha(int)));
+    connect(_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object, SLOT(setAlpha(int)));
 }
 
 void MainWindow::setShortcuts()
@@ -713,7 +721,7 @@ void MainWindow::initObjectsList()
     _mainMat->addChild(_objectsList[0]);
     _objectsList[0]->setNodeMask(0);
 
-    _objectsList2.push_back(new Our3DObject()); // globalMat en _objectsList[0]
+    _objectsList2.push_back(new Our3DObject()); // globalMat2 en _objectsList2[0]
     _mainMat2 = new osg::MatrixTransform();
     _mainMat2->addChild(_objectsList2[0]);
     _objectsList2[0]->setNodeMask(1);
@@ -730,9 +738,9 @@ void MainWindow::initObjectsList()
 
     int cx = cameraMatrix.at<double>(0, 2);
     int cy = cameraMatrix.at<double>(1, 2);
-    int n = (cameraMatrix.at<double>(0, 0) + cameraMatrix.at<double>(1, 1)) / 2;
-    // NEAR (n) = distance focale ; si pixels carrés, fx = fy -> np
-    //mais est généralement différent de fy donc on prend (pour l'instant) par défaut la valeur médiane
+    double n = (cameraMatrix.at<double>(0, 0) + cameraMatrix.at<double>(1, 1)) / 2;
+    // NEAR (n) = distance focale ; si pixels carres, fx = fy -> np
+    //mais est generalement different de fy donc on prend (pour l'instant) par defaut la valeur mediane
     _corrector = (n / 2) / (cameraMatrix.at<double>(1, 2) - webcamMat->rows / 2);
 
     fs.release();
@@ -741,49 +749,93 @@ void MainWindow::initObjectsList()
                                GL_RGB, GL_BGR, GL_UNSIGNED_BYTE,
                                (uchar*)(webcamMat->data),
                                osg::Image::AllocationMode::NO_DELETE, 1);
+    {
+        osg::Geometry* geoQuad = new osg::Geometry;
 
-    osg::Geometry* geoQuad = new osg::Geometry;
+        osg::Vec3Array* tabSommet = new osg::Vec3Array;
+        tabSommet->push_back(osg::Vec3(-cx, n, -cy));
+        tabSommet->push_back(osg::Vec3(webcamMat->cols - cx, n, -cy));
+        tabSommet->push_back(osg::Vec3(webcamMat->cols - cx, n, webcamMat->rows - cy));
+        tabSommet->push_back(osg::Vec3(-cx, n, webcamMat->rows - cy));
+        geoQuad->setVertexArray(tabSommet);
 
-    osg::Vec3Array* tabSommet = new osg::Vec3Array;
-    tabSommet->push_back(osg::Vec3(-cx, n, -cy));
-    tabSommet->push_back(osg::Vec3(webcamMat->cols - cx, n, -cy));
-    tabSommet->push_back(osg::Vec3(webcamMat->cols - cx, n, webcamMat->rows - cy));
-    tabSommet->push_back(osg::Vec3(-cx, n, webcamMat->rows - cy));
-    geoQuad->setVertexArray(tabSommet);
+        osg::DrawElementsUInt* primitive = new osg::DrawElementsUInt(osg::PrimitiveSet::QUADS, 0);
+        primitive->push_back(0);
+        primitive->push_back(1);
+        primitive->push_back(2);
+        primitive->push_back(3);
+        geoQuad->addPrimitiveSet(primitive);
 
-    osg::DrawElementsUInt* primitive = new osg::DrawElementsUInt(osg::PrimitiveSet::QUADS, 0);
-    primitive->push_back(0);
-    primitive->push_back(1);
-    primitive->push_back(2);
-    primitive->push_back(3);
-    geoQuad->addPrimitiveSet(primitive);
+        // Nous creons ensuite une tableau qui contiendra nos coordonnees de texture.
+        osg::Vec2Array* coordonneeTexture = new osg::Vec2Array(4);
+        (*coordonneeTexture)[0].set(0.0f, 1.0f);
+        (*coordonneeTexture)[1].set(1.0f, 1.0f);
+        (*coordonneeTexture)[2].set(1.0f, 0.0f);
+        (*coordonneeTexture)[3].set(0.0f, 0.0f);
+        geoQuad->setTexCoordArray(0, coordonneeTexture);
 
-    // Nous créons ensuite une tableau qui contiendra nos coordonnées de texture.
-    osg::Vec2Array* coordonneeTexture = new osg::Vec2Array(4);
-    (*coordonneeTexture)[0].set(0.0f, 1.0f);
-    (*coordonneeTexture)[1].set(1.0f, 1.0f);
-    (*coordonneeTexture)[2].set(1.0f, 0.0f);
-    (*coordonneeTexture)[3].set(0.0f, 0.0f);
-    geoQuad->setTexCoordArray(0, coordonneeTexture);
+        osg::Geode* noeudGeo = new osg::Geode;
+        osg::StateSet* statuts = noeudGeo->getOrCreateStateSet();
+        statuts->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+        noeudGeo->addDrawable(geoQuad);
 
-    osg::Geode* noeudGeo = new osg::Geode;
-    osg::StateSet* statuts = noeudGeo->getOrCreateStateSet();
-    statuts->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
-    noeudGeo->addDrawable(geoQuad);
+        // Nous creons une Texture2D.
+        osg::Texture2D* texture = new osg::Texture2D;
 
-    // Nous créons une Texture2D.
-    osg::Texture2D* texture = new osg::Texture2D;
+        // Nous associons notre image a notre objet Texture2D.
+        texture->setImage(_backgroundImage);
+        texture->setResizeNonPowerOfTwoHint(false);
 
-    // Nous associons notre image à notre objet Texture2D.
-    texture->setImage(_backgroundImage);
-    texture->setResizeNonPowerOfTwoHint(false);
+        // Enfin nous activons les texture de notre objet Geometry a travers l'objet statuts.
+        statuts->setTextureAttributeAndModes(0, texture, osg::StateAttribute::ON);
+        statuts->setMode(GL_BLEND,osg::StateAttribute::ON);
+        statuts->setRenderingHint(osg::StateSet::TRANSPARENT_BIN);
 
-    // Enfin nous activons les texture de notre objet Geometry à travers l'objet statuts.
-    statuts->setTextureAttributeAndModes(0, texture, osg::StateAttribute::ON);
-    statuts->setMode(GL_BLEND,osg::StateAttribute::ON);
-    statuts->setRenderingHint(osg::StateSet::TRANSPARENT_BIN);
+        _objectsList.push_back(new Our3DObject(noeudGeo)); // mat en _objectsList[1] qui contient le hud
+    }
 
-    _objectsList.push_back(new Our3DObject(noeudGeo)); // mat en _objectsList[1] qui contient le hud
-    _objectsList2.push_back(new Our3DObject(noeudGeo)); // mat en _objectsList[1] qui contient le hud
-    _objectsList2[0]->addChild(_objectsList2[1]);
+    {
+        osg::Geometry* geoQuad = new osg::Geometry;
+
+        osg::Vec3Array* tabSommet = new osg::Vec3Array;
+        tabSommet->push_back(osg::Vec3(-cx, n, -cy));
+        tabSommet->push_back(osg::Vec3(webcamMat->cols - cx, n, -cy));
+        tabSommet->push_back(osg::Vec3(webcamMat->cols - cx, n, webcamMat->rows - cy));
+        tabSommet->push_back(osg::Vec3(-cx, n, webcamMat->rows - cy));
+        geoQuad->setVertexArray(tabSommet);
+
+        osg::DrawElementsUInt* primitive = new osg::DrawElementsUInt(osg::PrimitiveSet::QUADS, 0);
+        primitive->push_back(0);
+        primitive->push_back(1);
+        primitive->push_back(2);
+        primitive->push_back(3);
+        geoQuad->addPrimitiveSet(primitive);
+
+        // Nous creons ensuite une tableau qui contiendra nos coordonnees de texture.
+        osg::Vec2Array* coordonneeTexture = new osg::Vec2Array(4);
+        (*coordonneeTexture)[0].set(0.0f, 1.0f);
+        (*coordonneeTexture)[1].set(1.0f, 1.0f);
+        (*coordonneeTexture)[2].set(1.0f, 0.0f);
+        (*coordonneeTexture)[3].set(0.0f, 0.0f);
+        geoQuad->setTexCoordArray(0, coordonneeTexture);
+
+        osg::Geode* noeudGeo = new osg::Geode;
+        osg::StateSet* statuts = noeudGeo->getOrCreateStateSet();
+        statuts->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+        noeudGeo->addDrawable(geoQuad);
+
+        // Nous creons une Texture2D.
+        osg::Texture2D* texture = new osg::Texture2D;
+
+        // Nous associons notre image a notre objet Texture2D.
+        texture->setImage(_backgroundImage);
+        texture->setResizeNonPowerOfTwoHint(false);
+
+        // Enfin nous activons les texture de notre objet Geometry a travers l'objet statuts.
+        statuts->setTextureAttributeAndModes(0, texture, osg::StateAttribute::ON);
+        statuts->setMode(GL_BLEND,osg::StateAttribute::ON);
+        statuts->setRenderingHint(osg::StateSet::TRANSPARENT_BIN);
+
+        _objectsList2.push_back(new Our3DObject(noeudGeo));
+    }
 }

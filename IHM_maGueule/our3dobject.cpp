@@ -56,10 +56,10 @@ void Our3DObject::update()
 {
     osg::Matrixd matrixS; // scale
     matrixS.set(
-        _sizeX,0,      0,      0,
-        0,      _sizeY,0,      0,
-        0,      0,      _sizeZ,0,
-        0,      0,      0,      1);
+                _sizeX,0,      0,      0,
+                0,      _sizeY,0,      0,
+                0,      0,      _sizeZ,0,
+                0,      0,      0,      1);
 
     osg::Matrixd matrixRot;
     matrixRot.makeRotate(osg::DegreesToRadians(_rotX), osg::Vec3d(1.0, 0.0, 0.0),
@@ -82,16 +82,3 @@ void Our3DObject::setAlpha(int alpha)
         _object->getOrCreateStateSet()->setMode( GL_BLEND, osg::StateAttribute::ON );
     }
 }
-
-
-//void Our3DObject::printObject(bool print)
-//{
-//    if(_isPrinted == print)
-//        return;
-
-//    _isPrinted = print;
-//    if(_isPrinted)
-//        this->addChild(_object);
-//    else
-//        this->removeChild(_object);
-//}

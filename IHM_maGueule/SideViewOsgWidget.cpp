@@ -1,11 +1,11 @@
 #include "SideViewOsgWidget.h"
 
-SideViewOsgWidet::SideViewOsgWidet(cv::Mat* webcamMat, osg::MatrixTransform *mainMat, QWidget* parent, const QGLWidget* shareWidget)
+SideViewOsgWidet::SideViewOsgWidet(cv::Mat* webcamMat, osg::MatrixTransform *mainMat, Our3DObject *hud, QWidget* parent, const QGLWidget* shareWidget)
     : QGLWidget( parent, shareWidget)
     , _graphicsWindow( new osgViewer::GraphicsWindowEmbedded( this->x(),
-                                                               this->y(),
-                                                               this->width(),
-                                                               this->height() ) )
+                                                              this->y(),
+                                                              this->width(),
+                                                              this->height() ) )
     , _viewer( new osgViewer::Viewer )
 {
     //////////////////////////////////////////////////
@@ -17,7 +17,6 @@ SideViewOsgWidet::SideViewOsgWidet(cv::Mat* webcamMat, osg::MatrixTransform *mai
     cv::Mat cameraMatrix;
 
     fs["cameraMatrix"] >> cameraMatrix;
-
     double NEAR_VALUE = (cameraMatrix.at<double>(0, 0) + cameraMatrix.at<double>(1, 1)) / 2;
 
     fs.release();
@@ -27,7 +26,6 @@ SideViewOsgWidet::SideViewOsgWidet(cv::Mat* webcamMat, osg::MatrixTransform *mai
     //////////////////////////////////////////////////
 
     _group = new osg::Group;
-    _mat = new osg::MatrixTransform();
 
     // Projection
 
@@ -42,13 +40,14 @@ SideViewOsgWidet::SideViewOsgWidet(cv::Mat* webcamMat, osg::MatrixTransform *mai
 
     osg::Vec3d eye(0.0f, 0.0f, 0.0f), target(0.0f, 1000.0, 0.0f), normal(0.0f, 0.0f, 1.0f);
 
+    _group->addChild(hud);
     _group->addChild(mainMat);
 
     //float aspectRatio = static_cast<float>(this->width()) / static_cast<float>( this->height() );
     _viewer->setSceneData(_group.get());
 
     osgGA::TrackballManipulator* manipulator = new osgGA::TrackballManipulator;
-    manipulator->setAllowThrow( false );
+    manipulator->setAllowThrow(false);
 
     _viewer->setCameraManipulator( manipulator );
     _viewer->getCamera()->setProjectionMatrix(projectionMatrix);
@@ -59,6 +58,7 @@ SideViewOsgWidet::SideViewOsgWidet(cv::Mat* webcamMat, osg::MatrixTransform *mai
     _viewer->realize();
 
     this->setAutoBufferSwap(false);
+    this->setMouseTracking(true);
 }
 
 SideViewOsgWidet::~SideViewOsgWidet()
@@ -98,9 +98,121 @@ void SideViewOsgWidet::resizeGL( int width, int height )
 
 
 
+
+void SideViewOsgWidet::mouseMoveEvent( QMouseEvent* event )
+{
+    this->getEventQueue()->mouseMotion( static_cast<float>( event->x() ),
+                                        static_cast<float>( event->y() ) );
+}
+
+void SideViewOsgWidet::mousePressEvent( QMouseEvent* event )
+{
+    // 1 = left mouse button
+    // 2 = middle mouse button
+    // 3 = right mouse button
+
+    unsigned int button = 0;
+
+    switch( event->button() )
+    {
+    case Qt::LeftButton:
+        button = 1;
+        break;
+
+    case Qt::MiddleButton:
+        button = 2;
+        break;
+
+    case Qt::RightButton:
+        button = 3;
+        break;
+
+    default:
+        break;
+    }
+
+    this->getEventQueue()->mouseButtonPress( static_cast<float>( event->x() ),
+                                             static_cast<float>( event->y() ),
+                                             button );
+}
+
+void SideViewOsgWidet::mouseReleaseEvent(QMouseEvent* event)
+{
+    // 1 = left mouse button
+    // 2 = middle mouse button
+    // 3 = right mouse button
+
+    unsigned int button = 0;
+
+    switch( event->button() )
+    {
+    case Qt::LeftButton:
+        button = 1;
+        break;
+
+    case Qt::MiddleButton:
+        button = 2;
+        break;
+
+    case Qt::RightButton:
+        button = 3;
+        break;
+
+    default:
+        break;
+    }
+
+    this->getEventQueue()->mouseButtonRelease( static_cast<float>( event->x() ),
+                                               static_cast<float>( event->y() ),
+                                               button );
+}
+
+void SideViewOsgWidet::wheelEvent( QWheelEvent* event )
+{
+    event->accept();
+    int delta = event->delta();
+
+    osgGA::GUIEventAdapter::ScrollingMotion motion = delta > 0 ?   osgGA::GUIEventAdapter::SCROLL_UP
+                                                                 : osgGA::GUIEventAdapter::SCROLL_DOWN;
+
+    this->getEventQueue()->mouseScroll( motion );
+}
+
+bool SideViewOsgWidet::event( QEvent* event )
+{
+    bool handled = QGLWidget::event( event );
+
+    // This ensures that the OSG widget is always going to be repainted after the
+    // user performed some interaction. Doing this in the event handler ensures
+    // that we don't forget about some event and prevents duplicate code.
+    switch( event->type() )
+    {
+    case QEvent::MouseButtonPress:
+    case QEvent::MouseButtonRelease:
+    case QEvent::MouseMove:
+    case QEvent::Wheel:
+        this->update();
+        break;
+
+    default:
+        break;
+    }
+
+    return handled;
+}
 // private
 
 void SideViewOsgWidet::onHome()
 {
     _viewer->home();
+}
+
+osgGA::EventQueue* SideViewOsgWidet::getEventQueue() const
+{
+    osgGA::EventQueue* eventQueue = _graphicsWindow->getEventQueue();
+
+    if( eventQueue )
+        return eventQueue;
+    else
+        throw std::runtime_error( "Unable to obtain valid event queue");
 }

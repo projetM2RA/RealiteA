@@ -44,27 +44,33 @@ win32:CONFIG(release, debug|release): LIBS += -lChehra_r
 ##
 
 
-SOURCES += main.cpp\
-        mainwindow.cpp \
-    osgwidget.cpp \
-    our3dobject.cpp \
-    webcamdevice.cpp \
-    addobjectdialog.cpp \
-    sideviewosgwidet.cpp \
-    calibratedialog.cpp \
-    webcamgraphicsscene.cpp \
-    chesscaracteristicsdialog.cpp
+SOURCES += \
+    SideViewOsgWidget.cpp \
+    OptionsDialog.cpp \
+    AddObjectDialog.cpp \
+    CalibrateDialog.cpp \
+    main.cpp \
+    MainWindow.cpp \
+    OptionsDialog.cpp \
+    OsgWidget.cpp \
+    SideViewOsgWidget.cpp \
+    WebcamDevice.cpp \
+    WebcamGraphicsScene.cpp \
+    Our3DObject.cpp
 
-HEADERS  += mainwindow.h \
-    osgwidget.h \
-    our3dobject.h \
-    webcamdevice.h \
-    addobjectdialog.h \
-    sideviewosgwidet.h \
-    calibratedialog.h \
-    webcamgraphicsscene.h \
+HEADERS  += \
+    SideViewOsgWidget.h \
+    OptionsDialog.h \
+    AddObjectDialog.h \
+    CalibrateDialog.h \
+    MainWindow.h \
+    OptionsDialog.h \
+    OsgWidget.h \
+    SideViewOsgWidget.h \
+    WebcamDevice.h \
+    WebcamGraphicsScene.h \
     WebcamGraphicsView.h \
-    chesscaracteristicsdialog.h
+    Our3DObject.h
 
 RESOURCES += \
-    rsc.qrc
+    rsc.qrc \
