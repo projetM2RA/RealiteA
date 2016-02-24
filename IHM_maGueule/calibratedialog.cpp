@@ -4,7 +4,7 @@ CalibrateDialog::CalibrateDialog(cv::Mat* frame, QWidget *parent) :
     QDialog(parent)
 {
     this->setWindowTitle("Camera calibration");
-    this->setWindowIcon(QIcon("../rsc/icons/icon.png"));
+    this->setWindowIcon(QIcon(":/icons/icon"));
 
     _imageIndex = 1;
     _savedFrame = new cv::Mat(cv::Mat::zeros(frame->rows, frame->cols, frame->type()));

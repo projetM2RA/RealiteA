@@ -92,6 +92,8 @@ void MainWindow::addObject()
 
     _objectsList.push_back(new Our3DObject(objectPath));
     _objectsList[0]->addChild(_objectsList[_objectsList.size() - 1]);
+    _objectsList2.push_back(new Our3DObject(objectPath));
+    _objectsList2[0]->addChild(_objectsList2[_objectsList2.size() - 1]);
 
     int nbrObjects = _objectChoiceComboBox->itemText(0).mid(14).toInt();
     _objectChoiceComboBox->setItemText(0, "All objects : " + QString::number(nbrObjects + 1));
@@ -105,9 +107,8 @@ void MainWindow::updateObjectCharacteristics(int objectID)
     // _objectList[0] <=> globalMat
     // _objectList[1] <=> hud
 
-    Our3DObject* object = NULL;
-
-    object = _objectsList[_objectID];
+    Our3DObject* object = _objectsList[_objectID];
+    Our3DObject* object2 = _objectsList2[_objectID];
 
     if(_objectID != 1)
     {
@@ -122,6 +123,20 @@ void MainWindow::updateObjectCharacteristics(int objectID)
         disconnect(_objectCharacteristicsSpinSliders[transX], SIGNAL(valueChanged(int)), object, SLOT(setTransX(int)));
         disconnect(_objectCharacteristicsSpinSliders[transY], SIGNAL(valueChanged(int)), object, SLOT(setTransY(int)));
         disconnect(_objectCharacteristicsSpinSliders[transZ], SIGNAL(valueChanged(int)), object, SLOT(setTransZ(int)));
+
+        //////////////////////////////////////////////////
+
+        disconnect(_objectCharacteristicsSpinSliders[sizeX], SIGNAL(valueChanged(int)), object2, SLOT(setSizeX(int)));
+        disconnect(_objectCharacteristicsSpinSliders[sizeY], SIGNAL(valueChanged(int)), object2, SLOT(setSizeY(int)));
+        disconnect(_objectCharacteristicsSpinSliders[sizeZ], SIGNAL(valueChanged(int)), object2, SLOT(setSizeZ(int)));
+
+        disconnect(_objectCharacteristicsSpinSliders[rotX], SIGNAL(valueChanged(int)), object2, SLOT(setRotX(int)));
+        disconnect(_objectCharacteristicsSpinSliders[rotY], SIGNAL(valueChanged(int)), object2, SLOT(setRotY(int)));
+        disconnect(_objectCharacteristicsSpinSliders[rotZ], SIGNAL(valueChanged(int)), object2, SLOT(setRotZ(int)));
+
+        disconnect(_objectCharacteristicsSpinSliders[transX], SIGNAL(valueChanged(int)), object2, SLOT(setTransX(int)));
+        disconnect(_objectCharacteristicsSpinSliders[transY], SIGNAL(valueChanged(int)), object2, SLOT(setTransY(int)));
+        disconnect(_objectCharacteristicsSpinSliders[transZ], SIGNAL(valueChanged(int)), object2, SLOT(setTransZ(int)));
     }
     else
     {
@@ -136,18 +151,23 @@ void MainWindow::updateObjectCharacteristics(int objectID)
         _objectCharacteristicsSpinSliders[transX]->setEnabled(true);
         _objectCharacteristicsSpinSliders[transY]->setEnabled(true);
         _objectCharacteristicsSpinSliders[transZ]->setEnabled(true);
+
+        _isPrintedBox->setEnabled(true);
     }
 
     disconnect(_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object, SLOT(setAlpha(int)));
+    disconnect(_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object2, SLOT(setAlpha(int)));
 
 
 
     _objectID = objectID;
 
     object = _objectsList[_objectID];
+    object2 = _objectsList2[_objectID];
 
 
     _isPrintedBox->setChecked(object->getNodeMask());
+    _isPrintedBox2->setChecked(object2->getNodeMask());
 
     if(_objectID == 1)
     {
@@ -174,6 +194,8 @@ void MainWindow::updateObjectCharacteristics(int objectID)
         _objectCharacteristicsSpinSliders[transX]->setEnabled(false);
         _objectCharacteristicsSpinSliders[transY]->setEnabled(false);
         _objectCharacteristicsSpinSliders[transZ]->setEnabled(false);
+
+        _isPrintedBox->setEnabled(false);
     }
     else
     {
@@ -200,10 +222,25 @@ void MainWindow::updateObjectCharacteristics(int objectID)
         connect(_objectCharacteristicsSpinSliders[transX], SIGNAL(valueChanged(int)), object, SLOT(setTransX(int)));
         connect(_objectCharacteristicsSpinSliders[transY], SIGNAL(valueChanged(int)), object, SLOT(setTransY(int)));
         connect(_objectCharacteristicsSpinSliders[transZ], SIGNAL(valueChanged(int)), object, SLOT(setTransZ(int)));
+
+        //////////////////////////////////////////////////
+
+        connect(_objectCharacteristicsSpinSliders[sizeX], SIGNAL(valueChanged(int)), object2, SLOT(setSizeX(int)));
+        connect(_objectCharacteristicsSpinSliders[sizeY], SIGNAL(valueChanged(int)), object2, SLOT(setSizeY(int)));
+        connect(_objectCharacteristicsSpinSliders[sizeZ], SIGNAL(valueChanged(int)), object2, SLOT(setSizeZ(int)));
+
+        connect(_objectCharacteristicsSpinSliders[rotX], SIGNAL(valueChanged(int)), object2, SLOT(setRotX(int)));
+        connect(_objectCharacteristicsSpinSliders[rotY], SIGNAL(valueChanged(int)), object2, SLOT(setRotY(int)));
+        connect(_objectCharacteristicsSpinSliders[rotZ], SIGNAL(valueChanged(int)), object2, SLOT(setRotZ(int)));
+
+        connect(_objectCharacteristicsSpinSliders[transX], SIGNAL(valueChanged(int)), object2, SLOT(setTransX(int)));
+        connect(_objectCharacteristicsSpinSliders[transY], SIGNAL(valueChanged(int)), object2, SLOT(setTransY(int)));
+        connect(_objectCharacteristicsSpinSliders[transZ], SIGNAL(valueChanged(int)), object2, SLOT(setTransZ(int)));
     }
 
     _objectCharacteristicsSpinSliders[alpha]->setValue(object->getAlpha());
     connect(_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object, SLOT(setAlpha(int)));
+    connect(_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object2, SLOT(setAlpha(int)));
 }
 
 void MainWindow::updateDetectMode()
@@ -241,6 +278,19 @@ void MainWindow::displayObjectInScene(bool display)
             _objectsList[_objectID]->setNodeMask(display);
         else
             _objectsList[_objectID]->setNodeMask(display);
+    }
+}
+
+void MainWindow::displayObjectInSideView(bool display)
+{
+    if(_objectID == 0)
+        displayObjectsInSideView(!display);
+    else
+    {
+        if(display)
+            _objectsList2[_objectID]->setNodeMask(display);
+        else
+            _objectsList2[_objectID]->setNodeMask(display);
     }
 }
 
@@ -427,11 +477,10 @@ void MainWindow::setMainWindow()
 
     QHBoxLayout* objectDispalyOptionsLayout = new QHBoxLayout();
     _isPrintedBox = new QCheckBox(tr("Display object in main view"));
-    _isPrintedBox->setChecked(true);
+    _isPrintedBox->setChecked(false);
     objectDispalyOptionsLayout->addWidget(_isPrintedBox);
     _isPrintedBox2 = new QCheckBox(tr("Display object in side view"));
     _isPrintedBox2->setChecked(true);
-    _isPrintedBox2->setEnabled(false);
     objectDispalyOptionsLayout->addWidget(_isPrintedBox2);
     _deleteObjectButton = new QPushButton(tr("Delete object"));
     _deleteObjectButton->setEnabled(false);
@@ -508,7 +557,7 @@ void MainWindow::setMainWindow()
     alphaGroup->setLayout(alphaLayout);
     objectLayout->addWidget(alphaGroup);
 
-    _sideView = new SideViewOsgWidet(_webcamDevice->getWebcam(), _mainMat, _objectsList[1], this);
+    _sideView = new SideViewOsgWidet(_webcamDevice->getWebcam(), _mainMat2, this);
     objectLayout->addWidget(_sideView);
 
     objectLayout->setStretchFactor(_sideView, 2);
@@ -537,8 +586,9 @@ void MainWindow::connectAll()
 
     connect(_detectActions[noDetect], SIGNAL(toggled(bool)), this, SLOT(displayObjects(bool)));
     connect(_isPrintedBox, SIGNAL(clicked(bool)), this, SLOT(displayObjectInScene(bool)));
+    //connect(_isPrintedBox2, SIGNAL(clicked(bool)), this, SLOT(displayObjectInSideView(bool))); // #truanderie
 
-    connect(_objectChoiceComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(updateObjectCharacteristics(int)));
+    //connect(_objectChoiceComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(updateObjectCharacteristics(int)));
 
     connect(_webcamDevice, SIGNAL(updateScene(cv::Mat, cv::Mat)), this, SLOT(updateSceneRT(cv::Mat, cv::Mat)));
 
@@ -558,6 +608,22 @@ void MainWindow::connectAll()
     connect(_objectCharacteristicsSpinSliders[transZ], SIGNAL(valueChanged(int)), object, SLOT(setTransZ(int)));
 
     connect(_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object, SLOT(setAlpha(int)));
+
+//    object = _objectsList2[0]; // #truaderie
+
+//    connect(_objectCharacteristicsSpinSliders[sizeX], SIGNAL(valueChanged(int)), object, SLOT(setSizeX(int)));
+//    connect(_objectCharacteristicsSpinSliders[sizeY], SIGNAL(valueChanged(int)), object, SLOT(setSizeY(int)));
+//    connect(_objectCharacteristicsSpinSliders[sizeZ], SIGNAL(valueChanged(int)), object, SLOT(setSizeZ(int)));
+
+//    connect(_objectCharacteristicsSpinSliders[rotX], SIGNAL(valueChanged(int)), object, SLOT(setRotX(int)));
+//    connect(_objectCharacteristicsSpinSliders[rotY], SIGNAL(valueChanged(int)), object, SLOT(setRotY(int)));
+//    connect(_objectCharacteristicsSpinSliders[rotZ], SIGNAL(valueChanged(int)), object, SLOT(setRotZ(int)));
+
+//    connect(_objectCharacteristicsSpinSliders[transX], SIGNAL(valueChanged(int)), object, SLOT(setTransX(int)));
+//    connect(_objectCharacteristicsSpinSliders[transY], SIGNAL(valueChanged(int)), object, SLOT(setTransY(int)));
+//    connect(_objectCharacteristicsSpinSliders[transZ], SIGNAL(valueChanged(int)), object, SLOT(setTransZ(int)));
+
+//    connect(_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object, SLOT(setAlpha(int)));
 }
 
 void MainWindow::setShortcuts()
@@ -566,6 +632,8 @@ void MainWindow::setShortcuts()
     connect(_fullScreenShortcut, SIGNAL(activated()), this, SLOT(displayFullScreen()));
     _fullScreenShortcut2 = new QShortcut(Qt::CTRL + Qt::Key_F, _fullScreenView); // necessaire pour utiliser le shortcut en plein ecran
     connect(_fullScreenShortcut2, SIGNAL(activated()), this, SLOT(displayFullScreen())); // #truanderie
+    _leaveFullScreen = new QShortcut(Qt::Key_Escape, _fullScreenView);
+    connect(_leaveFullScreen, SIGNAL(activated()), this, SLOT(displayFullScreen()));
 
     _pauseShortcut = new QShortcut(Qt::Key_Space, this);
     connect(_pauseShortcut, SIGNAL(activated()), _webcamDevice, SLOT(pause()));
@@ -648,7 +716,7 @@ void MainWindow::initObjectsList()
     _objectsList2.push_back(new Our3DObject()); // globalMat en _objectsList[0]
     _mainMat2 = new osg::MatrixTransform();
     _mainMat2->addChild(_objectsList2[0]);
-    _objectsList2[0]->setNodeMask(0);
+    _objectsList2[0]->setNodeMask(1);
 
     _backgroundImage = new osg::Image;
 

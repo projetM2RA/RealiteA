@@ -46,6 +46,7 @@ public:
 private slots:
     void updateCam() { _backgroundImage->dirty(); _mainView->repaint(); _sideView->repaint(); _fullScreenView->repaint(); }
     void displayObjects(bool removeObjects) { _objectsList[0]->setNodeMask(!removeObjects); }
+    void displayObjectsInSideView(bool removeObjects) { _objectsList2[0]->setNodeMask(!removeObjects); _isPrintedBox->setChecked(!removeObjects); }
     void start();
     void calibrateCamera();
     void addObject();
@@ -53,6 +54,7 @@ private slots:
     void updateDetectMode();
     void switchInput();
     void displayObjectInScene(bool display);
+    void displayObjectInSideView(bool display);
     void displayFullScreen();
     void updateSceneRT(cv::Mat rotVec, cv::Mat tvecs);
 
@@ -108,6 +110,7 @@ private:
 
     QShortcut* _fullScreenShortcut;
     QShortcut* _fullScreenShortcut2;
+    QShortcut* _leaveFullScreen;
     QShortcut* _pauseShortcut;
     QShortcut* _pauseShortcut2;
 

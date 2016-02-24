@@ -1,6 +1,6 @@
 #include "sideviewosgwidet.h"
 
-SideViewOsgWidet::SideViewOsgWidet(cv::Mat* webcamMat, osg::MatrixTransform *mainMat, Our3DObject* hud, QWidget* parent, const QGLWidget* shareWidget)
+SideViewOsgWidet::SideViewOsgWidet(cv::Mat* webcamMat, osg::MatrixTransform *mainMat, QWidget* parent, const QGLWidget* shareWidget)
     : QGLWidget( parent, shareWidget)
     , _graphicsWindow( new osgViewer::GraphicsWindowEmbedded( this->x(),
                                                                this->y(),
@@ -43,7 +43,6 @@ SideViewOsgWidet::SideViewOsgWidet(cv::Mat* webcamMat, osg::MatrixTransform *mai
     osg::Vec3d eye(0.0f, 0.0f, 0.0f), target(0.0f, 1000.0, 0.0f), normal(0.0f, 0.0f, 1.0f);
 
     _group->addChild(mainMat);
-    _group->addChild(hud);
 
     //float aspectRatio = static_cast<float>(this->width()) / static_cast<float>( this->height() );
     _viewer->setSceneData(_group.get());
@@ -65,60 +64,6 @@ SideViewOsgWidet::SideViewOsgWidet(cv::Mat* webcamMat, osg::MatrixTransform *mai
 SideViewOsgWidet::~SideViewOsgWidet()
 {
 }
-
-
-
-// public slots
-void SideViewOsgWidet::updateSceneRT(cv::Mat rotVec, cv::Mat tvecs)
-{
-    double t3 = tvecs.at<double>(1, 0);
-    double t1 = -tvecs.at<double>(0, 0);
-    double t2 = -tvecs.at<double>(2, 0);// - t3 / _corrector; // and now, magic !
-
-    double r11 = rotVec.at<double>(0, 0);
-    double r12 = rotVec.at<double>(0, 1);
-    double r13 = rotVec.at<double>(0, 2);
-    double r21 = rotVec.at<double>(1, 0);
-    double r22 = rotVec.at<double>(1, 1);
-    double r23 = rotVec.at<double>(1, 2);
-    double r31 = rotVec.at<double>(2, 0);
-    double r32 = rotVec.at<double>(2, 1);
-    double r33 = rotVec.at<double>(2, 2);
-
-    osg::Matrixd matrixR; // rotation (transposee de rotVec)
-    matrixR.set(
-                r11,	r21,	r31,	0,
-                r12,	r22,	r32,	0,
-                r13,	r23,	r33,	0,
-                0,		0,		0,		1);
-
-
-    double rotX = atan2(r32, r33);
-    double rotY =  atan2(r21, r11);
-    double rotZ = -atan2(-r31, sqrt((r32 * r32) + (r33 * r33)));
-
-    std::cout << "rotations : " << std::endl
-            << "x : " << rotX << std::endl
-            << "y : " << rotY << std::endl
-            << "z : " << rotZ << std::endl << std::endl;
-    std::cout << "translations : " << std::endl
-              << "x : " << t1 << std::endl
-              << "y : " << t2 << std::endl
-              << "z : " << t3 << std::endl << std::endl << std::endl;
-
-
-    osg::Matrixd matrixT; // translation
-    matrixT.makeTranslate(t1, t2, t3);
-
-    osg::Matrixd matrix90; // rotation de repere entre opencv et osg
-    matrix90.makeRotate(osg::Quat(osg::DegreesToRadians(90.0f), osg::Vec3d(1.0, 0.0, 0.0)));
-
-    osg::Matrixd matrix180; // rotation de repere entre opencv et osg
-    matrix180.makeRotate(osg::Quat(osg::DegreesToRadians(180.0f), osg::Vec3d(0.0, 0.0, 1.0)));
-
-    _mat->setMatrix(matrixR * matrix90 * matrix180 * matrixT);
-}
-
 
 
 

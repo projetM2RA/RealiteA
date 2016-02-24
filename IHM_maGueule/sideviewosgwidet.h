@@ -38,13 +38,10 @@ class SideViewOsgWidet : public QGLWidget
     Q_OBJECT
 
 public:
-    SideViewOsgWidet(cv::Mat *webcamMat, osg::MatrixTransform *mainMat, Our3DObject *hud, QWidget* parent = 0,
+    SideViewOsgWidet(cv::Mat *webcamMat, osg::MatrixTransform *mainMat, QWidget* parent = 0,
                const QGLWidget* shareWidget = 0);
 
     virtual ~SideViewOsgWidet();
-
-public slots:
-    void updateSceneRT(cv::Mat rotVec, cv::Mat tvecs);
 
 protected:
     virtual void paintEvent( QPaintEvent* paintEvent );

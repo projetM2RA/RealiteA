@@ -4,7 +4,7 @@ ChessCaracteristicsDialog::ChessCaracteristicsDialog(int nbrCols, int nbrRows, d
     QDialog(parent)
 {
     this->setWindowTitle("Options");
-    this->setWindowIcon(QIcon("../rsc/icons/icon.png"));
+    this->setWindowIcon(QIcon(":/icons/icon"));
 
     _nbrRowsLabel = new QLabel(tr("Number of rows : "));
     _nbrColsLabel = new QLabel(tr("Number of columns : "));
