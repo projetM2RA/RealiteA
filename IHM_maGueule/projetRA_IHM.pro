@@ -18,11 +18,13 @@ LIBS += -L"E:\Logiciels\Prog\opencv_2_4_11\opencv\build\x64\vc11\lib"
 
 win32:CONFIG(debug, debug|release): LIBS += -lopencv_calib3d2411d \
     -lopencv_core2411d -lopencv_features2d2411d -lopencv_highgui2411d \
-    -lopencv_imgproc2411d -lopencv_objdetect2411d -lopencv_video2411d
+    -lopencv_imgproc2411d -lopencv_objdetect2411d -lopencv_video2411d \
+    -lopencv_nonfree2411d -lopencv_flann2411d
 
 win32:CONFIG(release, debug|release): LIBS += -lopencv_calib3d2411 \
     -lopencv_core2411 -lopencv_features2d2411 -lopencv_imgproc2411 \
-    -lopencv_objdetect2411 -lopencv_highgui2411 -lopencv_video2411
+    -lopencv_objdetect2411 -lopencv_highgui2411 -lopencv_video2411 \
+    -lopencv_nonfree2411 -lopencv_flann2411
 ##
 
 #OpenScenGraph

@@ -6,6 +6,8 @@
 #include <QMessageBox>
 
 #include <opencv2/opencv.hpp>
+#include <opencv2/nonfree/nonfree.hpp>
+#include <opencv2/nonfree/features2d.hpp>
 #include <Chehra.h>
 
 #include "CalibrateDialog.h"
@@ -59,11 +61,14 @@ private:
     void calibrateCam(FileStorage *fs);
     bool detecterVisage(std::vector<cv::Point2f> *pointsVisage);
     bool detectChess(std::vector<cv::Point2f> *chessPoints);
+    bool detectMarker(std::vector<cv::Point2f> *markerPoints);
     void trackingChess(cv::Mat *rotVecs);
     void trackingMarker(cv::Mat *rotVecs);
+    void dbCorrelation();
     void faceRT();
     void chessRT();
     void markerRT();
+    float cv_distance(cv::Point2f P, cv::Point2f Q) { return sqrt(pow(abs(P.x - Q.x),2) + pow(abs(P.y - Q.y),2)); }
 
 
     // attributes
@@ -73,6 +78,7 @@ private:
     bool _chessCaracs;
     bool _reset;
     bool _chessDetected;
+    bool _markerDetected;
     detectMode _detect;
     cv::VideoCapture _vcap;
     cv::Mat _rotVecs;
@@ -80,18 +86,23 @@ private:
     cv::Mat _cameraMatrix;
     cv::Mat _distCoeffs;
     cv::Mat* _frame;
+    cv::Mat _bufferFrame;
     cv::Mat _nextFrame;
+    cv::Mat _frameCropped;
 
     Chehra* _chehra;
     std::vector<cv::Point3f> _pointsVisage3D;
     std::vector<cv::Point3f> _pointsChess3D;
+    std::vector<cv::Point3f> _pointsMarker3D;
     std::vector<std::vector<cv::Point2f>> _images;
     std::vector<std::vector<cv::Point2f>> _chessCornersInit;
+    std::vector<std::vector<cv::Point2f>> _markerCornersInit;
 
     OptionsDialog* _optionsDialog;
 
     int _nbrColChess;
     int _nbrRowChess;
+    int _markerSize;
     double _chessSize;
 
     int _nbrLoopSinceLastDetection;

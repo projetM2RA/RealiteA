@@ -22,6 +22,7 @@ CalibrateDialog::CalibrateDialog(cv::Mat* frame, QWidget *parent) :
 
     _imageIndexLabel = new QLabel("Image : " + QString::number(_imageIndex-1) + " / 15");
     _infoMessage = new QLabel();
+    _infoMessage->setObjectName("infoCalib"); // CSS
 
     _webcamFluxScene = new WebcamGraphicsScene(frame);
     _imageSavedScene = new WebcamGraphicsScene(_savedFrame);
@@ -66,8 +67,9 @@ CalibrateDialog::CalibrateDialog(cv::Mat* frame, QWidget *parent) :
     mainLayout->addLayout(imageLayout);
     mainLayout->addLayout(buttonsLayout);
 
-    setLayout(mainLayout);
-    //setFixedSize((frame->cols)*2+100,(frame->rows)+100);
+    this->setLayout(mainLayout);
+    this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
+    this->setWindowFlags(this->windowFlags() & (Qt::WindowMaximizeButtonHint));
 
     connect(_save, SIGNAL(clicked()), this, SLOT(saveSnapShot()));
     connect(_sup, SIGNAL(clicked()), this, SLOT(delSnapShot()));

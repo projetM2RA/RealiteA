@@ -10,15 +10,19 @@
 #include <QPushButton>
 #include <QGroupBox>
 #include <QCheckBox>
+#include <QFile>
+
+#include <iostream>
 
 class OptionsDialog : public QDialog
 {
     Q_OBJECT
 public:
-    explicit OptionsDialog(int nbrCols, int nbrRows, double chessSize, QWidget *parent = 0);
+    explicit OptionsDialog(int nbrCols, int nbrRows, double chessSize, int markerSize, QWidget *parent);
 
     int getNbrCols() { return _nbrCols->value(); }
     int getNbrRows() { return _nbrRows->value(); }
+    int getMarkerSize() { return _markerSize->value(); }
     double getChessSize() { return _chessSize->value(); }
 
 signals:
@@ -26,15 +30,17 @@ signals:
 public slots:
 
 private:
+    QCheckBox* _chehra;
+
     QSpinBox* _nbrCols;
     QSpinBox* _nbrRows;
     QDoubleSpinBox* _chessSize;
-
-    QCheckBox* _chehra;
+    QSpinBox* _markerSize;
 
     QLabel* _nbrRowsLabel;
     QLabel* _nbrColsLabel;
     QLabel* _chessSizeLabel;
+    QLabel* _markerSizeLabel;
 
     QPushButton* _ok;
     QPushButton* _cancel;

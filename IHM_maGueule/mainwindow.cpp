@@ -453,9 +453,9 @@ void MainWindow::setMainWindow()
     _detectActions[chehra]->setEnabled(true);
     _detectActions[chess]->setEnabled(true);
 
-    //    for(int i = 0; i < _nbrCam; i++)
-    //        _webcamActions[i]->setEnabled(true);
-    //    _videoAction->setEnabled(true);    // ca bug ; dunno why
+    for(int i = 0; i < _nbrCam; i++)
+        _webcamActions[i]->setEnabled(true);
+    _videoAction->setEnabled(true);    // ca bug ; dunno why
 
     //////////////////////////////////////////////////
     //////////////////////////////////////////////////
