@@ -25,14 +25,14 @@ void WebcamDevice::dbCorrelation()
         double dist = matches[i].distance;
         if( dist < min_dist ) min_dist = dist;
         if( dist > max_dist ) max_dist = dist;
+
+		if( matches[i].distance <= 2*min_dist )
+            good_matches1.push_back( matches[i]);
     }
 
-    for( int i = 0; i < descriptors2.rows; i++ )
+    /*for( int i = 0; i < descriptors2.rows; i++ )
         if( matches[i].distance <= 2*min_dist )
-            good_matches1.push_back( matches[i]);
-
-    //drawMatches(tabMarqueur[0], keypoints2, imagecropped, keypoints1, good_matches1, imgout1);
-
+            good_matches1.push_back( matches[i]);*/
     matcher.match( descriptors3, descriptors1, matches );
 
     for( int i = 0; i < descriptors3.rows; i++ )
@@ -40,12 +40,14 @@ void WebcamDevice::dbCorrelation()
         double dist = matches[i].distance;
         if( dist < min_dist ) min_dist = dist;
         if( dist > max_dist ) max_dist = dist;
+
+		if( matches[i].distance <= 2*min_dist )
+            good_matches2.push_back( matches[i]);
     }
 
-    for( int i = 0; i < descriptors3.rows; i++ )
+   /* for( int i = 0; i < descriptors3.rows; i++ )
         if( matches[i].distance <= 2*min_dist )
-            good_matches2.push_back( matches[i]);
-     //drawMatches(tabMarqueur[1], keypoints3, imagecropped, keypoints1, good_matches2, imgout2);
+            good_matches2.push_back( matches[i]);*/
 
     if(good_matches1.size() > good_matches2.size())
         std::cout << "cerveau" << std::endl;
