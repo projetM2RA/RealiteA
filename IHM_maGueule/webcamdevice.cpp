@@ -6,32 +6,45 @@ WebcamDevice::WebcamDevice(QObject *parent) :
     QThread(parent)
 {
     _vcap = cv::VideoCapture(0);
-    if(!_vcap.isOpened())
-    {
-        QMessageBox::StandardButton button = QMessageBox::critical(0, tr("Error"),
-                             tr("Unable to find a webcam.\nDo you wish to load a video ?"),
-                              QMessageBox::Yes | QMessageBox::No);
-    }
-    //vcap.set(CV_CAP_PROP_FPS, 30);
-    _frame = new cv::Mat(cv::Mat::zeros(_vcap.get(CV_CAP_PROP_FRAME_HEIGHT), _vcap.get(CV_CAP_PROP_FRAME_WIDTH), CV_8UC3));
-
-    do
-    {
-        _vcap >> *_frame;
-    }while(_frame->empty()); // on s'assure que la camera est lancé (#lenteurDuPCDeNico)
-    //////////////////////////////////////////////////
+    _frame = new cv::Mat(cv::Mat::zeros(640,480, CV_8UC3));
+    _initFps = 25;
+    _actualFps = 25;
 
     _isRunning = true;
     _pause = false;
     _chessCaracs = false;
     _chessDetected = false;
     _markerDetected = false;
+    _vid = false;
+    _inputIsSwitched = false;
     _detect = noDetection;
 
     _nbrColChess = 9;
     _nbrRowChess = 6;
     _chessSize = 26.0;
     _markerSize = 50;
+
+    if(!_vcap.isOpened())
+    {
+        QMessageBox::StandardButton button = QMessageBox::critical(0, tr("Error"),
+                             tr("Unable to find a webcam.\nDo you wish to load a video ?"),
+                              QMessageBox::Yes | QMessageBox::No);
+
+        if(button == QMessageBox::Yes)
+            this->switchInput(-1);
+        else
+            return;
+    }
+    //vcap.set(CV_CAP_PROP_FPS, 30);
+    else
+    {
+        do
+        {
+            _vcap >> *_frame;
+        }while(_frame->empty()); // on s'assure que la camera est lancé (#lenteurDuPCDeNico)
+    }
+    //////////////////////////////////////////////////
+
     //_corrector = (_focalePlane / 2) / (_cameraMatrix.at<double>(1, 2) - _vcap.get(CV_CAP_PROP_FRAME_HEIGHT) / 2);
 
     this->start();
@@ -75,7 +88,7 @@ void WebcamDevice::initModels()
     _markerCornersInit = std::vector<std::vector<cv::Point2f>>(2);
 
     std::cout << "initialisation de Chehra..." << std::endl;
-    _chehra = 0;//new Chehra; //TODO
+    _chehra = 0; //new Chehra; //TODO
     std::cout << "done" << std::endl;
 
     // Repere visage
@@ -126,9 +139,11 @@ void WebcamDevice::switchMode(int mode)
 
 void WebcamDevice::switchInput(int input)
 {
+    _inputIsSwitched = true;
+
     if(input == -1)
     {
-        QString videoPath = QFileDialog::getOpenFileName(0, "Open video", "../rsc/video/", "video file (*.avi)");
+        QString videoPath = QFileDialog::getOpenFileName((QWidget*)this->parent(), "Open video", "../rsc/video/", "video file (*.avi *.mp4 *.mkv)");
         if(videoPath == "")
             return;
 
@@ -137,15 +152,19 @@ void WebcamDevice::switchInput(int input)
             _pause = true;
 
             _vcap.open(videoPath.toStdString());
+            _initFps = _vcap.get(CV_CAP_PROP_FPS);
+            _actualFps = _vcap.get(CV_CAP_PROP_FPS);
             if(!_vcap.isOpened())
             {
                 std::cout << "error" << std::endl;
             }
-
             do
             {
-                _vcap >> *_frame;
-            }while(_frame->empty()); // on s'assure que la camera est lancé (#lenteurDuPCDeNico)
+                _vcap >> _bufferFrame;
+                cv::resize(_bufferFrame, (*_frame), cv::Size(640,480), 0, 0, CV_INTER_AREA);
+                emit updateWebcam();
+                //std::cout << _bufferFrame.size() << std::endl;
+            }while(_bufferFrame.empty()); // on s'assure que la camera est lancé (#lenteurDuPCDeNico)
         }
     }
     else
@@ -153,16 +172,22 @@ void WebcamDevice::switchInput(int input)
         _pause = true;
 
         _vcap.open(input);
+        _initFps = _vcap.get(CV_CAP_PROP_FPS);
+        _actualFps = 25;
         if(!_vcap.isOpened())
         {
             std::cout << "error" << std::endl;
         }
         do
         {
-            _vcap >> *_frame;
-        }while(_frame->empty()); // on s'assure que la camera est lancé (#lenteurDuPCDeNico)
+            _vcap >> _bufferFrame;
+            cv::resize(_bufferFrame, (*_frame), cv::Size(640,480), 0, 0, CV_INTER_AREA);
+            emit updateWebcam();
+            //std::cout << _bufferFrame.size() << std::endl;
+        }while(_bufferFrame.empty()); // on s'assure que la camera est lancé (#lenteurDuPCDeNico)
         _pause = false;
     }
+    _inputIsSwitched = false;
 }
 
 void WebcamDevice::setOptions()
@@ -190,16 +215,20 @@ void WebcamDevice::run()
     {
         if(!_pause)
         {
-            std::cout << "LOL TROLL ZE LAST" << std::endl;
-            if(_vcap.isOpened()) {
-                _vcap >> _bufferFrame;
-                std::cout << "LOL TROLL" << std::endl ;}
-            else
-                _vcap.release();
+            _vid = _vcap.read(_bufferFrame);
 
-            if(!_bufferFrame.empty()){
-                _bufferFrame.copyTo(*_frame);
-                std::cout << "LOL TROLL2" << std::endl ;}
+            if(_vid)
+            {
+                cv::resize(_bufferFrame, (*_frame), cv::Size(640,480), 0, 0, CV_INTER_AREA);
+                cv::resize(_bufferFrame, _testFrame, cv::Size(640,480), 0, 0, CV_INTER_AREA);
+            }
+            else
+            {
+                _vcap.release();
+                do {
+                    _testFrame.copyTo(*_frame); //cv::imshow("caca",*_frame); cv::waitKey(5000);
+                }while(!_inputIsSwitched);
+            }
 
             switch(_detect)
             {
@@ -219,12 +248,10 @@ void WebcamDevice::run()
             }
 
             emit updateWebcam();
-            msleep(33);
+            msleep(1000 / _actualFps);
         }
     }
 }
-
-
 
 
 // private
@@ -488,29 +515,17 @@ void WebcamDevice::trackingMarker(cv::Mat *rotVecs)
 
 void WebcamDevice::dbCorrelation()
 {
-    cv::Mat imMQR;
-    std::vector<cv::Mat> tabMarqueur;
-
-    for (int i = 0; i < 3; i++)
-    {
-        std::ostringstream oss;
-        oss << "../rsc/markers/Mqr" << i+1 << ".png";
-        imMQR = cv::imread(oss.str());
-        cv::cvtColor(imMQR, imMQR, CV_BGR2GRAY);
-        tabMarqueur.push_back(imMQR);
-    }
-
     cv::SiftFeatureDetector detector;
     std::vector<cv::KeyPoint> keypoints1, keypoints2, keypoints3;
     detector.detect(_frameCropped, keypoints1);
-    detector.detect(tabMarqueur[0], keypoints2);
-    detector.detect(tabMarqueur[1], keypoints3);
+    detector.detect(_markersModels[0], keypoints2);
+    detector.detect(_markersModels[1], keypoints3);
 
     cv::Ptr<cv::DescriptorExtractor> descriptor = cv::DescriptorExtractor::create("SIFT");
-    cv::Mat descriptors1, descriptors2, descriptors3, descriptors4, descriptors5;
+    cv::Mat descriptors1, descriptors2, descriptors3;
     descriptor->compute(_frameCropped, keypoints1, descriptors1 );
-    descriptor->compute(tabMarqueur[0], keypoints2, descriptors2 );
-    descriptor->compute(tabMarqueur[1], keypoints3, descriptors3 );
+    descriptor->compute(_markersModels[0], keypoints2, descriptors2 );
+    descriptor->compute(_markersModels[1], keypoints3, descriptors3 );
 
     cv::FlannBasedMatcher matcher;
     std::vector< cv::DMatch > matches;
@@ -525,14 +540,14 @@ void WebcamDevice::dbCorrelation()
         double dist = matches[i].distance;
         if( dist < min_dist ) min_dist = dist;
         if( dist > max_dist ) max_dist = dist;
-    }
 
-    for( int i = 0; i < descriptors2.rows; i++ )
         if( matches[i].distance <= 2*min_dist )
             good_matches1.push_back( matches[i]);
+    }
 
-        //drawMatches(tabMarqueur[0], keypoints2, imagecropped, keypoints1, good_matches1, imgout1);
-
+    /*for( int i = 0; i < descriptors2.rows; i++ )
+        if( matches[i].distance <= 2*min_dist )
+            good_matches1.push_back( matches[i]);*/
     matcher.match( descriptors3, descriptors1, matches );
 
     for( int i = 0; i < descriptors3.rows; i++ )
@@ -540,12 +555,14 @@ void WebcamDevice::dbCorrelation()
         double dist = matches[i].distance;
         if( dist < min_dist ) min_dist = dist;
         if( dist > max_dist ) max_dist = dist;
-    }
 
-    for( int i = 0; i < descriptors3.rows; i++ )
         if( matches[i].distance <= 2*min_dist )
             good_matches2.push_back( matches[i]);
-     //drawMatches(tabMarqueur[1], keypoints3, imagecropped, keypoints1, good_matches2, imgout2);
+    }
+
+   /* for( int i = 0; i < descriptors3.rows; i++ )
+        if( matches[i].distance <= 2*min_dist )
+            good_matches2.push_back( matches[i]);*/
 
     if(good_matches1.size() > good_matches2.size())
         std::cout << "cerveau" << std::endl;
@@ -645,9 +662,19 @@ void WebcamDevice::chessRT()
 
 void WebcamDevice::markerRT()
 {
+    cv::Mat imMQR;
     std::vector<cv::Point2f> imagePoints;
     std::vector<double> errors;
     double meanErrors;
+
+    for (int i = 0; i < 3; i++)
+    {
+        std::ostringstream oss;
+        oss << "../rsc/markers/Mqr" << i+1 << ".png";
+        imMQR = cv::imread(oss.str());
+        cv::cvtColor(imMQR, imMQR, CV_BGR2GRAY);
+        _markersModels.push_back(imMQR);
+    }
 
     if(_markerDetected)
     {

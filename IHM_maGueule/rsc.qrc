@@ -2,6 +2,10 @@
     <qresource prefix="/icons">
         <file alias="open">icons/open-file.png</file>
         <file alias="icon">icons/icon.png</file>
+        <file alias="pause">icons/pause.ico</file>
+        <file alias="back">icons/backward.png</file>
+        <file alias="forw">icons/forward.png</file>
+        <file alias="play">icons/play.png</file>
     </qresource>
     <qresource prefix="/css">
         <file alias="style">stylesheet.css</file>

@@ -35,7 +35,7 @@ public:
     cv::Mat* getWebcam() { return _frame; }
 
     void stop() { _isRunning = false; }
-    void play() { _isRunning = true; }
+    void launch() { _isRunning = true; }
 
     void initMatrix();
     void initModels();
@@ -51,6 +51,10 @@ public slots:
   void pause() { _pause = !_pause; }
   void switchInput(int input);
   void setOptions();
+
+  void backward() { if(_actualFps > 4) _actualFps -= 4; }
+  void forward() { if(_actualFps < 60) _actualFps += 4; }
+  void play() { _pause = false; _actualFps = _initFps; }
 
 protected:
     void run();
@@ -79,6 +83,8 @@ private:
     bool _reset;
     bool _chessDetected;
     bool _markerDetected;
+    bool _vid;
+    bool _inputIsSwitched;
     detectMode _detect;
     cv::VideoCapture _vcap;
     cv::Mat _rotVecs;
@@ -87,6 +93,7 @@ private:
     cv::Mat _distCoeffs;
     cv::Mat* _frame;
     cv::Mat _bufferFrame;
+    cv::Mat _testFrame;
     cv::Mat _nextFrame;
     cv::Mat _frameCropped;
 
@@ -97,6 +104,7 @@ private:
     std::vector<std::vector<cv::Point2f>> _images;
     std::vector<std::vector<cv::Point2f>> _chessCornersInit;
     std::vector<std::vector<cv::Point2f>> _markerCornersInit;
+    std::vector<cv::Mat> _markersModels;
 
     OptionsDialog* _optionsDialog;
 
@@ -106,6 +114,8 @@ private:
     double _chessSize;
 
     int _nbrLoopSinceLastDetection;
+    int _actualFps;
+    int _initFps;
     double _focalePlane;
     //double _corrector;
 };

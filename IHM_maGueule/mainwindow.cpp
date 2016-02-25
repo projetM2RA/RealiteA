@@ -4,7 +4,6 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
     this->setWindowTitle(tr("Augmented Reality Of Neuroskeleton"));
-    //this->setWindowIcon(QIcon("../rsc/icons/icon.png"));
     this->setWindowIcon(QIcon(":/icons/icon"));
     _objectID = 0;
     _nbrCam = WebcamDevice::webcamCount(); // a mettre au debut sinon conflit avec les webcams lancees
@@ -59,14 +58,16 @@ void MainWindow::start()
     this->initObjectsList();
 
     this->setMainWindow();
+
     this->setCursor(QCursor(Qt::WaitCursor));
     _webcamDevice->initModels();
     this->setCursor(QCursor(Qt::ArrowCursor));
 
     this->createFullScreenWidget();
-
     this->connectAll();
     this->setShortcuts();
+
+
 }
 
 void MainWindow::calibrateCamera()
@@ -269,10 +270,15 @@ void MainWindow::switchInput()
         if(_webcamActions[i]->isChecked())
         {
             _webcamDevice->switchInput(i);
+            _pause->setEnabled(false);
+            _play->setEnabled(false);
+            _fast->setEnabled(false);
+            _slow->setEnabled(false);
             return;
         }
     }
     _webcamDevice->switchInput(-1);
+    _play->setEnabled(true);
 }
 
 void MainWindow::displayObjectInScene(bool display)
@@ -413,15 +419,19 @@ void MainWindow::setFirstWindow()
 
 
     _webcamGroup = new QActionGroup(menuCam);
-    _webcamActions = new QAction*[_nbrCam];
-    for(int i = 0; i < _nbrCam; ++i)
+
+    if(_nbrCam > 0)
     {
-        _webcamActions[i] = menuCam->addAction(QString("Webcam ") + QString::number(i + 1));
-        _webcamGroup->addAction(_webcamActions[i]);
-        _webcamActions[i]->setCheckable(true);
-        _webcamActions[i]->setEnabled(false);
+        _webcamActions = new QAction*[_nbrCam];
+        for(int i = 0; i < _nbrCam; ++i)
+        {
+            _webcamActions[i] = menuCam->addAction(QString("Webcam ") + QString::number(i + 1));
+            _webcamGroup->addAction(_webcamActions[i]);
+            _webcamActions[i]->setCheckable(true);
+            _webcamActions[i]->setEnabled(false);
+        }
+        _webcamActions[0]->setChecked(true);
     }
-    _webcamActions[0]->setChecked(true);
 
     menuCam->addSeparator();
     _videoAction = menuCam->addAction(tr("&Open video file"));
@@ -452,6 +462,7 @@ void MainWindow::setMainWindow()
     _detectActions[noDetect]->setEnabled(true);
     _detectActions[chehra]->setEnabled(true);
     _detectActions[chess]->setEnabled(true);
+    _detectActions[QR]->setEnabled(true);
 
     for(int i = 0; i < _nbrCam; i++)
         _webcamActions[i]->setEnabled(true);
@@ -565,6 +576,24 @@ void MainWindow::setMainWindow()
     alphaGroup->setLayout(alphaLayout);
     objectLayout->addWidget(alphaGroup);
 
+    QHBoxLayout *videoLayout = new QHBoxLayout;
+    QGroupBox *videoGroup = new QGroupBox();
+    _play = new QPushButton(QIcon(":/icons/play"), "");
+    _pause = new QPushButton(QIcon(":/icons/pause"), "");
+    _fast = new QPushButton(QIcon(":/icons/forw"), "");
+    _slow = new QPushButton(QIcon(":/icons/back"), "");
+
+    videoLayout->addWidget(_slow);
+    videoLayout->addWidget(_play);
+    videoLayout->addWidget(_pause);
+    videoLayout->addWidget(_fast);
+    _pause->setEnabled(false);
+    _play->setEnabled(false);
+    _fast->setEnabled(false);
+    _slow->setEnabled(false);
+    videoGroup->setLayout(videoLayout);
+    objectLayout->addWidget(videoGroup);
+
     _sideView = new SideViewOsgWidet(_webcamDevice->getWebcam(), _mainMat2, _objectsList2[1], this);
     objectLayout->addWidget(_sideView);
 
@@ -632,6 +661,12 @@ void MainWindow::connectAll()
     connect(_objectCharacteristicsSpinSliders[transZ], SIGNAL(valueChanged(int)), object, SLOT(setTransZ(int)));
 
     connect(_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object, SLOT(setAlpha(int)));
+
+    connect(_slow, SIGNAL(clicked()), _webcamDevice, SLOT(backward()));
+    connect(_fast, SIGNAL(clicked()), _webcamDevice, SLOT(forward()));
+    connect(_pause, SIGNAL(clicked()), _webcamDevice, SLOT(pause()));
+    connect(_play, SIGNAL(clicked()), this, SLOT(play()));
+
 }
 
 void MainWindow::setShortcuts()

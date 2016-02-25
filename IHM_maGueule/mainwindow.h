@@ -57,6 +57,7 @@ private slots:
     void displayObjectInSideView(bool display);
     void displayFullScreen();
     void updateSceneRT(cv::Mat rotVec, cv::Mat tvecs);
+    void play() { _pause->setEnabled(true); _fast->setEnabled(true); _slow->setEnabled(true); _webcamDevice->play(); }
 
 private:
     void setFirstWindow();
@@ -91,6 +92,11 @@ private:
     QCheckBox* _isPrintedBox;
     QCheckBox* _isPrintedBox2;
     QSlider** _objectCharacteristicsSpinSliders;
+
+    QPushButton* _pause;
+    QPushButton* _play;
+    QPushButton* _fast;
+    QPushButton* _slow;
 
     SideViewOsgWidet* _sideView;
 
