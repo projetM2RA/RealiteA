@@ -53,21 +53,27 @@ MainWindow::~MainWindow()
 // private slots
 void MainWindow::start()
 {
+    QSplashScreen splash(QPixmap(":/icons/splash"));
+
+    splash.show();
+
     _webcamDevice->initMatrix();
+
+    splash.show();
 
     this->initObjectsList();
 
     this->setMainWindow();
-
     this->setCursor(QCursor(Qt::WaitCursor));
     _webcamDevice->initModels();
     this->setCursor(QCursor(Qt::ArrowCursor));
 
     this->createFullScreenWidget();
+
     this->connectAll();
     this->setShortcuts();
 
-
+    splash.close();
 }
 
 void MainWindow::calibrateCamera()
@@ -326,8 +332,8 @@ void MainWindow::displayFullScreen()
 void MainWindow::updateSceneRT(cv::Mat rotVec, cv::Mat tvecs)
 {
     double t3 = tvecs.at<double>(2, 0);
+    double t2 = tvecs.at<double>(1, 0) + t3 / _corrector; // #truanderie
     double t1 = tvecs.at<double>(0, 0);
-    double t2 = tvecs.at<double>(1, 0) + t3 / _corrector; // and now, magic !
 
     double r11 = rotVec.at<double>(0, 0);
     double r12 = rotVec.at<double>(0, 1);
@@ -347,10 +353,21 @@ void MainWindow::updateSceneRT(cv::Mat rotVec, cv::Mat tvecs)
                 r13,	r23,	r33,	0,
                 0,		0,		0,		1);
 
-
     double rotX = atan2(r32, r33);
-    double rotY =  atan2(r21, r11);
-    double rotZ = -atan2(-r31, sqrt((r32 * r32) + (r33 * r33)));
+    double rotY = atan2(r21, r11);
+    double rotZ = atan2(-r31, sqrt((r32 * r32) + (r33 * r33)));
+
+    std::cout << "rot x : " << rotX << std::endl;
+    std::cout << "rot y : " << rotY << std::endl;
+    std::cout << "rot z : " << rotZ << std::endl;
+    std::cout << std::endl << std::endl;
+    std::cout << "t x : " << t1 << std::endl;
+    std::cout << "t y : " << t2 << std::endl;
+    std::cout << "t z : " << t3 << std::endl;
+    std::cout << std::endl << std::endl;
+
+    osg::Matrixd matrixR2; // rotation corrigee
+    matrixR2.makeRotate(rotX, osg::Vec3d(1.0, 0.0, 0.0), rotZ, osg::Vec3d(0.0, 1.0, 0.0), rotY, osg::Vec3d(0.0, 0.0, 1.0));
 
     //    std::cout << "rotations : " << std::endl
     //              << "x : " << rotX << std::endl
@@ -419,7 +436,6 @@ void MainWindow::setFirstWindow()
 
 
     _webcamGroup = new QActionGroup(menuCam);
-
     if(_nbrCam > 0)
     {
         _webcamActions = new QAction*[_nbrCam];
@@ -462,7 +478,6 @@ void MainWindow::setMainWindow()
     _detectActions[noDetect]->setEnabled(true);
     _detectActions[chehra]->setEnabled(true);
     _detectActions[chess]->setEnabled(true);
-    _detectActions[QR]->setEnabled(true);
 
     for(int i = 0; i < _nbrCam; i++)
         _webcamActions[i]->setEnabled(true);
@@ -666,7 +681,6 @@ void MainWindow::connectAll()
     connect(_fast, SIGNAL(clicked()), _webcamDevice, SLOT(forward()));
     connect(_pause, SIGNAL(clicked()), _webcamDevice, SLOT(pause()));
     connect(_play, SIGNAL(clicked()), this, SLOT(play()));
-
 }
 
 void MainWindow::setShortcuts()

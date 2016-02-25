@@ -88,16 +88,17 @@ void WebcamDevice::initModels()
     _markerCornersInit = std::vector<std::vector<cv::Point2f>>(2);
 
     std::cout << "initialisation de Chehra..." << std::endl;
-    _chehra = 0; //new Chehra; //TODO
+    //    _chehra = 0;
+    _chehra = new Chehra;
     std::cout << "done" << std::endl;
 
     // Repere visage
-    _pointsVisage3D.push_back(cv::Point3f(-11, -34, 0)); // exterieur narine gauche sur l'image
-    _pointsVisage3D.push_back(cv::Point3f(11, -34, 0)); // exterieur narine droite sur l'image
-    _pointsVisage3D.push_back(cv::Point3f(0, -26, -14)); // bout du nez
-    _pointsVisage3D.push_back(cv::Point3f(-34, -7, 24)); // exterieur oeil gauche sur l'image
-    _pointsVisage3D.push_back(cv::Point3f(0, 0, 0)); // haut du nez, centre des yeux
-    _pointsVisage3D.push_back(cv::Point3f(34, -7, 24)); // exterieur oeil droit sur l'image
+    _pointsVisage3D.push_back(cv::Point3f(-17, -52, 0));       // exterieur narine gauche sur l'image
+    _pointsVisage3D.push_back(cv::Point3f(17, -52, 0));        // exterieur narine droite sur l'image
+    _pointsVisage3D.push_back(cv::Point3f(0, -40, 22));       // bout du nez
+    _pointsVisage3D.push_back(cv::Point3f(-53, -11, -38));    // exterieur oeil gauche sur l'image
+    _pointsVisage3D.push_back(cv::Point3f(0, 0, 0));                 // haut du nez, centre des yeux
+    _pointsVisage3D.push_back(cv::Point3f(53, -11, -38));     // exterieur oeil droit sur l'image
 
     // Repere chess
     for(int x = -_nbrColChess / 2; x < _nbrColChess / 2 + _nbrColChess % 2; x++)
@@ -105,12 +106,12 @@ void WebcamDevice::initModels()
             _pointsChess3D.push_back(cv::Point3f(x * _chessSize, y * _chessSize, 0.0f));
 
     // Repere marker
-    _pointsMarker3D.push_back(cv::Point3f(-_chessSize, 0, 0));              // A
-    _pointsMarker3D.push_back(cv::Point3f(_chessSize, 0, 0));               // B
-    _pointsMarker3D.push_back(cv::Point3f(_chessSize, _chessSize, 0));      // C
-    _pointsMarker3D.push_back(cv::Point3f(-_chessSize/2, _chessSize/2, 0)); // D
+    _pointsMarker3D.push_back(cv::Point3f(-_markerSize, 0, 0));              // A
+    _pointsMarker3D.push_back(cv::Point3f(_markerSize, 0, 0));               // B
+    _pointsMarker3D.push_back(cv::Point3f(_markerSize, _markerSize, 0));      // C
+    _pointsMarker3D.push_back(cv::Point3f(-_markerSize/2, _markerSize/2, 0)); // D
     _pointsMarker3D.push_back(cv::Point3f(0, 0, 0));                        // E
-    _pointsMarker3D.push_back(cv::Point3f(_chessSize/2, _chessSize/2, 0));  // F
+    _pointsMarker3D.push_back(cv::Point3f(_markerSize/2, _markerSize/2, 0));  // F
 }
 
 
@@ -172,7 +173,7 @@ void WebcamDevice::switchInput(int input)
         _pause = true;
 
         _vcap.open(input);
-        _initFps = _vcap.get(CV_CAP_PROP_FPS);
+        _initFps = 25;
         _actualFps = 25;
         if(!_vcap.isOpened())
         {
@@ -208,7 +209,6 @@ void WebcamDevice::setOptions()
 
 
 // protected
-
 void WebcamDevice::run()
 {
     while(_isRunning)
@@ -254,6 +254,7 @@ void WebcamDevice::run()
 }
 
 
+
 // private
 void WebcamDevice::calibrateCam(cv::FileStorage *fs)
 {
@@ -261,44 +262,44 @@ void WebcamDevice::calibrateCam(cv::FileStorage *fs)
     do
     {
         QMessageBox::StandardButton button = QMessageBox::critical(0, tr("Error"),
-                             tr("Unable to find calibration matrix.\nHave you already calibrated your camera?"),
-                              QMessageBox::Yes | QMessageBox::No);
+                                                                   tr("Unable to find calibration matrix.\nHave you already calibrated your camera?"),
+                                                                   QMessageBox::Yes | QMessageBox::No);
 
         switch(button)
         {
-            case QMessageBox::No:
+        case QMessageBox::No:
+        {
+            CalibrateDialog calibrateDialog(_frame);
+            connect(this, SIGNAL(updateWebcam()), &calibrateDialog, SLOT(updateWebcam()));
+            calibrateDialog.exec();
+            stop = true;
+            break;
+        }
+        case QMessageBox::Yes:
+        {
+            cv::Mat test1, test2;
+            QString fsPath = QFileDialog::getOpenFileName(0, "Select camera intrinsic matrix", "../rsc/", "FileStorage (*.yml)");
+            if(fsPath != "")
+                fs->open(fsPath.toStdString(), cv::FileStorage::READ);
+            (*fs)["cameraMatrix"] >> test1;
+            (*fs)["distCoeffs"] >> test2;
+            if(test1.empty() || test2.empty())
             {
-                CalibrateDialog calibrateDialog(_frame);
-                connect(this, SIGNAL(updateWebcam()), &calibrateDialog, SLOT(updateWebcam()));
-                calibrateDialog.exec();
+                QMessageBox::warning(0, tr("incorrect matrix"), tr("the given matrix is incorrect"));
+                fs->release();
+            }
+            else
+            {
                 stop = true;
-                break;
-            }
-            case QMessageBox::Yes:
-            {
-                cv::Mat test1, test2;
-                QString fsPath = QFileDialog::getOpenFileName(0, "Select camera intrinsic matrix", "../rsc/", "FileStorage (*.yml)");
-                if(fsPath != "")
-                    fs->open(fsPath.toStdString(), cv::FileStorage::READ);
-                (*fs)["cameraMatrix"] >> test1;
-                (*fs)["distCoeffs"] >> test2;
-                if(test1.empty() || test2.empty())
-                {
-                    QMessageBox::warning(0, tr("incorrect matrix"), tr("the given matrix is incorrect"));
-                    fs->release();
-                }
-                else
-                {
-                    stop = true;
 
-                    cv::FileStorage fs2("../rsc/intrinsicMatrix.yml", cv::FileStorage::WRITE);
-                    fs2 << "cameraMatrix" << test1 << "distCoeffs" << test2;
-                    fs2.release();
-                }
-                break;
+                cv::FileStorage fs2("../rsc/intrinsicMatrix.yml", cv::FileStorage::WRITE);
+                fs2 << "cameraMatrix" << test1 << "distCoeffs" << test2;
+                fs2.release();
             }
-            default:
-                break;
+            break;
+        }
+        default:
+            break;
         }
     }while(!stop);
     fs->open("../rsc/intrinsicMatrix.yml", cv::FileStorage::READ);
@@ -467,7 +468,7 @@ bool WebcamDevice::detectMarker(std::vector<cv::Point2f> *pointQR)
     return patternFound;
 }
 
-void WebcamDevice::trackingChess(cv::Mat *rotVecs)
+void WebcamDevice::trackingChess()
 {
     cv::Mat rvecs;
     cv::Mat imCalib;
@@ -487,7 +488,7 @@ void WebcamDevice::trackingChess(cv::Mat *rotVecs)
     cv::solvePnP(_pointsChess3D, _chessCornersInit[0], _cameraMatrix, _distCoeffs, rvecs, _tvecs);
 
     _rotVecs = cv::Mat(3, 3, CV_64F);
-    cv::Rodrigues(rvecs, (*rotVecs));
+    cv::Rodrigues(rvecs, _rotVecs);
 }
 
 void WebcamDevice::trackingMarker(cv::Mat *rotVecs)
@@ -621,13 +622,13 @@ void WebcamDevice::chessRT()
 
     if(_chessDetected)
     {
-        this->trackingChess(&_rotVecs);
+        this->trackingChess();
 
         cv::projectPoints(_pointsChess3D, _rotVecs, _tvecs, _cameraMatrix, _distCoeffs, imagePoints);
 
         // Draw chess points
-        for(int m = 0; m < _chessCornersInit[0].size(); m++)
-            cv::circle(*_frame, cv::Point(_chessCornersInit[0][m].x, _chessCornersInit[0][m].y), 3, cv::Scalar(0, 0, 255), 1, 8, 0);
+        //        for(int m = 0; m < _chessCornersInit[0].size(); m++)
+        //            cv::circle(*_frame, cv::Point(_chessCornersInit[0][m].x, _chessCornersInit[0][m].y), 3, cv::Scalar(0, 0, 255), 1, 8, 0);
 
         emit updateScene(_rotVecs, _tvecs);
 

@@ -66,7 +66,7 @@ private:
     bool detecterVisage(std::vector<cv::Point2f> *pointsVisage);
     bool detectChess(std::vector<cv::Point2f> *chessPoints);
     bool detectMarker(std::vector<cv::Point2f> *markerPoints);
-    void trackingChess(cv::Mat *rotVecs);
+    void trackingChess();
     void trackingMarker(cv::Mat *rotVecs);
     void dbCorrelation();
     void faceRT();

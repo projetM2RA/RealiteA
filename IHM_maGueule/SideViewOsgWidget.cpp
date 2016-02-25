@@ -98,7 +98,6 @@ void SideViewOsgWidet::resizeGL( int width, int height )
 
 
 
-
 void SideViewOsgWidet::mouseMoveEvent( QMouseEvent* event )
 {
     this->getEventQueue()->mouseMotion( static_cast<float>( event->x() ),
