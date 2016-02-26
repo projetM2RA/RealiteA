@@ -8,7 +8,6 @@ OptionsDialog::OptionsDialog(int nbrCols, int nbrRows, double chessSize, int mar
 
     _chehra = new QCheckBox("Activate face detection (might take up to 1min to load)");
     _chehra->setChecked(true);
-    _chehra->setEnabled(false);
 
     _nbrRowsLabel = new QLabel(tr("Number of rows : "));
     _nbrColsLabel = new QLabel(tr("Number of columns : "));

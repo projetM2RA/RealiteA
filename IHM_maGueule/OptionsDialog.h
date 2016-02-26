@@ -24,10 +24,12 @@ public:
     int getNbrRows() { return _nbrRows->value(); }
     int getMarkerSize() { return _markerSize->value(); }
     double getChessSize() { return _chessSize->value(); }
+    bool launchChehra() { return _chehra->isChecked(); }
 
 signals:
 
-public slots:
+public slots:    
+
 
 private:
     QCheckBox* _chehra;
