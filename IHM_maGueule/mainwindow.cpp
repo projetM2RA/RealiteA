@@ -55,8 +55,6 @@ void MainWindow::start()
 {
     QSplashScreen splash(QPixmap(":/icons/splash"));
 
-    splash.show();
-
     _webcamDevice->initMatrix();
 
     splash.show();
@@ -473,12 +471,8 @@ void MainWindow::setMainWindow()
     _addObjectAction->setEnabled(true);
     _fullScreenAction->setEnabled(true);
 
-    //    for(int i = 0; i < NBR_DETECT; i++)
-    //        _detectActions[i]->setEnable(true);
-    _detectActions[noDetect]->setEnabled(true);
-    _detectActions[chehra]->setEnabled(true);
-    _detectActions[chess]->setEnabled(true);
-
+        for(int i = 0; i < NBR_DETECT; i++)
+            _detectActions[i]->setEnabled(true);
     for(int i = 0; i < _nbrCam; i++)
         _webcamActions[i]->setEnabled(true);
     _videoAction->setEnabled(true);    // ca bug ; dunno why
