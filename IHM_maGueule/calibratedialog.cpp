@@ -6,8 +6,12 @@ CalibrateDialog::CalibrateDialog(cv::Mat* frame, QWidget *parent) :
     this->setWindowTitle("Camera calibration");
     this->setWindowIcon(QIcon(":/icons/icon"));
 
+    _rows = frame->rows;
+    _cols = frame->cols;
+    _type = frame->type();
+
     _imageIndex = 1;
-    _savedFrame = new cv::Mat(cv::Mat::zeros(frame->rows, frame->cols, frame->type()));
+    _savedFrame = new cv::Mat(cv::Mat::zeros(_rows, _cols, _type));
 
     _save = new QPushButton(tr("Save screenshot"));
     _sup = new QPushButton(tr("Delete last screenshot"));
@@ -157,13 +161,20 @@ void CalibrateDialog::delSnapShot()
     {
         QFile::remove(QString::fromStdString(oss.str()));
         _infoMessage->setText(QString("Image ") + QString::number(_imageIndex) + QString(" deleted."));
+        std::ostringstream oss;
+        oss << "../rsc/mires/mire" << _imageIndex-1 << ".png";
+
+        if(_imageIndex == 1)
+            (*_savedFrame) = cv::Scalar(0, 0, 0);
+        else
+            (*_savedFrame) = cv::imread(oss.str());
         _imageSavedScene->update();
     }
 
     if(_imageIndex == 1)
     {
         _imageIndexLabel->setText("Image : " + QString::number(_imageIndex - 1) + " / 15");
-        _sup->setEnabled(false);
+        _sup->setEnabled(false);        
     }
     else if(_imageIndex > 1 && _imageIndex <= 15)
     {

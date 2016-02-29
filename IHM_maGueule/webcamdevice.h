@@ -12,6 +12,7 @@
 
 #include "CalibrateDialog.h"
 #include "OptionsDialog.h"
+#include "MatrixDialog.h"
 
 #define NBR_DETECT              4
 #define NBRSAVEDIMAGES          5

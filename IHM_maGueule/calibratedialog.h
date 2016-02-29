@@ -48,10 +48,14 @@ private:
     QPushButton* _sup;
     QPushButton* _finish;
     QProgressDialog* _calibration;
-    int _imageIndex;
     cv::Mat* _savedFrame;
     WebcamGraphicsScene* _webcamFluxScene;
     WebcamGraphicsScene* _imageSavedScene;
+
+    int _imageIndex;
+    int _rows;
+    int _cols;
+    int _type;
 
     bool detectChess(cv::Mat chessFrame, cv::Mat* chessSaved);
 };

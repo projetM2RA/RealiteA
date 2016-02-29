@@ -273,46 +273,56 @@ void WebcamDevice::calibrateCam(cv::FileStorage *fs)
     bool stop = false;
     do
     {
-        QMessageBox::StandardButton button = QMessageBox::critical(0, tr("Error"),
-                                                                   tr("Unable to find calibration matrix.\nHave you already calibrated your camera?"),
-                                                                   QMessageBox::Yes | QMessageBox::No);
 
-        switch(button)
+        MatrixDialog* matrixDialog = new MatrixDialog();
+
+        if(matrixDialog->exec() == QDialog::Accepted)
         {
-        case QMessageBox::No:
-        {
-            CalibrateDialog calibrateDialog(_frame);
-            connect(this, SIGNAL(updateWebcam()), &calibrateDialog, SLOT(updateWebcam()));
-            calibrateDialog.exec();
             stop = true;
-            break;
         }
-        case QMessageBox::Yes:
-        {
-            cv::Mat test1, test2;
-            QString fsPath = QFileDialog::getOpenFileName(0, "Select camera intrinsic matrix", "../rsc/", "FileStorage (*.yml)");
-            if(fsPath != "")
-                fs->open(fsPath.toStdString(), cv::FileStorage::READ);
-            (*fs)["cameraMatrix"] >> test1;
-            (*fs)["distCoeffs"] >> test2;
-            if(test1.empty() || test2.empty())
-            {
-                QMessageBox::warning(0, tr("incorrect matrix"), tr("the given matrix is incorrect"));
-                fs->release();
-            }
-            else
-            {
-                stop = true;
+        else
+            break;
 
-                cv::FileStorage fs2("../rsc/intrinsicMatrix.yml", cv::FileStorage::WRITE);
-                fs2 << "cameraMatrix" << test1 << "distCoeffs" << test2;
-                fs2.release();
-            }
-            break;
-        }
-        default:
-            break;
-        }
+//        QMessageBox::StandardButton button = QMessageBox::critical(0, tr("Error"),
+//                                                                   tr("Unable to find calibration matrix.\nHave you already calibrated your camera?"),
+//                                                                   QMessageBox::Yes | QMessageBox::No);
+
+//        switch(button)
+//        {
+//        case QMessageBox::No:
+//        {
+//            CalibrateDialog calibrateDialog(_frame, (QWidget*)this->parent();
+//            connect(this, SIGNAL(updateWebcam()), &calibrateDialog, SLOT(updateWebcam()));
+//            calibrateDialog.exec();
+//            stop = true;
+//            break;
+//        }
+//        case QMessageBox::Yes:
+//        {
+//            cv::Mat test1, test2;
+//            QString fsPath = QFileDialog::getOpenFileName((QWidget*)this->parent(), "Select camera intrinsic matrix", "../rsc/", "FileStorage (*.yml)");
+//            if(fsPath != "")
+//                fs->open(fsPath.toStdString(), cv::FileStorage::READ);
+//            (*fs)["cameraMatrix"] >> test1;
+//            (*fs)["distCoeffs"] >> test2;
+//            if(test1.empty() || test2.empty())
+//            {
+//                QMessageBox::warning((QWidget*)this->parent(), tr("Incorrect matrix"), tr("The given matrix is incorrect."));
+//                fs->release();
+//            }
+//            else
+//            {
+//                stop = true;
+
+//                cv::FileStorage fs2("../rsc/intrinsicMatrix.yml", cv::FileStorage::WRITE);
+//                fs2 << "cameraMatrix" << test1 << "distCoeffs" << test2;
+//                fs2.release();
+//            }
+//            break;
+//        }
+//        default:
+//            break;
+//        }
     }while(!stop);
     fs->open("../rsc/intrinsicMatrix.yml", cv::FileStorage::READ);
 }

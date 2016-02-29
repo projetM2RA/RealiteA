@@ -53,7 +53,6 @@ MainWindow::~MainWindow()
 // private slots
 void MainWindow::start()
 {
-    this->hide();
     //QSplashScreen splash(QPixmap(":/icons/splash"), Qt::WindowStaysOnTopHint);
     QWidget *splash = new QWidget();
     QBitmap bit(":/icons/splash");
