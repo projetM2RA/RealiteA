@@ -29,8 +29,8 @@ WebcamDevice::WebcamDevice(QObject *parent) :
     if(!_vcap.isOpened())
     {
         QMessageBox::StandardButton button = QMessageBox::critical(0, tr("Error"),
-                             tr("Unable to find a webcam.\nDo you wish to load a video ?"),
-                              QMessageBox::Yes | QMessageBox::No);
+                                                                   tr("Unable to find a webcam.\nDo you wish to load a video ?"),
+                                                                   QMessageBox::Yes | QMessageBox::No);
 
         if(button == QMessageBox::Yes)
             this->switchInput(-1);
@@ -98,19 +98,19 @@ void WebcamDevice::initModels()
         _chehra = 0;
 
     // Repere visage
-    _pointsVisage3D.push_back(cv::Point3f(-53, -11, -38));    // exterieur oeil gauche sur l'image
-    _pointsVisage3D.push_back(cv::Point3f(-17, -11, -38));    // interieur oeil gauche sur l'image
+    _pointsVisage3D.push_back(cv::Point3f(53, -11, -38));    // exterieur oeil gauche sur l'image
+    _pointsVisage3D.push_back(cv::Point3f(17, -11, -38));    // interieur oeil gauche sur l'image
     _pointsVisage3D.push_back(cv::Point3f(0, 0, 0));          // haut du nez, centre des yeux
-    _pointsVisage3D.push_back(cv::Point3f(17, -11, -38));     // interieur oeil droit sur l'image
-    _pointsVisage3D.push_back(cv::Point3f(53, -11, -38));     // exterieur oeil droit sur l'image
+    _pointsVisage3D.push_back(cv::Point3f(-17, -11, -38));     // interieur oeil droit sur l'image
+    _pointsVisage3D.push_back(cv::Point3f(-53, -11, -38));     // exterieur oeil droit sur l'image
     _pointsVisage3D.push_back(cv::Point3f(0, -40, 7));        // milieu haut du nez
     _pointsVisage3D.push_back(cv::Point3f(0, -40, 14));       // milieu bas du nez
     _pointsVisage3D.push_back(cv::Point3f(0, -40, 22));       // bout du nez
-    _pointsVisage3D.push_back(cv::Point3f(-17, -52, 0));      // exterieur narine gauche sur l'image
-    _pointsVisage3D.push_back(cv::Point3f(-8, -56, 0));       // milieu narine gauche sur l'image
+    _pointsVisage3D.push_back(cv::Point3f(17, -52, 0));      // exterieur narine gauche sur l'image
+    _pointsVisage3D.push_back(cv::Point3f(8, -56, 0));       // milieu narine gauche sur l'image
     _pointsVisage3D.push_back(cv::Point3f(0, -60, 0));        // milieu narines sur l'image
-    _pointsVisage3D.push_back(cv::Point3f(8, -56, 0));        // milieu narine droite sur l'image
-    _pointsVisage3D.push_back(cv::Point3f(17, -52, 0));       // exterieur narine droite sur l'image
+    _pointsVisage3D.push_back(cv::Point3f(-8, -56, 0));        // milieu narine droite sur l'image
+    _pointsVisage3D.push_back(cv::Point3f(-17, -52, 0));       // exterieur narine droite sur l'image
 
     // Repere chess
     for(int x = -_nbrColChess / 2; x < _nbrColChess / 2 + _nbrColChess % 2; x++)
@@ -343,7 +343,13 @@ bool WebcamDevice::detecterVisage(std::vector<cv::Point2f> *pointsVisage)
             (*pointsVisage).push_back(cv::Point2f(points.at<float>(15, 0), points.at<float>(15 + 49, 0)));
             (*pointsVisage).push_back(cv::Point2f(points.at<float>(16, 0), points.at<float>(16 + 49, 0)));
             (*pointsVisage).push_back(cv::Point2f(points.at<float>(17, 0), points.at<float>(17 + 49, 0)));
+            (*pointsVisage).push_back(cv::Point2f(points.at<float>(18, 0), points.at<float>(18 + 49, 0)));/*
+            (*pointsVisage).push_back(cv::Point2f(points.at<float>(14, 0), points.at<float>(14 + 49, 0)));
             (*pointsVisage).push_back(cv::Point2f(points.at<float>(18, 0), points.at<float>(18 + 49, 0)));
+            (*pointsVisage).push_back(cv::Point2f(points.at<float>(13, 0), points.at<float>(13 + 49, 0)));
+            (*pointsVisage).push_back(cv::Point2f(points.at<float>(19, 0), points.at<float>(19 + 49, 0)));
+            (*pointsVisage).push_back(cv::Point2f(points.at<float>(10, 0), points.at<float>(10 + 49, 0)));
+            (*pointsVisage).push_back(cv::Point2f(points.at<float>(28, 0), points.at<float>(28 + 49, 0)));*/
         }
         else
             return false;
@@ -580,7 +586,7 @@ void WebcamDevice::dbCorrelation()
             good_matches2.push_back( matches[i]);
     }
 
-   /* for( int i = 0; i < descriptors3.rows; i++ )
+    /* for( int i = 0; i < descriptors3.rows; i++ )
         if( matches[i].distance <= 2*min_dist )
             good_matches2.push_back( matches[i]);*/
 

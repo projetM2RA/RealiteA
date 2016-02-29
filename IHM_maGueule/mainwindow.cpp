@@ -53,25 +53,33 @@ MainWindow::~MainWindow()
 // private slots
 void MainWindow::start()
 {
-    QSplashScreen splash(QPixmap(":/icons/splash"));
+    this->hide();
+    //QSplashScreen splash(QPixmap(":/icons/splash"), Qt::WindowStaysOnTopHint);
+    QWidget *splash = new QWidget();
+    QBitmap bit(":/icons/splash");
+    splash->setMask(bit);
+    splash->setFixedSize(bit.size());
 
     _webcamDevice->initMatrix();
 
-    splash.show();
+    splash->show();
+    splash->raise();
+    splash->repaint();
+    this->setCursor(QCursor(Qt::WaitCursor));
 
     this->initObjectsList();
 
     this->setMainWindow();
-    this->setCursor(QCursor(Qt::WaitCursor));
     _webcamDevice->initModels();
-    this->setCursor(QCursor(Qt::ArrowCursor));
 
     this->createFullScreenWidget();
 
     this->connectAll();
     this->setShortcuts();
 
-    splash.close();
+    this->setCursor(QCursor(Qt::ArrowCursor));
+    this->show();
+    splash->close();
 }
 
 void MainWindow::calibrateCamera()
@@ -471,8 +479,12 @@ void MainWindow::setMainWindow()
     _addObjectAction->setEnabled(true);
     _fullScreenAction->setEnabled(true);
 
-        for(int i = 0; i < NBR_DETECT; i++)
-            _detectActions[i]->setEnabled(true);
+    //    for(int i = 0; i < NBR_DETECT; i++)
+    //        _detectActions[i]->setEnable(true);
+    _detectActions[noDetect]->setEnabled(true);
+    _detectActions[chehra]->setEnabled(true);
+    _detectActions[chess]->setEnabled(true);
+
     for(int i = 0; i < _nbrCam; i++)
         _webcamActions[i]->setEnabled(true);
     _videoAction->setEnabled(true);    // ca bug ; dunno why

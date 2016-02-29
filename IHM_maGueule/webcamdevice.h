@@ -15,12 +15,7 @@
 
 #define NBR_DETECT              4
 #define NBRSAVEDIMAGES          5
-#define NBRFACEPOINTSDETECTED   6
-
-#define NBRIMAGESCALIB	20
-#define COLCHESSBOARD	9
-#define ROWCHESSBOARD	6
-#define SAVEDPATH "../rsc/mires/mire"
+#define NBRFACEPOINTSDETECTED   13
 
 enum detectMode{noDetection = 0, faceDetection = 1, chessDetection = 2, qrDetection = 3};
 
@@ -66,7 +61,7 @@ private:
     bool detecterVisage(std::vector<cv::Point2f> *pointsVisage);
     bool detectChess(std::vector<cv::Point2f> *chessPoints);
     bool detectMarker(std::vector<cv::Point2f> *markerPoints);
-    void trackingChess(cv::Mat *rotVecs);
+    void trackingChess();
     void trackingMarker(cv::Mat *rotVecs);
     void dbCorrelation();
     void faceRT();

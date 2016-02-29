@@ -26,11 +26,6 @@ public:
     double getChessSize() { return _chessSize->value(); }
     bool launchChehra() { return _chehra->isChecked(); }
 
-signals:
-
-public slots:    
-
-
 private:
     QCheckBox* _chehra;
 
