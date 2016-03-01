@@ -1,6 +1,6 @@
 #include "OsgWidget.h"
 
-OSGWidget::OSGWidget(cv::Mat* webcamMat, osg::MatrixTransform *mainMat, Our3DObject* hud, QWidget* parent, const QGLWidget* shareWidget)
+OSGWidget::OSGWidget(cv::Mat* webcamMat, osg::MatrixTransform *mainMat, Our3DObject* hud, int mode, QWidget* parent, const QGLWidget* shareWidget)
     : QGLWidget( parent, shareWidget)
     , _graphicsWindow( new osgViewer::GraphicsWindowEmbedded( this->x(),
                                                                this->y(),
@@ -9,16 +9,41 @@ OSGWidget::OSGWidget(cv::Mat* webcamMat, osg::MatrixTransform *mainMat, Our3DObj
     , _viewer( new osgViewer::Viewer )
 {
 
-    cv::FileStorage fs("../rsc/intrinsicMatrix.yml", cv::FileStorage::READ);
+    //////////////////////////////////////////////////
+    ////////// initialisation OpenCV /////////////////
+    //////////////////////////////////////////////////
 
-    cv::Mat cameraMatrix;
+    cv::Mat cameraMatrix = cv::Mat::zeros(3, 3, CV_32F);
+    double NEAR_VALUE;
+    double FAR_VALUE;
 
-    fs["cameraMatrix"] >> cameraMatrix;
+    if(mode == 1)
+    {
+        cameraMatrix.at<double>(0,0) = 683.52803565425086;
+        cameraMatrix.at<double>(0,1) = 0;
+        cameraMatrix.at<double>(0,2) = 322.55739845129722;
+        cameraMatrix.at<double>(1,0) = 0;
+        cameraMatrix.at<double>(1,1) = 684.92870414691424;
+        cameraMatrix.at<double>(1,1) = 244.60400436525589;
+        cameraMatrix.at<double>(2,0) = 0;
+        cameraMatrix.at<double>(2,1) = 0;
+        cameraMatrix.at<double>(2,2) = 1;
 
-    double NEAR_VALUE = (cameraMatrix.at<double>(0, 0) + cameraMatrix.at<double>(1, 1)) / 2;
-    double FAR_VALUE = 2000 * NEAR_VALUE;
+        NEAR_VALUE = (cameraMatrix.at<double>(0, 0) + cameraMatrix.at<double>(1, 1)) / 2;
+        FAR_VALUE = 2000 * NEAR_VALUE;
 
-    fs.release();
+    }
+    else if(mode == 2)
+    {
+        cv::FileStorage fs("../rsc/intrinsicMatrix.yml", cv::FileStorage::READ);
+
+        fs["cameraMatrix"] >> cameraMatrix;
+
+        NEAR_VALUE = (cameraMatrix.at<double>(0, 0) + cameraMatrix.at<double>(1, 1)) / 2;
+        FAR_VALUE = 2000 * NEAR_VALUE;
+
+        fs.release();
+    }
 
     //////////////////////////////////////////////////
     ////////// initialisation OpenSceneGraph /////////
@@ -31,6 +56,7 @@ OSGWidget::OSGWidget(cv::Mat* webcamMat, osg::MatrixTransform *mainMat, Our3DObj
     // Projection
 
     osg::Matrixd projectionMatrix;
+
 
     projectionMatrix.makeFrustum(
                 -cameraMatrix.at<double>(0, 2),		webcamMat->cols - cameraMatrix.at<double>(0, 2),

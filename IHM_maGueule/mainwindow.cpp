@@ -53,22 +53,34 @@ MainWindow::~MainWindow()
 // private slots
 void MainWindow::start()
 {
+    int initCalib = 0;
     //QSplashScreen splash(QPixmap(":/icons/splash"), Qt::WindowStaysOnTopHint);
     QWidget *splash = new QWidget();
     QBitmap bit(":/icons/splash");
     splash->setMask(bit);
     splash->setFixedSize(bit.size());
 
-    _webcamDevice->initMatrix();
+    initCalib = _webcamDevice->initMatrix();
+
+    if(initCalib == cancel)
+        return;
 
     splash->show();
     splash->raise();
     splash->repaint();
     this->setCursor(QCursor(Qt::WaitCursor));
 
-    this->initObjectsList();
+    if(initCalib == defaultCase)
+    {
+        this->initObjectsList(defaultCase);
+        this->setMainWindow(defaultCase);
+    }
+    else if(initCalib == calibrationCase)
+    {
+        this->initObjectsList(calibrationCase);
+        this->setMainWindow(calibrationCase);
+    }
 
-    this->setMainWindow();
     _webcamDevice->initModels();
 
     this->createFullScreenWidget();
@@ -469,7 +481,7 @@ void MainWindow::setFirstWindow()
     this->setMenuBar(menuBar);
 }
 
-void MainWindow::setMainWindow()
+void MainWindow::setMainWindow(int mode)
 {
     //////////////////////////////////////////////////
     ////////// enable actions ////////////////////////
@@ -501,7 +513,7 @@ void MainWindow::setMainWindow()
     ////////// webcam layout /////////////////////////
     //////////////////////////////////////////////////
 
-    _mainView = new OSGWidget(_webcamDevice->getWebcam(), _mainMat, _objectsList[1], this);
+    _mainView = new OSGWidget(_webcamDevice->getWebcam(), _mainMat, _objectsList[1], mode, this);
     mainLayout->addWidget(_mainView);
 
     //////////////////////////////////////////////////
@@ -614,7 +626,7 @@ void MainWindow::setMainWindow()
     videoGroup->setLayout(videoLayout);
     objectLayout->addWidget(videoGroup);
 
-    _sideView = new SideViewOsgWidet(_webcamDevice->getWebcam(), _mainMat2, _objectsList2[1], this);
+    _sideView = new SideViewOsgWidet(_webcamDevice->getWebcam(), _mainMat2, _objectsList2[1], mode, this);
     objectLayout->addWidget(_sideView);
 
     objectLayout->setStretchFactor(_sideView, 2);
@@ -626,6 +638,8 @@ void MainWindow::setMainWindow()
     mainLayout->setStretch(1, 1);
     mainWidget->setLayout(mainLayout);
     this->setCentralWidget(mainWidget);
+
+
 }
 
 void MainWindow::connectAll()
@@ -768,7 +782,7 @@ void MainWindow::createFullScreenWidget() // #truanderie
         _fullScreenWidget = _fullScreenView;
 }
 
-void MainWindow::initObjectsList()
+void MainWindow::initObjectsList(int mode)
 {
     _objectsList.push_back(new Our3DObject()); // globalMat en _objectsList[0]
     _mainMat = new osg::MatrixTransform();
@@ -783,21 +797,50 @@ void MainWindow::initObjectsList()
     _backgroundImage = new osg::Image;
 
     cv::Mat *webcamMat = _webcamDevice->getWebcam();
+    int cx;
+    int cy;
+    double n;
 
-    cv::FileStorage fs("../rsc/intrinsicMatrix.yml", cv::FileStorage::READ);
+    if(mode == 1)
+    {
+        cv::Mat cameraMatrix = cv::Mat::zeros(3, 3, CV_32F);
 
-    cv::Mat cameraMatrix;
+        cameraMatrix.at<double>(0,0) = 683.52803565425086;
+        cameraMatrix.at<double>(0,1) = 0;
+        cameraMatrix.at<double>(0,2) = 322.55739845129722;
+        cameraMatrix.at<double>(1,0) = 0;
+        cameraMatrix.at<double>(1,1) = 684.92870414691424;
+        cameraMatrix.at<double>(1,1) = 244.60400436525589;
+        cameraMatrix.at<double>(2,0) = 0;
+        cameraMatrix.at<double>(2,1) = 0;
+        cameraMatrix.at<double>(2,2) = 1;
 
-    fs["cameraMatrix"] >> cameraMatrix;
+        cx = cameraMatrix.at<double>(0, 2);
+        cy = cameraMatrix.at<double>(1, 2);
+        n = (cameraMatrix.at<double>(0, 0) + cameraMatrix.at<double>(1, 1)) / 2;
+        // NEAR (n) = distance focale ; si pixels carres, fx = fy -> np
+        //mais est generalement different de fy donc on prend (pour l'instant) par defaut la valeur mediane
+        _corrector = (n / 2) / (cameraMatrix.at<double>(1, 2) - webcamMat->rows / 2);
 
-    int cx = cameraMatrix.at<double>(0, 2);
-    int cy = cameraMatrix.at<double>(1, 2);
-    double n = (cameraMatrix.at<double>(0, 0) + cameraMatrix.at<double>(1, 1)) / 2;
-    // NEAR (n) = distance focale ; si pixels carres, fx = fy -> np
-    //mais est generalement different de fy donc on prend (pour l'instant) par defaut la valeur mediane
-    _corrector = (n / 2) / (cameraMatrix.at<double>(1, 2) - webcamMat->rows / 2);
+    }
 
-    fs.release();
+    else if(mode == 2)
+    {
+        cv::FileStorage fs("../rsc/intrinsicMatrix.yml", cv::FileStorage::READ);
+
+        cv::Mat cameraMatrix;
+
+        fs["cameraMatrix"] >> cameraMatrix;
+
+        cx = cameraMatrix.at<double>(0, 2);
+        cy = cameraMatrix.at<double>(1, 2);
+        n = (cameraMatrix.at<double>(0, 0) + cameraMatrix.at<double>(1, 1)) / 2;
+        // NEAR (n) = distance focale ; si pixels carres, fx = fy -> np
+        //mais est generalement different de fy donc on prend (pour l'instant) par defaut la valeur mediane
+        _corrector = (n / 2) / (cameraMatrix.at<double>(1, 2) - webcamMat->rows / 2);
+
+        fs.release();
+    }
 
     _backgroundImage->setImage(webcamMat->cols, webcamMat->rows, 3,
                                GL_RGB, GL_BGR, GL_UNSIGNED_BYTE,

@@ -19,7 +19,7 @@
 #define NBRFACEPOINTSDETECTED   13
 
 enum detectMode{noDetection = 0, faceDetection = 1, chessDetection = 2, qrDetection = 3};
-
+enum {cancel = 0, defaultCase = 1, calibrationCase = 2};
 
 class WebcamDevice : public QThread
 {
@@ -33,7 +33,7 @@ public:
     void stop() { _isRunning = false; }
     void launch() { _isRunning = true; }
 
-    void initMatrix();
+    int initMatrix();
     void initModels();
 
     static int webcamCount();
@@ -46,7 +46,7 @@ public slots:
   void switchMode(int mode);
   void pause() { _pause = !_pause; }
   void switchInput(int input);
-  void setOptions();
+  bool setOptions();
 
   void backward() { if(_actualFps > 4) _actualFps -= 4; }
   void forward() { if(_actualFps < 60) _actualFps += 4; }
@@ -58,7 +58,7 @@ protected:
 private:
     // member
 
-    void calibrateCam(FileStorage *fs);
+    int calibrateCam(FileStorage *fs);
     bool detecterVisage(std::vector<cv::Point2f> *pointsVisage);
     bool detectChess(std::vector<cv::Point2f> *chessPoints);
     bool detectMarker(std::vector<cv::Point2f> *markerPoints);

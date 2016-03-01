@@ -1,6 +1,6 @@
 #include "SideViewOsgWidget.h"
 
-SideViewOsgWidet::SideViewOsgWidet(cv::Mat* webcamMat, osg::MatrixTransform *mainMat, Our3DObject *hud, QWidget* parent, const QGLWidget* shareWidget)
+SideViewOsgWidet::SideViewOsgWidet(cv::Mat* webcamMat, osg::MatrixTransform *mainMat, Our3DObject *hud, int mode, QWidget* parent, const QGLWidget* shareWidget)
     : QGLWidget( parent, shareWidget)
     , _graphicsWindow( new osgViewer::GraphicsWindowEmbedded( this->x(),
                                                               this->y(),
@@ -12,14 +12,33 @@ SideViewOsgWidet::SideViewOsgWidet(cv::Mat* webcamMat, osg::MatrixTransform *mai
     ////////// initialisation OpenCV /////////////////
     //////////////////////////////////////////////////
 
-    cv::FileStorage fs("../rsc/intrinsicMatrix.yml", cv::FileStorage::READ);
+    cv::Mat cameraMatrix = cv::Mat::zeros(3, 3, CV_32F);
+    double NEAR_VALUE;
 
-    cv::Mat cameraMatrix;
+    if(mode == 1)
+    {
+        cameraMatrix.at<double>(0,0) = 683.52803565425086;
+        cameraMatrix.at<double>(0,1) = 0;
+        cameraMatrix.at<double>(0,2) = 322.55739845129722;
+        cameraMatrix.at<double>(1,0) = 0;
+        cameraMatrix.at<double>(1,1) = 684.92870414691424;
+        cameraMatrix.at<double>(1,1) = 244.60400436525589;
+        cameraMatrix.at<double>(2,0) = 0;
+        cameraMatrix.at<double>(2,1) = 0;
+        cameraMatrix.at<double>(2,2) = 1;
 
-    fs["cameraMatrix"] >> cameraMatrix;
-    double NEAR_VALUE = (cameraMatrix.at<double>(0, 0) + cameraMatrix.at<double>(1, 1)) / 2;
+        NEAR_VALUE = (cameraMatrix.at<double>(0, 0) + cameraMatrix.at<double>(1, 1)) / 2;
+    }
+    else if(mode == 2)
+    {
+        cv::FileStorage fs("../rsc/intrinsicMatrix.yml", cv::FileStorage::READ);
 
-    fs.release();
+        fs["cameraMatrix"] >> cameraMatrix;
+
+        NEAR_VALUE = (cameraMatrix.at<double>(0, 0) + cameraMatrix.at<double>(1, 1)) / 2;
+
+        fs.release();
+    }
 
     //////////////////////////////////////////////////
     ////////// initialisation OpenSceneGraph /////////

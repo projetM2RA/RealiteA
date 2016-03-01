@@ -3,26 +3,37 @@
 MatrixDialog::MatrixDialog(QWidget *parent) :
     QDialog(parent)
 {
-    this->setWindowTitle("Matrix choice");
+    this->setWindowTitle("Calibration matrix");
     this->setWindowIcon(QIcon(":/icons/icon"));
 
-    _defaultMatrix = new QRadioButton("Use default calibration matrix.");
+    _defaultMatrix = new QRadioButton("Use default calibration matrix (might be less accurate).");
     _existingMatrix = new QRadioButton("Import existing calibration matrix.");
     _calibrateMatrix = new QRadioButton("Create a new calibration matrix.");
+
+    _title = new QLabel("Unable to find calibration matrix.\nPlease select your choice of calibration.");
+
+    _index = 0;
+    _defaultMatrix->setChecked(true);
 
     _ok = new QPushButton(tr("Ok"));
     _cancel = new QPushButton(tr("Cancel"));
 
-    QGroupBox* matrixGroup = new QGroupBox();
+    _matrixGroup = new QGroupBox();
+    _buttonGroup = new QButtonGroup();
+
+    _buttonGroup->addButton(_defaultMatrix, defaultMatrix);
+    _buttonGroup->addButton(_existingMatrix, existingMatrix);
+    _buttonGroup->addButton(_calibrateMatrix, calibrateMatrix);
 
     QVBoxLayout* choiceLayout = new QVBoxLayout;
     choiceLayout->addWidget(_defaultMatrix);
     choiceLayout->addWidget(_existingMatrix);
     choiceLayout->addWidget(_calibrateMatrix);
-    matrixGroup->setLayout(choiceLayout);
+    _matrixGroup->setLayout(choiceLayout);
 
     QVBoxLayout* choiceLayoutGlobal = new QVBoxLayout;
-    choiceLayoutGlobal->addWidget(matrixGroup);
+    choiceLayoutGlobal->addWidget(_title);
+    choiceLayoutGlobal->addWidget(_matrixGroup);
 
     QHBoxLayout* buttonsLayout = new QHBoxLayout;
     buttonsLayout->setAlignment(Qt::AlignRight);
@@ -39,4 +50,5 @@ MatrixDialog::MatrixDialog(QWidget *parent) :
 
     connect(_cancel, SIGNAL(clicked()), this, SLOT(reject()));
     connect(_ok, SIGNAL(clicked()), this, SLOT(accept()));
+    connect(_buttonGroup, SIGNAL(buttonClicked(int)), this, SLOT(updateIndex(int)));
 }

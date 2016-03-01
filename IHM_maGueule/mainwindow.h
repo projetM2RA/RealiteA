@@ -61,11 +61,11 @@ private slots:
 
 private:
     void setFirstWindow();
-    void setMainWindow();
+    void setMainWindow(int mode);
     void connectAll();
     void setShortcuts();
     void createFullScreenWidget();
-    void initObjectsList();
+    void initObjectsList(int mode);
 
     //////////////////////////////////////////////////
     ////////// widgets graphiques ////////////////////
