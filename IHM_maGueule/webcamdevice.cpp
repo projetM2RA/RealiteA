@@ -11,6 +11,7 @@ WebcamDevice::WebcamDevice(QObject *parent) :
     _actualFps = 25;
 
     _runCount = 0;
+    _resetLabel = 0;
 
     _isRunning = true;
     _pause = false;
@@ -19,6 +20,7 @@ WebcamDevice::WebcamDevice(QObject *parent) :
     _markerDetected = false;
     _vid = false;
     _inputIsSwitched = false;
+    _launchChehra = true;
     _detect = noDetection;
 
     _nbrColChess = 9;
@@ -33,7 +35,7 @@ WebcamDevice::WebcamDevice(QObject *parent) :
                                                                    QMessageBox::Yes | QMessageBox::No);
 
         if(button == QMessageBox::Yes)
-            this->switchInput(-1);
+            this->switchInput(-1, false);
         else
             return;
     }
@@ -124,26 +126,45 @@ int WebcamDevice::initMatrix()
             }
         }
     }
+    else
+    {
+        fs["cameraMatrix"] >> _cameraMatrix;
+        fs["distCoeffs"] >> _distCoeffs;
+
+        _focalePlane = (_cameraMatrix.at<double>(0, 0) + _cameraMatrix.at<double>(1, 1)) / 2; // NEAR = distance focale ; si pixels carrés, fx = fy -> np
+        //mais est généralement différent de fy donc on prend (pour l'instant) par défaut la valeur médiane
+
+        fs.release();
+
+        if(this->setOptions())
+            return calibrationCase;
+        else
+            return cancel;
+    }
 }
 
 
 
-void WebcamDevice::initModels()
+bool WebcamDevice::initModels()
 {
     //////////////////////////////////////////////////
     ////////// initialisation variables visage ///////
     //////////////////////////////////////////////////
 
+    _launchChehra = true;
+
     _chessCornersInit = std::vector<std::vector<cv::Point2f>>(2);
     _markerCornersInit = std::vector<std::vector<cv::Point2f>>(2);
     if(_optionsDialog->launchChehra())
     {
-        //std::cout << "initialisation de Chehra..." << std::endl;
-        _chehra = new Chehra; //TODO
-        //std::cout << "done" << std::endl;
+        _chehra = new Chehra;
+        _launchChehra = true;
     }
     else
+    {
         _chehra = 0;
+        _launchChehra = false;
+    }
 
     // Repere visage
     _pointsVisage3D.push_back(cv::Point3f(53, -11, -38));    // exterieur oeil gauche sur l'image
@@ -172,6 +193,8 @@ void WebcamDevice::initModels()
     _pointsMarker3D.push_back(cv::Point3f(-_markerSize/2, _markerSize/2, 0)); // D
     _pointsMarker3D.push_back(cv::Point3f(0, 0, 0));                        // E
     _pointsMarker3D.push_back(cv::Point3f(_markerSize/2, _markerSize/2, 0));  // F
+
+    return _launchChehra;
 }
 
 
@@ -198,23 +221,49 @@ void WebcamDevice::switchMode(int mode)
 
 }
 
-void WebcamDevice::switchInput(int input)
+void WebcamDevice::switchInput(int input, bool rewind)
 {
     _inputIsSwitched = true;
 
-    if(input == -1)
+    if(!rewind)
     {
-        QString videoPath = QFileDialog::getOpenFileName((QWidget*)this->parent(), "Open video", "../rsc/video/", "video file (*.avi *.mp4 *.mkv)");
-        if(videoPath == "")
-            return;
+        emit freezeButtons();
 
+        if(input == -1)
+        {
+            QString videoPath = QFileDialog::getOpenFileName((QWidget*)this->parent(), "Open video", "../rsc/video/", "video file (*.avi *.mp4 *.mkv)");
+            if(videoPath == "")
+                return;
+
+            else
+            {
+                _pause = true;
+
+                _path = videoPath;
+                _vcap.open(videoPath.toStdString());
+                _initFps = _vcap.get(CV_CAP_PROP_FPS);
+                _actualFps = _vcap.get(CV_CAP_PROP_FPS);
+                if(!_vcap.isOpened())
+                {
+                    std::cout << "error" << std::endl;
+                }
+                do
+                {
+                    _vcap >> _bufferFrame;
+                    cv::resize(_bufferFrame, (*_frame), cv::Size(640,480), 0, 0, CV_INTER_AREA);
+                    emit updateWebcam();
+                    emit playVideo();
+                    //std::cout << _bufferFrame.size() << std::endl;
+                }while(_bufferFrame.empty()); // on s'assure que la camera est lancé (#lenteurDuPCDeNico)
+            }
+        }
         else
         {
             _pause = true;
 
-            _vcap.open(videoPath.toStdString());
-            _initFps = _vcap.get(CV_CAP_PROP_FPS);
-            _actualFps = _vcap.get(CV_CAP_PROP_FPS);
+            _vcap.open(input);
+            _initFps = 25;
+            _actualFps = 25;
             if(!_vcap.isOpened())
             {
                 std::cout << "error" << std::endl;
@@ -224,17 +273,19 @@ void WebcamDevice::switchInput(int input)
                 _vcap >> _bufferFrame;
                 cv::resize(_bufferFrame, (*_frame), cv::Size(640,480), 0, 0, CV_INTER_AREA);
                 emit updateWebcam();
+                emit playCam();
                 //std::cout << _bufferFrame.size() << std::endl;
             }while(_bufferFrame.empty()); // on s'assure que la camera est lancé (#lenteurDuPCDeNico)
+            _pause = false;
         }
     }
     else
     {
         _pause = true;
 
-        _vcap.open(input);
-        _initFps = 25;
-        _actualFps = 25;
+        _vcap.open(_path.toStdString());
+        _initFps = _vcap.get(CV_CAP_PROP_FPS);
+        _actualFps = _vcap.get(CV_CAP_PROP_FPS);
         if(!_vcap.isOpened())
         {
             std::cout << "error" << std::endl;
@@ -244,16 +295,18 @@ void WebcamDevice::switchInput(int input)
             _vcap >> _bufferFrame;
             cv::resize(_bufferFrame, (*_frame), cv::Size(640,480), 0, 0, CV_INTER_AREA);
             emit updateWebcam();
+            emit playVideo();
             //std::cout << _bufferFrame.size() << std::endl;
         }while(_bufferFrame.empty()); // on s'assure que la camera est lancé (#lenteurDuPCDeNico)
-        _pause = false;
+
     }
+
     _inputIsSwitched = false;
 }
 
 bool WebcamDevice::setOptions()
 {
-    _optionsDialog = new OptionsDialog(_nbrColChess, _nbrRowChess, _chessSize, _markerSize, (QWidget*)this->parent());
+    _optionsDialog = new OptionsDialog(_nbrColChess, _nbrRowChess, _chessSize, _markerSize, _launchChehra, (QWidget*)this->parent());
     if(_optionsDialog->exec() == QDialog::Accepted)
     {
         _nbrColChess = _optionsDialog->getNbrCols();
@@ -287,7 +340,8 @@ void WebcamDevice::run()
             {
                 _vcap.release();
                 do {
-                    _testFrame.copyTo(*_frame); //cv::imshow("caca",*_frame); cv::waitKey(5000);
+                    _testFrame.copyTo(*_frame);
+                    emit backToBeginSig();
                 }while(!_inputIsSwitched);
             }
 
@@ -671,15 +725,20 @@ void WebcamDevice::faceRT()
     cv::Mat rvecs;
     std::vector<cv::Point2f> pointsVisage2D;
     std::vector<cv::Point2f> moyPointsVisage2D;
+
     bool faceDetected = detecterVisage(&pointsVisage2D);
 
     if(faceDetected)
     {
         _nbrLoopSinceLastDetection = 0;
+        _resetLabel = 0;
         _images.push_back(pointsVisage2D);
     }
     else
+    {
+        _resetLabel++;
         _nbrLoopSinceLastDetection++;
+    }
 
     if((_images.size() > NBRSAVEDIMAGES || _nbrLoopSinceLastDetection > NBRSAVEDIMAGES) && !_images.empty())
         _images.erase(_images.begin());
@@ -706,7 +765,11 @@ void WebcamDevice::faceRT()
         cv::Rodrigues(rvecs, _rotVecs);
 
         emit updateScene(_rotVecs, _tvecs);
+        emit updateDetect(true);
     }
+
+    if(_resetLabel > 5)
+        emit updateDetect(false);
 }
 
 void WebcamDevice::chessRT()
@@ -726,6 +789,7 @@ void WebcamDevice::chessRT()
         //            cv::circle(*_frame, cv::Point(_chessCornersInit[0][m].x, _chessCornersInit[0][m].y), 3, cv::Scalar(0, 0, 255), 1, 8, 0);
 
         emit updateScene(_rotVecs, _tvecs);
+        emit updateDetect(true);
 
         double mean = 0;
         for(int j = 0; j < _nbrColChess * _nbrRowChess; j++)
@@ -738,7 +802,10 @@ void WebcamDevice::chessRT()
         meanErrors = mean / (_nbrColChess * _nbrRowChess);
 
         if(meanErrors > 2)
+        {
+            emit updateDetect(false);
             _reset = true;
+        }
     }
 
     if (!_chessDetected || _reset == true)
@@ -789,6 +856,7 @@ void WebcamDevice::markerRT()
         }
 
         emit updateScene(_rotVecs, _tvecs);
+        emit updateDetect(true);
 
         double mean = 0;
         for(int j = 0; j < _markerCornersInit[0].size(); j++)
@@ -801,7 +869,10 @@ void WebcamDevice::markerRT()
         meanErrors = mean / (_markerCornersInit[0].size());
 
         if(meanErrors > 10)
+        {
+            emit updateDetect(false);
             _reset = true;
+        }
 
         ++_runCount;
     }

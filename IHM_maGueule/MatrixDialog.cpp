@@ -3,7 +3,7 @@
 MatrixDialog::MatrixDialog(QWidget *parent) :
     QDialog(parent)
 {
-    this->setWindowTitle("Calibration matrix");
+    this->setWindowTitle("Calibration");
     this->setWindowIcon(QIcon(":/icons/icon"));
 
     _defaultMatrix = new QRadioButton("Use default calibration matrix (might be less accurate).");

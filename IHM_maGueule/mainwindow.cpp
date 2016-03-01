@@ -9,6 +9,9 @@ MainWindow::MainWindow(QWidget *parent)
     _nbrCam = WebcamDevice::webcamCount(); // a mettre au debut sinon conflit avec les webcams lancees
     _webcamDevice = new WebcamDevice(this);
     _fullScreen = false;
+    _delete = false;
+    _playVideo = false;
+    _playCam = false;
 
     setFirstWindow();
 
@@ -18,40 +21,44 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
-    for(int i = 0; i < NBR_DETECT; i++)
+    if(_delete)
     {
-        delete _detectActions[i];
+        for(int i = 0; i < NBR_DETECT; i++)
+        {
+            delete _detectActions[i];
+        }
+        delete _detectActions;
+
+        delete _addObjectAction;
+        delete _fullScreenAction;
+
+        delete _mainView;
+
+        delete _objectChoiceComboBox;
+        delete _deleteObjectButton;
+        delete _isPrintedBox;
+
+        for(int i = 0; i < NBR_CHARACTERISTICS; i++)
+        {
+            delete _objectCharacteristicsSpinSliders[i];
+        }
+
+        delete _objectCharacteristicsSpinSliders;
+
+        delete _sideView;
     }
-    delete _detectActions;
-
-    delete _addObjectAction;
-    delete _fullScreenAction;
-
-    delete _mainView;
-
-    delete _objectChoiceComboBox;
-    delete _deleteObjectButton;
-    delete _isPrintedBox;
-
-    for(int i = 0; i < NBR_CHARACTERISTICS; i++)
-    {
-        delete _objectCharacteristicsSpinSliders[i];
-    }
-
-    delete _objectCharacteristicsSpinSliders;
-
-    delete _sideView;
 
     //////////////////////////////////////////////////
 
     _webcamDevice->stop();
+    _sleep(100);
     delete _webcamDevice;
 }
 
 
 
 // private slots
-void MainWindow::start()
+bool MainWindow::start()
 {
     int initCalib = 0;
     //QSplashScreen splash(QPixmap(":/icons/splash"), Qt::WindowStaysOnTopHint);
@@ -63,7 +70,7 @@ void MainWindow::start()
     initCalib = _webcamDevice->initMatrix();
 
     if(initCalib == cancel)
-        return;
+        return _delete;
 
     splash->show();
     splash->raise();
@@ -74,16 +81,19 @@ void MainWindow::start()
     {
         this->initObjectsList(defaultCase);
         this->setMainWindow(defaultCase);
+        this->createFullScreenWidget(defaultCase);
     }
     else if(initCalib == calibrationCase)
     {
         this->initObjectsList(calibrationCase);
         this->setMainWindow(calibrationCase);
+        this->createFullScreenWidget(calibrationCase);
     }
 
-    _webcamDevice->initModels();
-
-    this->createFullScreenWidget();
+    if(_webcamDevice->initModels())
+         _detectActions[chehra]->setEnabled(true);
+    else
+         _detectActions[chehra]->setEnabled(false);
 
     this->connectAll();
     this->setShortcuts();
@@ -91,6 +101,7 @@ void MainWindow::start()
     this->setCursor(QCursor(Qt::ArrowCursor));
     this->show();
     splash->close();
+    _delete = true;
 }
 
 void MainWindow::calibrateCamera()
@@ -281,6 +292,63 @@ void MainWindow::updateDetectMode()
         if(_detectActions[i]->isChecked())
         {
             _webcamDevice->switchMode(i);
+
+            switch(i)
+            {
+            case 0:
+                _detectionLabel->setText("No active detection.");
+                break;
+            case 1:
+                _detectionLabel->setText("Face detection");
+                break;
+            case 2:
+                _detectionLabel->setText("Board detection");
+                break;
+            case 3:
+                _detectionLabel->setText("Marker detection");
+                break;
+            default:
+                _detectionLabel->setText("No active detection.");
+                break;
+            }
+            return;
+        }
+    }
+}
+
+void MainWindow::updateDetectLabel(bool detect)
+{
+    for(int i = 0; i < NBR_DETECT; i++)
+    {
+        if(_detectActions[i]->isChecked())
+        {
+            switch(i)
+            {
+            case 0:
+                _detectionLabel2->setText("");
+                break;
+            case 1:
+                if(detect)
+                    _detectionLabel2->setText(": face detected.");
+                else
+                    _detectionLabel2->setText(": no detection.");
+                break;
+            case 2:
+                if(detect)
+                    _detectionLabel2->setText(": board detected.");
+                else
+                    _detectionLabel2->setText(": no detection.");
+                break;
+            case 3:
+                if(detect)
+                    _detectionLabel2->setText(": marker detected.");
+                else
+                    _detectionLabel2->setText(": no detection.");
+                break;
+            default:
+                _detectionLabel2->setText("");
+                break;
+            }
             return;
         }
     }
@@ -292,7 +360,7 @@ void MainWindow::switchInput()
     {
         if(_webcamActions[i]->isChecked())
         {
-            _webcamDevice->switchInput(i);
+            _webcamDevice->switchInput(i, false);
             _pause->setEnabled(false);
             _play->setEnabled(false);
             _fast->setEnabled(false);
@@ -300,7 +368,7 @@ void MainWindow::switchInput()
             return;
         }
     }
-    _webcamDevice->switchInput(-1);
+    _webcamDevice->switchInput(-1, false);
     _play->setEnabled(true);
 }
 
@@ -406,6 +474,97 @@ void MainWindow::updateSceneRT(cv::Mat rotVec, cv::Mat tvecs)
     _mainMat2->setMatrix(matrixR * matrixT * matrix90);
 }
 
+void MainWindow::playNpause()
+{
+    if(_playCam)
+    {
+        _backBegin->setVisible(false);
+        _play->setVisible(false);
+        _pause->setVisible(false);
+        _fast->setVisible(false);
+        _slow->setVisible(false);
+        _videoGroup->setVisible(false);
+        _camGroup->setVisible(true);
+
+        _playCam = false;
+    }
+    else
+    {
+        if(_playVideo)
+        {
+            _pause->setVisible(true);
+            _pause->setEnabled(true);
+            _play->setVisible(false);
+            _play->setEnabled(false);
+            _fast->setEnabled(true);
+            _slow->setEnabled(true);
+            _webcamDevice->play();
+
+            _playVideo = false;
+        }
+        else
+        {
+            _pause->setVisible(false);
+            _pause->setEnabled(false);
+            _play->setVisible(true);
+            _play->setEnabled(true);
+            _fast->setEnabled(false);
+            _slow->setEnabled(false);
+            _webcamDevice->pause();
+
+            _playVideo = true;
+        }
+    }
+
+}
+
+void MainWindow::back2Begin()
+{
+    _backBegin->setVisible(true);
+    _backBegin->setEnabled(true);
+    _play->setVisible(false);
+    _pause->setVisible(false);
+    _fast->setVisible(false);
+    _slow->setVisible(false);
+}
+
+void MainWindow::freezeButtons()
+{
+    _backBegin->setVisible(false);
+    _pause->setEnabled(false);
+    _play->setEnabled(false);
+    _fast->setEnabled(false);
+    _slow->setEnabled(false);
+}
+
+void MainWindow::playVideo()
+{
+    _camGroup->setVisible(false);
+    _playVideo = true;
+    _playCam = false;
+    _play->setVisible(true);
+    _play->setEnabled(true);
+    _backBegin->setVisible(false);
+    _pause->setVisible(false);
+    _fast->setVisible(true);
+    _fast->setEnabled(false);
+    _slow->setVisible(true);
+    _slow->setEnabled(false);
+    _videoGroup->setVisible(true);
+}
+
+void MainWindow::playCam()
+{
+    _videoGroup->setVisible(false);
+    _playVideo = false;
+    _playCam = true;
+    _backBegin->setVisible(false);
+    _play->setVisible(false);
+    _pause->setVisible(false);
+    _fast->setVisible(false);
+    _slow->setVisible(false);
+    _camGroup->setVisible(true);
+}
 
 
 // private
@@ -490,11 +649,10 @@ void MainWindow::setMainWindow(int mode)
     _addObjectAction->setEnabled(true);
     _fullScreenAction->setEnabled(true);
 
-    //    for(int i = 0; i < NBR_DETECT; i++)
-    //        _detectActions[i]->setEnable(true);
+    for(int i = 0; i < NBR_DETECT; i++)
+        _detectActions[i]->setEnabled(true);
+
     _detectActions[noDetect]->setEnabled(true);
-    _detectActions[chehra]->setEnabled(true);
-    _detectActions[chess]->setEnabled(true);
 
     for(int i = 0; i < _nbrCam; i++)
         _webcamActions[i]->setEnabled(true);
@@ -609,22 +767,34 @@ void MainWindow::setMainWindow(int mode)
     objectLayout->addWidget(alphaGroup);
 
     QHBoxLayout *videoLayout = new QHBoxLayout;
-    QGroupBox *videoGroup = new QGroupBox();
+    _videoGroup = new QGroupBox();
     _play = new QPushButton(QIcon(":/icons/play"), "");
     _pause = new QPushButton(QIcon(":/icons/pause"), "");
     _fast = new QPushButton(QIcon(":/icons/forw"), "");
     _slow = new QPushButton(QIcon(":/icons/back"), "");
+    _backBegin = new QPushButton(QIcon(":/icons/backBegin"), "");
 
+    videoLayout->addWidget(_backBegin);
     videoLayout->addWidget(_slow);
     videoLayout->addWidget(_play);
     videoLayout->addWidget(_pause);
     videoLayout->addWidget(_fast);
-    _pause->setEnabled(false);
-    _play->setEnabled(false);
-    _fast->setEnabled(false);
-    _slow->setEnabled(false);
-    videoGroup->setLayout(videoLayout);
-    objectLayout->addWidget(videoGroup);
+    _videoGroup->setLayout(videoLayout);
+    _videoGroup->setVisible(false);
+    objectLayout->addWidget(_videoGroup);
+
+    QHBoxLayout *camLayout = new QHBoxLayout;
+    _camGroup = new QGroupBox();
+    _detectionLabel = new QLabel("No active detection.");
+    _detectionLabel->setObjectName("infoDetection"); // CSS
+    _detectionLabel2 = new QLabel("");
+    _detectionLabel2->setObjectName("infoDetection"); // CSS
+
+    camLayout->addWidget(_detectionLabel);
+    camLayout->addWidget(_detectionLabel2);
+    camLayout->setAlignment(Qt::AlignCenter);
+    _camGroup->setLayout(camLayout);
+    objectLayout->addWidget(_camGroup);
 
     _sideView = new SideViewOsgWidet(_webcamDevice->getWebcam(), _mainMat2, _objectsList2[1], mode, this);
     objectLayout->addWidget(_sideView);
@@ -646,8 +816,13 @@ void MainWindow::connectAll()
 {
     qRegisterMetaType<cv::Mat>("cv::Mat");
     connect(_webcamDevice, SIGNAL(updateWebcam()), this, SLOT(updateCam()));
+    connect(_webcamDevice, SIGNAL(backToBeginSig()), this, SLOT(back2Begin()));
+    connect(_webcamDevice, SIGNAL(freezeButtons()), this, SLOT(freezeButtons()));
+    connect(_webcamDevice, SIGNAL(playVideo()), this, SLOT(playVideo()));
+    connect(_webcamDevice, SIGNAL(playCam()), this, SLOT(playCam()));
 
     connect(_detectGroup, SIGNAL(triggered(QAction*)), this, SLOT(updateDetectMode()));
+    connect(_webcamDevice, SIGNAL(updateDetect(bool)), this, SLOT(updateDetectLabel(bool)));
     connect(_webcamGroup, SIGNAL(triggered(QAction*)), this, SLOT(switchInput()));
 
     connect(_addObjectAction, SIGNAL(triggered()), this, SLOT(addObject()));
@@ -698,8 +873,9 @@ void MainWindow::connectAll()
 
     connect(_slow, SIGNAL(clicked()), _webcamDevice, SLOT(backward()));
     connect(_fast, SIGNAL(clicked()), _webcamDevice, SLOT(forward()));
-    connect(_pause, SIGNAL(clicked()), _webcamDevice, SLOT(pause()));
-    connect(_play, SIGNAL(clicked()), this, SLOT(play()));
+    connect(_pause, SIGNAL(clicked()), this, SLOT(playNpause()));
+    connect(_play, SIGNAL(clicked()), this, SLOT(playNpause()));
+    connect(_backBegin, SIGNAL(clicked()), _webcamDevice, SLOT(backToBeginSlot()));
 }
 
 void MainWindow::setShortcuts()
@@ -712,12 +888,12 @@ void MainWindow::setShortcuts()
     connect(_leaveFullScreen, SIGNAL(activated()), this, SLOT(displayFullScreen()));
 
     _pauseShortcut = new QShortcut(Qt::Key_Space, this);
-    connect(_pauseShortcut, SIGNAL(activated()), _webcamDevice, SLOT(pause()));
+    connect(_pauseShortcut, SIGNAL(activated()), this, SLOT(playNpause()));
     _pauseShortcut2 = new QShortcut(Qt::Key_Space, _fullScreenView);
-    connect(_pauseShortcut2, SIGNAL(activated()), _webcamDevice, SLOT(pause()));
+    connect(_pauseShortcut2, SIGNAL(activated()), this, SLOT(playNpause()));
 }
 
-void MainWindow::createFullScreenWidget() // #truanderie
+void MainWindow::createFullScreenWidget(int mode) // #truanderie
 {
     QRect rec = QApplication::desktop()->screenGeometry();
     int screenHeight = rec.height();
@@ -727,7 +903,7 @@ void MainWindow::createFullScreenWidget() // #truanderie
     int camHeight = webcam->rows;
     int camWidth = webcam->cols;
 
-    _fullScreenView = new OSGWidget(webcam, _mainMat, _objectsList[1], 0);
+    _fullScreenView = new OSGWidget(webcam, _mainMat, _objectsList[1], mode);
     _fullScreenWidget = new QWidget;
     _fullScreenWidget->setContentsMargins(0, 0, 0, 0);
 

@@ -18,3 +18,7 @@ QGroupBox::title {
 QLabel#infoCalib {
     font: bold;
 }
+
+QLabel#infoDetection {
+    font: bold;
+}
