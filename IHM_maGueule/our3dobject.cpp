@@ -75,6 +75,7 @@ void Our3DObject::update()
 void Our3DObject::setAlpha(int alpha)
 {
     _alpha = alpha / 100.0f;
+
     if(_object)
     {
         _material->setAlpha(osg::Material::FRONT_AND_BACK, _alpha); //Making alpha channel

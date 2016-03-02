@@ -47,6 +47,8 @@ public:
 private slots:
     void updateCam() { _backgroundImage->dirty(); _mainView->repaint(); _sideView->repaint(); _fullScreenView->repaint(); }
     void displayObjects(bool removeObjects) { _objectsList[0]->setNodeMask(!removeObjects); _isPrintedBox->setChecked(!removeObjects); }
+    void displaySceneAuto(bool displayObj) { _objectsList[0]->setNodeMask(displayObj); }
+    void displayInsideViewAuto(bool displayObj) { _objectsList2[0]->setNodeMask(displayObj); }
     void displayObjectsInSideView(bool removeObjects) { _objectsList2[0]->setNodeMask(!removeObjects); }
     bool start();
     void calibrateCamera();

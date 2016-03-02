@@ -844,6 +844,8 @@ void MainWindow::connectAll()
     connect(_fullScreenView, SIGNAL(changeFullScreenState()), this, SLOT(displayFullScreen()));
 
     connect(_detectActions[noDetect], SIGNAL(toggled(bool)), this, SLOT(displayObjects(bool)));
+    connect(_webcamDevice, SIGNAL(updateDetect(bool)), this, SLOT(displaySceneAuto(bool)));
+    connect(_webcamDevice, SIGNAL(updateDetect(bool)), this, SLOT(displayInsideViewAuto(bool)));
     connect(_isPrintedBox, SIGNAL(clicked(bool)), this, SLOT(displayObjectInScene(bool)));
     connect(_isPrintedBox2, SIGNAL(clicked(bool)), this, SLOT(displayObjectInSideView(bool))); // #truanderie
 
