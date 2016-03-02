@@ -7,6 +7,7 @@ WebcamDevice::WebcamDevice(QObject *parent) :
 {
     _vcap = cv::VideoCapture(0);
     _frame = new cv::Mat(cv::Mat::zeros(640,480, CV_8UC3));
+    _rotVecs = cv::Mat::zeros(3, 3, CV_64F);
     _initFps = 25;
     _actualFps = 25;
 
@@ -143,8 +144,6 @@ int WebcamDevice::initMatrix()
     }
 }
 
-
-
 bool WebcamDevice::initModels()
 {
     //////////////////////////////////////////////////
@@ -167,19 +166,19 @@ bool WebcamDevice::initModels()
     }
 
     // Repere visage
-    _pointsVisage3D.push_back(cv::Point3f(53, -11, -38));    // exterieur oeil gauche sur l'image
-    _pointsVisage3D.push_back(cv::Point3f(17, -11, -38));    // interieur oeil gauche sur l'image
+    _pointsVisage3D.push_back(cv::Point3f(-53, -11, -38));    // exterieur oeil gauche sur l'image
+    _pointsVisage3D.push_back(cv::Point3f(-17, -11, -38));    // interieur oeil gauche sur l'image
     _pointsVisage3D.push_back(cv::Point3f(0, 0, 0));          // haut du nez, centre des yeux
-    _pointsVisage3D.push_back(cv::Point3f(-17, -11, -38));     // interieur oeil droit sur l'image
-    _pointsVisage3D.push_back(cv::Point3f(-53, -11, -38));     // exterieur oeil droit sur l'image
+    _pointsVisage3D.push_back(cv::Point3f(17, -11, -38));     // interieur oeil droit sur l'image
+    _pointsVisage3D.push_back(cv::Point3f(53, -11, -38));     // exterieur oeil droit sur l'image
     _pointsVisage3D.push_back(cv::Point3f(0, -40, 7));        // milieu haut du nez
     _pointsVisage3D.push_back(cv::Point3f(0, -40, 14));       // milieu bas du nez
     _pointsVisage3D.push_back(cv::Point3f(0, -40, 22));       // bout du nez
-    _pointsVisage3D.push_back(cv::Point3f(17, -52, 0));      // exterieur narine gauche sur l'image
-    _pointsVisage3D.push_back(cv::Point3f(8, -56, 0));       // milieu narine gauche sur l'image
+    _pointsVisage3D.push_back(cv::Point3f(-17, -52, 0));      // exterieur narine gauche sur l'image
+    _pointsVisage3D.push_back(cv::Point3f(-8, -56, 0));       // milieu narine gauche sur l'image
     _pointsVisage3D.push_back(cv::Point3f(0, -60, 0));        // milieu narines sur l'image
-    _pointsVisage3D.push_back(cv::Point3f(-8, -56, 0));        // milieu narine droite sur l'image
-    _pointsVisage3D.push_back(cv::Point3f(-17, -52, 0));       // exterieur narine droite sur l'image
+    _pointsVisage3D.push_back(cv::Point3f(8, -56, 0));        // milieu narine droite sur l'image
+    _pointsVisage3D.push_back(cv::Point3f(17, -52, 0));       // exterieur narine droite sur l'image
 
     // Repere chess
     for(int x = -_nbrColChess / 2; x < _nbrColChess / 2 + _nbrColChess % 2; x++)
@@ -449,11 +448,11 @@ bool WebcamDevice::detecterVisage(std::vector<cv::Point2f> *pointsVisage)
 
     cv::cvtColor(*_frame, imNB, CV_BGR2GRAY);
 
-    visageFound = (*_chehra).track(imNB);
+    visageFound = _chehra->track(imNB);
 
     if(visageFound)
     {
-        points = (*_chehra).getTrackedPoints();
+        points = _chehra->getTrackedPoints();
         if (points.rows == 98){
             (*pointsVisage).push_back(cv::Point2f(points.at<float>(19, 0), points.at<float>(19 + 49, 0)));
             (*pointsVisage).push_back(cv::Point2f(points.at<float>(22, 0), points.at<float>(22 + 49, 0)));
@@ -482,14 +481,14 @@ bool WebcamDevice::detecterVisage(std::vector<cv::Point2f> *pointsVisage)
     return visageFound;
 }
 
-bool WebcamDevice::detectChess(std::vector<cv::Point2f> *chessPoints)
+bool WebcamDevice::detectChess()
 {
     bool chessFound = false;
     cv::Mat imGray;
 
     cv::cvtColor(*_frame, imGray, CV_BGR2GRAY);
 
-    chessFound = cv::findChessboardCorners(imGray, cv::Size(_nbrRowChess, _nbrColChess), *chessPoints, cv::CALIB_CB_FAST_CHECK);
+    chessFound = cv::findChessboardCorners(imGray, cv::Size(_nbrRowChess, _nbrColChess), _chessCornersInit[1], cv::CALIB_CB_FAST_CHECK);
 
     if(chessFound)
         cv::swap(_nextFrame, imGray);
@@ -636,7 +635,6 @@ void WebcamDevice::trackingChess()
 
     cv::solvePnP(_pointsChess3D, _chessCornersInit[0], _cameraMatrix, _distCoeffs, rvecs, _tvecs);
 
-    _rotVecs = cv::Mat(3, 3, CV_64F);
     cv::Rodrigues(rvecs, _rotVecs);
 }
 
@@ -761,7 +759,6 @@ void WebcamDevice::faceRT()
 
         cv::solvePnP(_pointsVisage3D, moyPointsVisage2D, _cameraMatrix, _distCoeffs, rvecs, _tvecs);
 
-        _rotVecs = cv::Mat(3, 3, CV_64F);
         cv::Rodrigues(rvecs, _rotVecs);
 
         emit updateScene(_rotVecs, _tvecs);
@@ -810,16 +807,13 @@ void WebcamDevice::chessRT()
 
     if (!_chessDetected || _reset == true)
     {
-        imagePoints.clear();
         _chessCornersInit[0].clear();
         _chessCornersInit[1].clear();
-        meanErrors = 0;
-        errors.clear();
         _nextFrame.release();
         _reset = false;
         _chessDetected = false;
 
-        _chessDetected = detectChess(&_chessCornersInit[1]);
+        _chessDetected = detectChess();
     }
 }
 

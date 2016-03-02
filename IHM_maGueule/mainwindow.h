@@ -30,6 +30,7 @@
 
 
 #define NBR_CHARACTERISTICS  10
+#define PI  3.14159265359
 
 enum { noDetect = 0, chehra = 1, chess = 2, QR = 3 };
 enum { sizeX = 0, sizeY = 1, sizeZ = 2, rotX = 3, rotY = 4, rotZ = 5, transX = 6, transY = 7, transZ = 8, alpha = 9 };

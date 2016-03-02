@@ -91,9 +91,9 @@ bool MainWindow::start()
     }
 
     if(_webcamDevice->initModels())
-         _detectActions[chehra]->setEnabled(true);
+        _detectActions[chehra]->setEnabled(true);
     else
-         _detectActions[chehra]->setEnabled(false);
+        _detectActions[chehra]->setEnabled(false);
 
     this->connectAll();
     this->setShortcuts();
@@ -430,48 +430,57 @@ void MainWindow::updateSceneRT(cv::Mat rotVec, cv::Mat tvecs)
     double r32 = rotVec.at<double>(2, 1);
     double r33 = rotVec.at<double>(2, 2);
 
+    cv::Mat r;
 
-    osg::Matrixd matrixR; // rotation (transposee de rotVec)
-    matrixR.set(
-                r11,	r21,	r31,	0,
-                r12,	r22,	r32,	0,
-                r13,	r23,	r33,	0,
-                0,		0,		0,		1);
+    cv::Rodrigues(rotVec, r);
 
-    double rotX = atan2(r32, r33);
-    double rotY = atan2(r21, r11);
-    double rotZ = atan2(-r31, sqrt((r32 * r32) + (r33 * r33)));
+    if(_webcamDevice->getMode() == chehra)
+    {
+        double rx = r.at<double>(2, 0);
+        double ry = r.at<double>(1, 0) - PI;
+        double rz = -r.at<double>(0, 0);
 
-    std::cout << "rot x : " << rotX << std::endl;
-    std::cout << "rot y : " << rotY << std::endl;
-    std::cout << "rot z : " << rotZ << std::endl;
-    std::cout << std::endl << std::endl;
-    std::cout << "t x : " << t1 << std::endl;
-    std::cout << "t y : " << t2 << std::endl;
-    std::cout << "t z : " << t3 << std::endl;
-    std::cout << std::endl << std::endl;
+        ry < -PI ? rz *= -1 : rx *= -1;
 
-    osg::Matrixd matrixR2; // rotation corrigee
-    matrixR2.makeRotate(rotX, osg::Vec3d(1.0, 0.0, 0.0), rotZ, osg::Vec3d(0.0, 1.0, 0.0), rotY, osg::Vec3d(0.0, 0.0, 1.0));
+        rx -= 2 * atan(t2 / t3);
+        ry -= 2 * atan(t1 / t3);
+        rz *= 0.70; // la rotation autour de z semble excessive ; no idea why
+        /*
+                std::cout << "r x : " << rx * 180 / PI << std::endl;
+                std::cout << "r y : " << ry * 180 / PI << std::endl;
+                std::cout << "r z : " << rz * 180 / PI << std::endl;
+                std::cout << std::endl << std::endl;
+                std::cout << "t x : " << t1 << std::endl;
+                std::cout << "t y : " << t2 << std::endl;
+                std::cout << "t z : " << t3 << std::endl;
+                std::cout << std::endl << std::endl;*/
 
-    //    std::cout << "rotations : " << std::endl
-    //              << "x : " << rotX << std::endl
-    //              << "y : " << rotY << std::endl
-    //              << "z : " << rotZ << std::endl << std::endl;
-    //    std::cout << "translations : " << std::endl
-    //              << "x : " << t1 << std::endl
-    //              << "y : " << t2 << std::endl
-    //              << "z : " << t3 << std::endl << std::endl << std::endl;
+        osg::Matrixd matrixR; // rotation corrigee
+        matrixR.makeRotate(rx, osg::Vec3d(1.0, 0.0, 0.0), -ry, osg::Vec3d(0.0, 1.0, 0.0), rz, osg::Vec3d(0.0, 0.0, 1.0));
 
+        osg::Matrixd matrixT; // translation
+        matrixT.makeTranslate(t1, t2, t3);
 
-    osg::Matrixd matrixT; // translation
-    matrixT.makeTranslate(t1, t2, t3);
+        osg::Matrixd matrix90; // rotation de repere entre opencv et osg
+        matrix90.makeRotate(osg::Quat(osg::DegreesToRadians(+90.0f), osg::Vec3d(1.0, 0.0, 0.0)));
 
-    osg::Matrixd matrix90; // rotation de repere entre opencv et osg
-    matrix90.makeRotate(osg::Quat(osg::DegreesToRadians(-90.0f), osg::Vec3d(1.0, 0.0, 0.0)));
-
-    _mainMat->setMatrix(matrixR * matrixT * matrix90);
-    _mainMat2->setMatrix(matrixR * matrixT * matrix90);
+        _mainMat->setMatrix(matrixR * matrixT * matrix90);
+        _mainMat2->setMatrix(matrixR * matrixT * matrix90);
+    }
+    else
+    {
+        double rx = atan2(r32, r33);
+        double ry = atan2(r21, r11);
+        double rz = -atan2(-r31, sqrt((r32 * r32) + (r33 * r33)));
+        osg::Matrixd matrixR; // rotation corrigee
+        matrixR.makeRotate(rx, osg::Vec3d(1.0, 0.0, 0.0), rz, osg::Vec3d(0.0, 1.0, 0.0), -ry, osg::Vec3d(0.0, 0.0, 1.0));
+        osg::Matrixd matrixT; // translation
+        matrixT.makeTranslate(-t1, t2, t3);
+        osg::Matrixd matrix90; // rotation de repere entre opencv et osg
+        matrix90.makeRotate(osg::Quat(osg::DegreesToRadians(-90.0f), osg::Vec3d(1.0, 0.0, 0.0)));
+        _mainMat->setMatrix(matrixR * matrixT * matrix90);
+        _mainMat2->setMatrix(matrixR * matrixT * matrix90);
+    }
 }
 
 void MainWindow::playNpause()
@@ -1041,10 +1050,10 @@ void MainWindow::initObjectsList(int mode)
 
         // Nous creons ensuite une tableau qui contiendra nos coordonnees de texture.
         osg::Vec2Array* coordonneeTexture = new osg::Vec2Array(4);
-        (*coordonneeTexture)[0].set(0.0f, 1.0f);
-        (*coordonneeTexture)[1].set(1.0f, 1.0f);
-        (*coordonneeTexture)[2].set(1.0f, 0.0f);
-        (*coordonneeTexture)[3].set(0.0f, 0.0f);
+        (*coordonneeTexture)[0].set(1.0f, 1.0f);
+        (*coordonneeTexture)[1].set(0.0f, 1.0f);
+        (*coordonneeTexture)[2].set(0.0f, 0.0f);
+        (*coordonneeTexture)[3].set(1.0f, 0.0f);
         geoQuad->setTexCoordArray(0, coordonneeTexture);
 
         osg::Geode* noeudGeo = new osg::Geode;
@@ -1086,10 +1095,10 @@ void MainWindow::initObjectsList(int mode)
 
         // Nous creons ensuite une tableau qui contiendra nos coordonnees de texture.
         osg::Vec2Array* coordonneeTexture = new osg::Vec2Array(4);
-        (*coordonneeTexture)[0].set(0.0f, 1.0f);
-        (*coordonneeTexture)[1].set(1.0f, 1.0f);
-        (*coordonneeTexture)[2].set(1.0f, 0.0f);
-        (*coordonneeTexture)[3].set(0.0f, 0.0f);
+        (*coordonneeTexture)[0].set(1.0f, 1.0f);
+        (*coordonneeTexture)[1].set(0.0f, 1.0f);
+        (*coordonneeTexture)[2].set(0.0f, 0.0f);
+        (*coordonneeTexture)[3].set(1.0f, 0.0f);
         geoQuad->setTexCoordArray(0, coordonneeTexture);
 
         osg::Geode* noeudGeo = new osg::Geode;

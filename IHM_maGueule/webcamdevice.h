@@ -29,6 +29,7 @@ public:
     ~WebcamDevice();
 
     cv::Mat* getWebcam() { return _frame; }
+    detectMode getMode() { return _detect; }
 
     void stop() { _isRunning = false; }
     void launch() { _isRunning = true; }
@@ -66,7 +67,7 @@ private:
 
     int calibrateCam(FileStorage *fs);
     bool detecterVisage(std::vector<cv::Point2f> *pointsVisage);
-    bool detectChess(std::vector<cv::Point2f> *chessPoints);
+    bool detectChess();
     bool detectMarker(std::vector<cv::Point2f> *markerPoints);
     void trackingChess();
     void trackingMarker(cv::Mat *rotVecs);
