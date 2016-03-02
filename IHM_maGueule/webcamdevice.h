@@ -19,7 +19,7 @@
 #define NBRFACEPOINTSDETECTED   13
 
 enum detectMode{noDetection = 0, faceDetection = 1, chessDetection = 2, qrDetection = 3};
-
+enum {cancel = 0, defaultCase = 1, calibrationCase = 2};
 
 class WebcamDevice : public QThread
 {
@@ -29,29 +29,34 @@ public:
     ~WebcamDevice();
 
     cv::Mat* getWebcam() { return _frame; }
-    detectMode getMode() { return _detect; }
 
     void stop() { _isRunning = false; }
     void launch() { _isRunning = true; }
 
-    void initMatrix();
-    void initModels();
+    int initMatrix();
+    bool initModels();
 
     static int webcamCount();
 
 signals:
     void updateWebcam();
     void updateScene(cv::Mat, cv::Mat);
+    void updateDetect(bool);
+    void backToBeginSig();
+    void freezeButtons();
+    void playVideo();
+    void playCam();
 
 public slots:
   void switchMode(int mode);
   void pause() { _pause = !_pause; }
-  void switchInput(int input);
-  void setOptions();
+  void switchInput(int input, bool rewind);
+  bool setOptions();
 
   void backward() { if(_actualFps > 4) _actualFps -= 4; }
   void forward() { if(_actualFps < 60) _actualFps += 4; }
-  void play() { _pause = false; _actualFps = _initFps; }
+  void play() { _pause = !_pause; _actualFps = _initFps; }
+  void backToBeginSlot() { switchInput(-1, true); }
 
 protected:
     void run();
@@ -59,9 +64,9 @@ protected:
 private:
     // member
 
-    void calibrateCam(FileStorage *fs);
+    int calibrateCam(FileStorage *fs);
     bool detecterVisage(std::vector<cv::Point2f> *pointsVisage);
-    bool detectChess();
+    bool detectChess(std::vector<cv::Point2f> *chessPoints);
     bool detectMarker(std::vector<cv::Point2f> *markerPoints);
     void trackingChess();
     void trackingMarker(cv::Mat *rotVecs);
@@ -82,6 +87,7 @@ private:
     bool _markerDetected;
     bool _vid;
     bool _inputIsSwitched;
+    bool _launchChehra;
     detectMode _detect;
     cv::VideoCapture _vcap;
     cv::Mat _rotVecs;
@@ -93,6 +99,7 @@ private:
     cv::Mat _testFrame;
     cv::Mat _nextFrame;
     cv::Mat _frameCropped;
+    QString _path;
 
     Chehra* _chehra;
     std::vector<cv::Point3f> _pointsVisage3D;
@@ -108,6 +115,7 @@ private:
     int _nbrColChess;
     int _nbrRowChess;
     int _markerSize;
+    int _resetLabel;
     double _chessSize;
 
     int _nbrLoopSinceLastDetection;

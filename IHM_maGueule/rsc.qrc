@@ -7,6 +7,7 @@
         <file alias="forw">icons/forward.png</file>
         <file alias="play">icons/play.png</file>
         <file alias="splash">icons/splash.png</file>
+        <file alias="backBegin">icons/back.png</file>
     </qresource>
     <qresource prefix="/css">
         <file alias="style">stylesheet.css</file>
