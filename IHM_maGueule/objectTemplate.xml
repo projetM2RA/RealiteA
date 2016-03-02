@@ -7,54 +7,58 @@
 		<objet id="0">
 			<name>Head mask</name>
 			<path>../rsc/objets3D/head.obj</path>
-			<sx></sx>
-			<sy></sy>
-			<sz></sz>
-			<rx></rx>
-			<ry></ry>
-			<rz></rz>
-			<tx></tx>
-			<ty></ty>
-			<tz></tz>
+			<sx>21</sx>
+			<sy>24</sy>
+			<sz>19</sz>
+			<rx>-90</rx>
+			<ry>0</ry>
+			<rz>0</rz>
+			<tx>-6</tx>
+			<ty>-13</ty>
+			<tz>-10</tz>
+			<alpha>0</alpha>
 		</objet>
 		<objet id="1">
 			<name>Glasses</name>
-			<path>../rsc/objets3D/lunettes.obj</path>
-			<sx></sx>
-			<sy></sy>
-			<sz></sz>
-			<rx></rx>
-			<ry></ry>
-			<rz></rz>
-			<tx></tx>
-			<ty></ty>
-			<tz></tz>
+			<path>../rsc/objets3D/GlassesSwag.3DS</path>
+			<sx>5</sx>
+			<sy>4</sy>
+			<sz>4</sz>
+			<rx>-92</rx>
+			<ry>-1</ry>
+			<rz>-2</rz>
+			<tx>0</tx>
+			<ty>-27</ty>
+			<tz>-86</tz>
+			<alpha>100</alpha>
 		</objet>
 		<objet id="2">
 			<name>Mustache</name>
 			<path>../rsc/objets3D/Mustache.obj</path>
-			<sx></sx>
-			<sy></sy>
-			<sz></sz>
-			<rx></rx>
-			<ry></ry>
-			<rz></rz>
-			<tx></tx>
-			<ty></ty>
-			<tz></tz>
+			<sx>35</sx>
+			<sy>22</sy>
+			<sz>19</sz>
+			<rx>-90</rx>
+			<ry>0</ry>
+			<rz>0</rz>
+			<tx>-4</tx>
+			<ty>-72</ty>
+			<tz>21</tz>
+			<alpha>100</alpha>
 		</objet>
 		<objet id="3">
 			<name>Rabbit hat</name>
 			<path>../rsc/objets3D/rabbit.obj</path>
-			<sx></sx>
-			<sy></sy>
-			<sz></sz>
-			<rx></rx>
-			<ry></ry>
-			<rz></rz>
-			<tx></tx>
-			<ty></ty>
-			<tz></tz>
+			<sx>49</sx>
+			<sy>48</sy>
+			<sz>47</sz>
+			<rx>-94</rx>
+			<ry>0</ry>
+			<rz>0</rz>
+			<tx>0</tx>
+			<ty>1</ty>
+			<tz>-165</tz>
+			<alpha>100</alpha>
 		</objet>		
 	</template>
 	
@@ -64,30 +68,31 @@
 		<objet id="0">
 			<name>Avatar</name>
 			<path>../rsc/objets3D/avatar.osg</path>
-			<sx>-1</sx>
-			<sy>-1</sy>
-			<sz>-1</sz>
+			<sx>4</sx>
+			<sy>4</sy>
+			<sz>4</sz>
 			<rx>0</rx>
 			<ry>0</ry>
 			<rz>90</rz>
-			<tx>-8</tx>
-			<ty>-2</ty>
+			<tx>-80</tx>
+			<ty>-13</ty>
 			<tz>0</tz>
+			<alpha>100</alpha>
 		</objet>
 		<objet id="1">
 			<name>Cow</name>
 			<path>../rsc/objets3D/cow.osg</path>
-			<sx>0</sx>
-			<sy>1</sy>
-			<sz>0</sz>
+			<sx>10</sx>
+			<sy>13</sy>
+			<sz>10</sz>
 			<rx>0</rx>
 			<ry>0</ry>
 			<rz>180</rz>
-			<tx>7</tx>
-			<ty>-2</ty>
-			<tz>3</tz>
-		</objet>
-	
+			<tx>7O</tx>
+			<ty>-14</ty>
+			<tz>34</tz>
+			<alpha>100</alpha>
+		</objet>	
 	</template>
 	
 	<template id="2">
@@ -96,28 +101,30 @@
 		<objet id="0">
 			<name>Grey matter</name>
 			<path>../rsc/objets3D/grayMatter.stl</path>
-			<sx></sx>
-			<sy></sy>
-			<sz></sz>
-			<rx></rx>
-			<ry></ry>
-			<rz></rz>
-			<tx></tx>
-			<ty></ty>
-			<tz></tz>
+			<sx>1</sx>
+			<sy>1</sy>
+			<sz>1</sz>
+			<rx>-96</rx>
+			<ry>180</ry>
+			<rz>9</rz>
+			<tx>-1</tx>
+			<ty>-35</ty>
+			<tz>-170</tz>
+			<alpha>50</alpha>
 		</objet>
 		<objet id="1">
 			<name>White matter</name>
 			<path>../rsc/objets3D/whiteMatter.stl</path>
-			<sx></sx>
-			<sy></sy>
-			<sz></sz>
-			<rx></rx>
-			<ry></ry>
-			<rz></rz>
-			<tx></tx>
-			<ty></ty>
-			<tz></tz>
+			<sx>1</sx>
+			<sy>1</sy>
+			<sz>1</sz>
+			<rx>85</rx>
+			<ry>2</ry>
+			<rz>-177</rz>
+			<tx>0</tx>
+			<ty>0</ty>
+			<tz>128</tz>
+			<alpha>100</alpha>
 		</objet>	
 	</template>
 	
@@ -127,15 +134,16 @@
 		<objet id="0">
 			<name>Axes</name>
 			<path>../rsc/objets3D/axes.osgt</path>
-			<sx>10</sx>
-			<sy>10</sy>
-			<sz>10</sz>
+			<sx>100</sx>
+			<sy>100</sy>
+			<sz>100</sz>
 			<rx>0</rx>
 			<ry>0</ry>
 			<rz>0</rz>
 			<tx>0</tx>
 			<ty>0</ty>
 			<tz>0</tz>
+			<alpha>100</alpha>
 		</objet>	
 	</template>
 </objectsTemplate>
