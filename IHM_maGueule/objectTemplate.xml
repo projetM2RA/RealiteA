@@ -1,0 +1,37 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ 
+<objectTemplates>
+	<template id="0">
+		<name>face</name>
+		<objectCount>4</objectCount>
+		<objet id="0">
+			<name>Head mask</name>
+			<path>../rsc/objets3D/head.obj</path>
+		</objet>
+		<objet id="1">
+			<name>Glasses</name>
+			<path>../rsc/objets3D/lunettes.obj</path>
+		</objet>
+		<objet id="2">
+			<name>Mustache</name>
+			<path>../rsc/objets3D/Mustache.obj</path>
+		</objet>
+		<objet id="3">
+			<name>Rabbit hat</name>
+			<path>../rsc/objets3D/rabbit.obj</path>
+		</objet>		
+	</template>
+	
+	<template id="1">
+	
+	</template>
+	
+	<template id="2">
+	
+	</template>
+	
+	<template id="3">
+	
+	</template>
+</objectTemplates>
+
