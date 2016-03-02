@@ -58,7 +58,8 @@ SOURCES += \
     SideViewOsgWidget.cpp \
     WebcamDevice.cpp \
     WebcamGraphicsScene.cpp \
-    Our3DObject.cpp
+    Our3DObject.cpp \
+    MatrixDialog.cpp
 
 HEADERS  += \
     SideViewOsgWidget.h \
@@ -72,7 +73,8 @@ HEADERS  += \
     WebcamDevice.h \
     WebcamGraphicsScene.h \
     WebcamGraphicsView.h \
-    Our3DObject.h
+    Our3DObject.h \
+    MatrixDialog.h
 
 RESOURCES += \
     rsc.qrc \

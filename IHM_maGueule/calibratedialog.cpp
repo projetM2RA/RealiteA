@@ -270,7 +270,7 @@ void CalibrateDialog::endSnapShot()
     _calibration->setValue(100);
 
     QMessageBox::information(this, "Calibration", "Calibration done with success.\nYour intrinsinc matrix as been successfuly created.");
-    this->accept();
+    this->close();
 
     fs.release();
 

@@ -30,6 +30,7 @@
 
 
 #define NBR_CHARACTERISTICS  10
+#define PI  3.14159265359
 
 enum { noDetect = 0, chehra = 1, chess = 2, QR = 3 };
 enum { sizeX = 0, sizeY = 1, sizeZ = 2, rotX = 3, rotY = 4, rotZ = 5, transX = 6, transY = 7, transZ = 8, alpha = 9 };
@@ -47,30 +48,25 @@ private slots:
     void updateCam() { _backgroundImage->dirty(); _mainView->repaint(); _sideView->repaint(); _fullScreenView->repaint(); }
     void displayObjects(bool removeObjects) { _objectsList[0]->setNodeMask(!removeObjects); _isPrintedBox->setChecked(!removeObjects); }
     void displayObjectsInSideView(bool removeObjects) { _objectsList2[0]->setNodeMask(!removeObjects); }
-    bool start();
+    void start();
     void calibrateCamera();
     void addObject();
     void updateObjectCharacteristics(int objectID);
     void updateDetectMode();
-    void updateDetectLabel(bool detect);
     void switchInput();
     void displayObjectInScene(bool display);
     void displayObjectInSideView(bool display);
     void displayFullScreen();
     void updateSceneRT(cv::Mat rotVec, cv::Mat tvecs);
-    void playNpause();
-    void back2Begin();
-    void freezeButtons();
-    void playVideo();
-    void playCam();
+    void play() { _pause->setEnabled(true); _fast->setEnabled(true); _slow->setEnabled(true); _webcamDevice->play(); }
 
 private:
     void setFirstWindow();
-    void setMainWindow(int mode);
+    void setMainWindow();
     void connectAll();
     void setShortcuts();
-    void createFullScreenWidget(int mode);
-    void initObjectsList(int mode);
+    void createFullScreenWidget();
+    void initObjectsList();
 
     //////////////////////////////////////////////////
     ////////// widgets graphiques ////////////////////
@@ -92,9 +88,6 @@ private:
 
     OSGWidget* _mainView;
 
-    QGroupBox* _videoGroup;
-    QGroupBox* _camGroup;
-
     QComboBox* _objectChoiceComboBox;
     QPushButton* _deleteObjectButton;
     QCheckBox* _isPrintedBox;
@@ -105,10 +98,6 @@ private:
     QPushButton* _play;
     QPushButton* _fast;
     QPushButton* _slow;
-    QPushButton* _backBegin;
-
-    QLabel* _detectionLabel;
-    QLabel* _detectionLabel2;
 
     SideViewOsgWidet* _sideView;
 
@@ -147,9 +136,6 @@ private:
     int _objectID;
     int _nbrCam;
     bool _fullScreen;
-    bool _delete;
-    bool _playVideo;
-    bool _playCam;
 };
 
 #endif // MAINWINDOW_H

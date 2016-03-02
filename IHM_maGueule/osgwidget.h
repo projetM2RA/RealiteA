@@ -35,7 +35,7 @@ class OSGWidget : public QGLWidget
     Q_OBJECT
 
 public:
-    OSGWidget(cv::Mat* webcamMat, osg::MatrixTransform *mainMat, Our3DObject *hud, int mode, QWidget* parent = 0, const QGLWidget* shareWidget = 0);
+    OSGWidget(cv::Mat* webcamMat, osg::MatrixTransform *mainMat, Our3DObject *hud, QWidget* parent = 0, const QGLWidget* shareWidget = 0);
 
     virtual ~OSGWidget();
 

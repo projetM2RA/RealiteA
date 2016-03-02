@@ -18,7 +18,7 @@ class OptionsDialog : public QDialog
 {
     Q_OBJECT
 public:
-    explicit OptionsDialog(int nbrCols, int nbrRows, double chessSize, int markerSize, bool chehra, QWidget *parent);
+    explicit OptionsDialog(int nbrCols, int nbrRows, double chessSize, int markerSize, QWidget *parent);
 
     int getNbrCols() { return _nbrCols->value(); }
     int getNbrRows() { return _nbrRows->value(); }

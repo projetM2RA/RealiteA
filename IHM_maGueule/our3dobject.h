@@ -47,9 +47,9 @@ public slots:
 
     // setters
 
-    void setSizeX(int s) { if(s >= 0) _sizeX = 1 + s; else _sizeX = 1 / (1 - s); update(); }
-    void setSizeY(int s) { if(s >= 0) _sizeY = 1 + s; else _sizeY = 1 / (1 - s); update(); }
-    void setSizeZ(int s) { if(s >= 0) _sizeZ = 1 + s; else _sizeZ = 1 / (1 - s); update(); }
+    void setSizeX(int s) { if(s >= 0) _sizeX = 1 + s; else _sizeX = 1.0f / (1 - s); update(); }
+    void setSizeY(int s) { if(s >= 0) _sizeY = 1 + s; else _sizeY = 1.0f / (1 - s); update(); }
+    void setSizeZ(int s) { if(s >= 0) _sizeZ = 1 + s; else _sizeZ = 1.0f / (1 - s); update(); }
 
     void setRotX(int r) { _rotX = r; update(); }
     void setRotY(int r) { _rotY = r; update(); }

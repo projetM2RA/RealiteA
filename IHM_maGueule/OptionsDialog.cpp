@@ -1,6 +1,6 @@
 #include "OptionsDialog.h"
 
-OptionsDialog::OptionsDialog(int nbrCols, int nbrRows, double chessSize, int markerSize, bool chehra, QWidget *parent) :
+OptionsDialog::OptionsDialog(int nbrCols, int nbrRows, double chessSize, int markerSize, QWidget *parent) :
     QDialog(parent)
 {
     this->setWindowTitle("Options");
@@ -54,9 +54,6 @@ OptionsDialog::OptionsDialog(int nbrCols, int nbrRows, double chessSize, int mar
     markerLayout->addWidget(_markerSizeLabel);
     markerLayout->addWidget(_markerSize);
     markerGroup->setLayout(markerLayout);
-
-    if(!chehra)
-        faceGroup->setEnabled(false);
 
     QVBoxLayout* caracsLayout = new QVBoxLayout;
     caracsLayout->addWidget(faceGroup);

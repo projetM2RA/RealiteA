@@ -9,9 +9,6 @@ MainWindow::MainWindow(QWidget *parent)
     _nbrCam = WebcamDevice::webcamCount(); // a mettre au debut sinon conflit avec les webcams lancees
     _webcamDevice = new WebcamDevice(this);
     _fullScreen = false;
-    _delete = false;
-    _playVideo = false;
-    _playCam = false;
 
     setFirstWindow();
 
@@ -21,79 +18,62 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
-    if(_delete)
+    for(int i = 0; i < NBR_DETECT; i++)
     {
-        for(int i = 0; i < NBR_DETECT; i++)
-        {
-            delete _detectActions[i];
-        }
-        delete _detectActions;
-
-        delete _addObjectAction;
-        delete _fullScreenAction;
-
-        delete _mainView;
-
-        delete _objectChoiceComboBox;
-        delete _deleteObjectButton;
-        delete _isPrintedBox;
-
-        for(int i = 0; i < NBR_CHARACTERISTICS; i++)
-        {
-            delete _objectCharacteristicsSpinSliders[i];
-        }
-
-        delete _objectCharacteristicsSpinSliders;
-
-        delete _sideView;
+        delete _detectActions[i];
     }
+    delete _detectActions;
+
+    delete _addObjectAction;
+    delete _fullScreenAction;
+
+    delete _mainView;
+
+    delete _objectChoiceComboBox;
+    delete _deleteObjectButton;
+    delete _isPrintedBox;
+
+    for(int i = 0; i < NBR_CHARACTERISTICS; i++)
+    {
+        delete _objectCharacteristicsSpinSliders[i];
+    }
+
+    delete _objectCharacteristicsSpinSliders;
+
+    delete _sideView;
 
     //////////////////////////////////////////////////
 
     _webcamDevice->stop();
-    _sleep(100);
     delete _webcamDevice;
 }
 
 
 
 // private slots
-bool MainWindow::start()
+void MainWindow::start()
 {
-    int initCalib = 0;
+    this->setBackgroundRole(QPalette::BrightText);
     //QSplashScreen splash(QPixmap(":/icons/splash"), Qt::WindowStaysOnTopHint);
     QWidget *splash = new QWidget();
     QBitmap bit(":/icons/splash");
     splash->setMask(bit);
     splash->setFixedSize(bit.size());
+    splash->setBackgroundRole(QPalette::BrightText);
 
-    initCalib = _webcamDevice->initMatrix();
-
-    if(initCalib == cancel)
-        return _delete;
+    _webcamDevice->initMatrix();
 
     splash->show();
     splash->raise();
     splash->repaint();
     this->setCursor(QCursor(Qt::WaitCursor));
 
-    if(initCalib == defaultCase)
-    {
-        this->initObjectsList(defaultCase);
-        this->setMainWindow(defaultCase);
-        this->createFullScreenWidget(defaultCase);
-    }
-    else if(initCalib == calibrationCase)
-    {
-        this->initObjectsList(calibrationCase);
-        this->setMainWindow(calibrationCase);
-        this->createFullScreenWidget(calibrationCase);
-    }
+    this->initObjectsList();
 
-    if(_webcamDevice->initModels())
-         _detectActions[chehra]->setEnabled(true);
-    else
-         _detectActions[chehra]->setEnabled(false);
+    this->setMainWindow();
+    _webcamDevice->initModels();
+
+    this->createFullScreenWidget();
 
     this->connectAll();
     this->setShortcuts();
@@ -101,7 +81,6 @@ bool MainWindow::start()
     this->setCursor(QCursor(Qt::ArrowCursor));
     this->show();
     splash->close();
-    _delete = true;
 }
 
 void MainWindow::calibrateCamera()
@@ -292,63 +271,6 @@ void MainWindow::updateDetectMode()
         if(_detectActions[i]->isChecked())
         {
             _webcamDevice->switchMode(i);
-
-            switch(i)
-            {
-            case 0:
-                _detectionLabel->setText("No active detection.");
-                break;
-            case 1:
-                _detectionLabel->setText("Face detection");
-                break;
-            case 2:
-                _detectionLabel->setText("Board detection");
-                break;
-            case 3:
-                _detectionLabel->setText("Marker detection");
-                break;
-            default:
-                _detectionLabel->setText("No active detection.");
-                break;
-            }
-            return;
-        }
-    }
-}
-
-void MainWindow::updateDetectLabel(bool detect)
-{
-    for(int i = 0; i < NBR_DETECT; i++)
-    {
-        if(_detectActions[i]->isChecked())
-        {
-            switch(i)
-            {
-            case 0:
-                _detectionLabel2->setText("");
-                break;
-            case 1:
-                if(detect)
-                    _detectionLabel2->setText(": face detected.");
-                else
-                    _detectionLabel2->setText(": no detection.");
-                break;
-            case 2:
-                if(detect)
-                    _detectionLabel2->setText(": board detected.");
-                else
-                    _detectionLabel2->setText(": no detection.");
-                break;
-            case 3:
-                if(detect)
-                    _detectionLabel2->setText(": marker detected.");
-                else
-                    _detectionLabel2->setText(": no detection.");
-                break;
-            default:
-                _detectionLabel2->setText("");
-                break;
-            }
             return;
         }
     }
@@ -360,7 +282,7 @@ void MainWindow::switchInput()
     {
         if(_webcamActions[i]->isChecked())
         {
-            _webcamDevice->switchInput(i, false);
+            _webcamDevice->switchInput(i);
             _pause->setEnabled(false);
             _play->setEnabled(false);
             _fast->setEnabled(false);
@@ -368,7 +290,7 @@ void MainWindow::switchInput()
             return;
         }
     }
-    _webcamDevice->switchInput(-1, false);
+    _webcamDevice->switchInput(-1);
     _play->setEnabled(true);
 }
 
@@ -430,141 +352,73 @@ void MainWindow::updateSceneRT(cv::Mat rotVec, cv::Mat tvecs)
     double r32 = rotVec.at<double>(2, 1);
     double r33 = rotVec.at<double>(2, 2);
 
-
     osg::Matrixd matrixR; // rotation (transposee de rotVec)
     matrixR.set(
-                r11,	r21,	r31,	0,
-                r12,	r22,	r32,	0,
-                r13,	r23,	r33,	0,
-                0,		0,		0,		1);
+        r11,	r21,	r31,	0,
+        r12,	r22,	r32,	0,
+        r13,	r23,	r33,	0,
+        0,		0,		0,		1);
 
-    double rotX = atan2(r32, r33);
-    double rotY = atan2(r21, r11);
-    double rotZ = atan2(-r31, sqrt((r32 * r32) + (r33 * r33)));
+    cv::Mat r;
+    cv::Rodrigues(rotVec, r);
 
-    std::cout << "rot x : " << rotX << std::endl;
-    std::cout << "rot y : " << rotY << std::endl;
-    std::cout << "rot z : " << rotZ << std::endl;
-    std::cout << std::endl << std::endl;
-    std::cout << "t x : " << t1 << std::endl;
-    std::cout << "t y : " << t2 << std::endl;
-    std::cout << "t z : " << t3 << std::endl;
-    std::cout << std::endl << std::endl;
-
-    osg::Matrixd matrixR2; // rotation corrigee
-    matrixR2.makeRotate(rotX, osg::Vec3d(1.0, 0.0, 0.0), rotZ, osg::Vec3d(0.0, 1.0, 0.0), rotY, osg::Vec3d(0.0, 0.0, 1.0));
-
-    //    std::cout << "rotations : " << std::endl
-    //              << "x : " << rotX << std::endl
-    //              << "y : " << rotY << std::endl
-    //              << "z : " << rotZ << std::endl << std::endl;
-    //    std::cout << "translations : " << std::endl
-    //              << "x : " << t1 << std::endl
-    //              << "y : " << t2 << std::endl
-    //              << "z : " << t3 << std::endl << std::endl << std::endl;
-
-
-    osg::Matrixd matrixT; // translation
-    matrixT.makeTranslate(t1, t2, t3);
-
-    osg::Matrixd matrix90; // rotation de repere entre opencv et osg
-    matrix90.makeRotate(osg::Quat(osg::DegreesToRadians(-90.0f), osg::Vec3d(1.0, 0.0, 0.0)));
-
-    _mainMat->setMatrix(matrixR * matrixT * matrix90);
-    _mainMat2->setMatrix(matrixR * matrixT * matrix90);
-}
-
-void MainWindow::playNpause()
-{
-    if(_playCam)
+    if(_webcamDevice->getMode() == chehra)
     {
-        _backBegin->setVisible(false);
-        _play->setVisible(false);
-        _pause->setVisible(false);
-        _fast->setVisible(false);
-        _slow->setVisible(false);
-        _videoGroup->setVisible(false);
-        _camGroup->setVisible(true);
+        double rx = r.at<double>(2, 0);
+        double ry = r.at<double>(1, 0) - PI;
+        double rz = -r.at<double>(0, 0);
 
-        _playCam = false;
+        ry < -PI ? rz *= -1 : rx *= -1;
+
+        std::cout << "r x : " << rx * 180 / PI << std::endl;
+        std::cout << "r y : " << ry * 180 / PI << std::endl;
+        std::cout << "r z : " << rz * 180 / PI << std::endl;
+
+        rx -= 2 * atan(t2 / t3);
+        ry -= 2 * atan(t1 / t3);
+        rz *= 0.70; // la rotation autour de z semble excessive ; no idea why
+/*
+        std::cout << "r x : " << rx * 180 / PI << std::endl;
+        std::cout << "r y : " << ry * 180 / PI << std::endl;
+        std::cout << "r z : " << rz * 180 / PI << std::endl;
+        std::cout << std::endl << std::endl;
+        std::cout << "t x : " << t1 << std::endl;
+        std::cout << "t y : " << t2 << std::endl;
+        std::cout << "t z : " << t3 << std::endl;
+        std::cout << std::endl << std::endl;*/
+
+        osg::Matrixd matrixR; // rotation corrigee
+        matrixR.makeRotate(rx, osg::Vec3d(1.0, 0.0, 0.0), -ry, osg::Vec3d(0.0, 1.0, 0.0), rz, osg::Vec3d(0.0, 0.0, 1.0));
+
+        osg::Matrixd matrixT; // translation
+        matrixT.makeTranslate(t1, t2, t3);
+
+        osg::Matrixd matrix90; // rotation de repere entre opencv et osg
+        matrix90.makeRotate(osg::Quat(osg::DegreesToRadians(+90.0f), osg::Vec3d(1.0, 0.0, 0.0)));
+
+        _mainMat->setMatrix(matrixR * matrixT * matrix90);
+        _mainMat2->setMatrix(matrixR * matrixT * matrix90);
     }
     else
     {
-        if(_playVideo)
-        {
-            _pause->setVisible(true);
-            _pause->setEnabled(true);
-            _play->setVisible(false);
-            _play->setEnabled(false);
-            _fast->setEnabled(true);
-            _slow->setEnabled(true);
-            _webcamDevice->play();
+        double rx = atan2(r32, r33);
+        double ry = atan2(r21, r11);
+        double rz = -atan2(-r31, sqrt((r32 * r32) + (r33 * r33)));
 
-            _playVideo = false;
-        }
-        else
-        {
-            _pause->setVisible(false);
-            _pause->setEnabled(false);
-            _play->setVisible(true);
-            _play->setEnabled(true);
-            _fast->setEnabled(false);
-            _slow->setEnabled(false);
-            _webcamDevice->pause();
+        osg::Matrixd matrixR; // rotation corrigee
+        matrixR.makeRotate(rx, osg::Vec3d(1.0, 0.0, 0.0), rz, osg::Vec3d(0.0, 1.0, 0.0), -ry, osg::Vec3d(0.0, 0.0, 1.0));
 
-            _playVideo = true;
-        }
+        osg::Matrixd matrixT; // translation
+        matrixT.makeTranslate(-t1, t2, t3);
+
+        osg::Matrixd matrix90; // rotation de repere entre opencv et osg
+        matrix90.makeRotate(osg::Quat(osg::DegreesToRadians(-90.0f), osg::Vec3d(1.0, 0.0, 0.0)));
+
+        _mainMat->setMatrix(matrixR * matrixT * matrix90);
+        _mainMat2->setMatrix(matrixR * matrixT * matrix90);
     }
-
 }
 
-void MainWindow::back2Begin()
-{
-    _backBegin->setVisible(true);
-    _backBegin->setEnabled(true);
-    _play->setVisible(false);
-    _pause->setVisible(false);
-    _fast->setVisible(false);
-    _slow->setVisible(false);
-}
-
-void MainWindow::freezeButtons()
-{
-    _backBegin->setVisible(false);
-    _pause->setEnabled(false);
-    _play->setEnabled(false);
-    _fast->setEnabled(false);
-    _slow->setEnabled(false);
-}
-
-void MainWindow::playVideo()
-{
-    _camGroup->setVisible(false);
-    _playVideo = true;
-    _playCam = false;
-    _play->setVisible(true);
-    _play->setEnabled(true);
-    _backBegin->setVisible(false);
-    _pause->setVisible(false);
-    _fast->setVisible(true);
-    _fast->setEnabled(false);
-    _slow->setVisible(true);
-    _slow->setEnabled(false);
-    _videoGroup->setVisible(true);
-}
-
-void MainWindow::playCam()
-{
-    _videoGroup->setVisible(false);
-    _playVideo = false;
-    _playCam = true;
-    _backBegin->setVisible(false);
-    _play->setVisible(false);
-    _pause->setVisible(false);
-    _fast->setVisible(false);
-    _slow->setVisible(false);
-    _camGroup->setVisible(true);
-}
 
 
 // private
@@ -640,7 +494,7 @@ void MainWindow::setFirstWindow()
     this->setMenuBar(menuBar);
 }
 
-void MainWindow::setMainWindow(int mode)
+void MainWindow::setMainWindow()
 {
     //////////////////////////////////////////////////
     ////////// enable actions ////////////////////////
@@ -649,10 +503,11 @@ void MainWindow::setMainWindow(int mode)
     _addObjectAction->setEnabled(true);
     _fullScreenAction->setEnabled(true);
 
-    for(int i = 0; i < NBR_DETECT; i++)
-        _detectActions[i]->setEnabled(true);
-
+    //    for(int i = 0; i < NBR_DETECT; i++)
+    //        _detectActions[i]->setEnable(true);
     _detectActions[noDetect]->setEnabled(true);
+    _detectActions[chehra]->setEnabled(true);
+    _detectActions[chess]->setEnabled(true);
 
     for(int i = 0; i < _nbrCam; i++)
         _webcamActions[i]->setEnabled(true);
@@ -664,14 +519,13 @@ void MainWindow::setMainWindow(int mode)
 
     QWidget* mainWidget = new QWidget();
     QHBoxLayout* mainLayout = new QHBoxLayout();
-
     QVBoxLayout* objectLayout = new QVBoxLayout();
 
     //////////////////////////////////////////////////
     ////////// webcam layout /////////////////////////
     //////////////////////////////////////////////////
 
-    _mainView = new OSGWidget(_webcamDevice->getWebcam(), _mainMat, _objectsList[1], mode, this);
+    _mainView = new OSGWidget(_webcamDevice->getWebcam(), _mainMat, _objectsList[1], this);
     mainLayout->addWidget(_mainView);
 
     //////////////////////////////////////////////////
@@ -767,36 +621,24 @@ void MainWindow::setMainWindow(int mode)
     objectLayout->addWidget(alphaGroup);
 
     QHBoxLayout *videoLayout = new QHBoxLayout;
-    _videoGroup = new QGroupBox();
+    QGroupBox *videoGroup = new QGroupBox();
     _play = new QPushButton(QIcon(":/icons/play"), "");
     _pause = new QPushButton(QIcon(":/icons/pause"), "");
     _fast = new QPushButton(QIcon(":/icons/forw"), "");
     _slow = new QPushButton(QIcon(":/icons/back"), "");
-    _backBegin = new QPushButton(QIcon(":/icons/backBegin"), "");
 
-    videoLayout->addWidget(_backBegin);
     videoLayout->addWidget(_slow);
     videoLayout->addWidget(_play);
     videoLayout->addWidget(_pause);
     videoLayout->addWidget(_fast);
-    _videoGroup->setLayout(videoLayout);
-    _videoGroup->setVisible(false);
-    objectLayout->addWidget(_videoGroup);
+    _pause->setEnabled(false);
+    _play->setEnabled(false);
+    _fast->setEnabled(false);
+    _slow->setEnabled(false);
+    videoGroup->setLayout(videoLayout);
+    objectLayout->addWidget(videoGroup);
 
-    QHBoxLayout *camLayout = new QHBoxLayout;
-    _camGroup = new QGroupBox();
-    _detectionLabel = new QLabel("No active detection.");
-    _detectionLabel->setObjectName("infoDetection"); // CSS
-    _detectionLabel2 = new QLabel("");
-    _detectionLabel2->setObjectName("infoDetection"); // CSS
-
-    camLayout->addWidget(_detectionLabel);
-    camLayout->addWidget(_detectionLabel2);
-    camLayout->setAlignment(Qt::AlignCenter);
-    _camGroup->setLayout(camLayout);
-    objectLayout->addWidget(_camGroup);
-
-    _sideView = new SideViewOsgWidet(_webcamDevice->getWebcam(), _mainMat2, _objectsList2[1], mode, this);
+    _sideView = new SideViewOsgWidet(_webcamDevice->getWebcam(), _mainMat2, _objectsList2[1], this);
     objectLayout->addWidget(_sideView);
 
     objectLayout->setStretchFactor(_sideView, 2);
@@ -808,21 +650,14 @@ void MainWindow::setMainWindow(int mode)
     mainLayout->setStretch(1, 1);
     mainWidget->setLayout(mainLayout);
     this->setCentralWidget(mainWidget);
-
-
 }
 
 void MainWindow::connectAll()
 {
     qRegisterMetaType<cv::Mat>("cv::Mat");
     connect(_webcamDevice, SIGNAL(updateWebcam()), this, SLOT(updateCam()));
-    connect(_webcamDevice, SIGNAL(backToBeginSig()), this, SLOT(back2Begin()));
-    connect(_webcamDevice, SIGNAL(freezeButtons()), this, SLOT(freezeButtons()));
-    connect(_webcamDevice, SIGNAL(playVideo()), this, SLOT(playVideo()));
-    connect(_webcamDevice, SIGNAL(playCam()), this, SLOT(playCam()));
 
     connect(_detectGroup, SIGNAL(triggered(QAction*)), this, SLOT(updateDetectMode()));
-    connect(_webcamDevice, SIGNAL(updateDetect(bool)), this, SLOT(updateDetectLabel(bool)));
     connect(_webcamGroup, SIGNAL(triggered(QAction*)), this, SLOT(switchInput()));
 
     connect(_addObjectAction, SIGNAL(triggered()), this, SLOT(addObject()));
@@ -873,9 +708,8 @@ void MainWindow::connectAll()
 
     connect(_slow, SIGNAL(clicked()), _webcamDevice, SLOT(backward()));
     connect(_fast, SIGNAL(clicked()), _webcamDevice, SLOT(forward()));
-    connect(_pause, SIGNAL(clicked()), this, SLOT(playNpause()));
-    connect(_play, SIGNAL(clicked()), this, SLOT(playNpause()));
-    connect(_backBegin, SIGNAL(clicked()), _webcamDevice, SLOT(backToBeginSlot()));
+    connect(_pause, SIGNAL(clicked()), _webcamDevice, SLOT(pause()));
+    connect(_play, SIGNAL(clicked()), this, SLOT(play()));
 }
 
 void MainWindow::setShortcuts()
@@ -888,12 +722,12 @@ void MainWindow::setShortcuts()
     connect(_leaveFullScreen, SIGNAL(activated()), this, SLOT(displayFullScreen()));
 
     _pauseShortcut = new QShortcut(Qt::Key_Space, this);
-    connect(_pauseShortcut, SIGNAL(activated()), this, SLOT(playNpause()));
+    connect(_pauseShortcut, SIGNAL(activated()), _webcamDevice, SLOT(pause()));
     _pauseShortcut2 = new QShortcut(Qt::Key_Space, _fullScreenView);
-    connect(_pauseShortcut2, SIGNAL(activated()), this, SLOT(playNpause()));
+    connect(_pauseShortcut2, SIGNAL(activated()), _webcamDevice, SLOT(pause()));
 }
 
-void MainWindow::createFullScreenWidget(int mode) // #truanderie
+void MainWindow::createFullScreenWidget() // #truanderie
 {
     QRect rec = QApplication::desktop()->screenGeometry();
     int screenHeight = rec.height();
@@ -903,7 +737,7 @@ void MainWindow::createFullScreenWidget(int mode) // #truanderie
     int camHeight = webcam->rows;
     int camWidth = webcam->cols;
 
-    _fullScreenView = new OSGWidget(webcam, _mainMat, _objectsList[1], mode);
+    _fullScreenView = new OSGWidget(webcam, _mainMat, _objectsList[1], 0);
     _fullScreenWidget = new QWidget;
     _fullScreenWidget->setContentsMargins(0, 0, 0, 0);
 
@@ -958,7 +792,7 @@ void MainWindow::createFullScreenWidget(int mode) // #truanderie
         _fullScreenWidget = _fullScreenView;
 }
 
-void MainWindow::initObjectsList(int mode)
+void MainWindow::initObjectsList()
 {
     _objectsList.push_back(new Our3DObject()); // globalMat en _objectsList[0]
     _mainMat = new osg::MatrixTransform();
@@ -973,50 +807,21 @@ void MainWindow::initObjectsList(int mode)
     _backgroundImage = new osg::Image;
 
     cv::Mat *webcamMat = _webcamDevice->getWebcam();
-    int cx;
-    int cy;
-    double n;
 
-    if(mode == 1)
-    {
-        cv::Mat cameraMatrix = cv::Mat::zeros(3, 3, CV_32F);
+    cv::FileStorage fs("../rsc/intrinsicMatrix.yml", cv::FileStorage::READ);
 
-        cameraMatrix.at<double>(0,0) = 683.52803565425086;
-        cameraMatrix.at<double>(0,1) = 0;
-        cameraMatrix.at<double>(0,2) = 322.55739845129722;
-        cameraMatrix.at<double>(1,0) = 0;
-        cameraMatrix.at<double>(1,1) = 684.92870414691424;
-        cameraMatrix.at<double>(1,1) = 244.60400436525589;
-        cameraMatrix.at<double>(2,0) = 0;
-        cameraMatrix.at<double>(2,1) = 0;
-        cameraMatrix.at<double>(2,2) = 1;
+    cv::Mat cameraMatrix;
 
-        cx = cameraMatrix.at<double>(0, 2);
-        cy = cameraMatrix.at<double>(1, 2);
-        n = (cameraMatrix.at<double>(0, 0) + cameraMatrix.at<double>(1, 1)) / 2;
-        // NEAR (n) = distance focale ; si pixels carres, fx = fy -> np
-        //mais est generalement different de fy donc on prend (pour l'instant) par defaut la valeur mediane
-        _corrector = (n / 2) / (cameraMatrix.at<double>(1, 2) - webcamMat->rows / 2);
+    fs["cameraMatrix"] >> cameraMatrix;
 
-    }
+    int cx = cameraMatrix.at<double>(0, 2);
+    int cy = cameraMatrix.at<double>(1, 2);
+    double n = (cameraMatrix.at<double>(0, 0) + cameraMatrix.at<double>(1, 1)) / 2;
+    // NEAR (n) = distance focale ; si pixels carres, fx = fy -> np
+    //mais est generalement different de fy donc on prend (pour l'instant) par defaut la valeur mediane
+    _corrector = (n / 2) / (cameraMatrix.at<double>(1, 2) - webcamMat->rows / 2);
 
-    else if(mode == 2)
-    {
-        cv::FileStorage fs("../rsc/intrinsicMatrix.yml", cv::FileStorage::READ);
-
-        cv::Mat cameraMatrix;
-
-        fs["cameraMatrix"] >> cameraMatrix;
-
-        cx = cameraMatrix.at<double>(0, 2);
-        cy = cameraMatrix.at<double>(1, 2);
-        n = (cameraMatrix.at<double>(0, 0) + cameraMatrix.at<double>(1, 1)) / 2;
-        // NEAR (n) = distance focale ; si pixels carres, fx = fy -> np
-        //mais est generalement different de fy donc on prend (pour l'instant) par defaut la valeur mediane
-        _corrector = (n / 2) / (cameraMatrix.at<double>(1, 2) - webcamMat->rows / 2);
-
-        fs.release();
-    }
+    fs.release();
 
     _backgroundImage->setImage(webcamMat->cols, webcamMat->rows, 3,
                                GL_RGB, GL_BGR, GL_UNSIGNED_BYTE,
@@ -1041,10 +846,10 @@ void MainWindow::initObjectsList(int mode)
 
         // Nous creons ensuite une tableau qui contiendra nos coordonnees de texture.
         osg::Vec2Array* coordonneeTexture = new osg::Vec2Array(4);
-        (*coordonneeTexture)[0].set(0.0f, 1.0f);
-        (*coordonneeTexture)[1].set(1.0f, 1.0f);
-        (*coordonneeTexture)[2].set(1.0f, 0.0f);
-        (*coordonneeTexture)[3].set(0.0f, 0.0f);
+        (*coordonneeTexture)[0].set(1.0f, 1.0f);
+        (*coordonneeTexture)[1].set(0.0f, 1.0f);
+        (*coordonneeTexture)[2].set(0.0f, 0.0f);
+        (*coordonneeTexture)[3].set(1.0f, 0.0f);
         geoQuad->setTexCoordArray(0, coordonneeTexture);
 
         osg::Geode* noeudGeo = new osg::Geode;
