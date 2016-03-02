@@ -1,37 +1,142 @@
  <?xml version="1.0" encoding="UTF-8"?>
  
-<objectTemplates>
+<objectsTemplate>
 	<template id="0">
 		<name>face</name>
 		<objectCount>4</objectCount>
 		<objet id="0">
 			<name>Head mask</name>
 			<path>../rsc/objets3D/head.obj</path>
+			<sx></sx>
+			<sy></sy>
+			<sz></sz>
+			<rx></rx>
+			<ry></ry>
+			<rz></rz>
+			<tx></tx>
+			<ty></ty>
+			<tz></tz>
 		</objet>
 		<objet id="1">
 			<name>Glasses</name>
 			<path>../rsc/objets3D/lunettes.obj</path>
+			<sx></sx>
+			<sy></sy>
+			<sz></sz>
+			<rx></rx>
+			<ry></ry>
+			<rz></rz>
+			<tx></tx>
+			<ty></ty>
+			<tz></tz>
 		</objet>
 		<objet id="2">
 			<name>Mustache</name>
 			<path>../rsc/objets3D/Mustache.obj</path>
+			<sx></sx>
+			<sy></sy>
+			<sz></sz>
+			<rx></rx>
+			<ry></ry>
+			<rz></rz>
+			<tx></tx>
+			<ty></ty>
+			<tz></tz>
 		</objet>
 		<objet id="3">
 			<name>Rabbit hat</name>
 			<path>../rsc/objets3D/rabbit.obj</path>
+			<sx></sx>
+			<sy></sy>
+			<sz></sz>
+			<rx></rx>
+			<ry></ry>
+			<rz></rz>
+			<tx></tx>
+			<ty></ty>
+			<tz></tz>
 		</objet>		
 	</template>
 	
 	<template id="1">
+		<name>chess</name>
+		<objectCount>2</objectCount>
+		<objet id="0">
+			<name>Avatar</name>
+			<path>../rsc/objets3D/avatar.osg</path>
+			<sx>-1</sx>
+			<sy>-1</sy>
+			<sz>-1</sz>
+			<rx>0</rx>
+			<ry>0</ry>
+			<rz>90</rz>
+			<tx>-8</tx>
+			<ty>-2</ty>
+			<tz>0</tz>
+		</objet>
+		<objet id="1">
+			<name>Cow</name>
+			<path>../rsc/objets3D/cow.osg</path>
+			<sx>0</sx>
+			<sy>1</sy>
+			<sz>0</sz>
+			<rx>0</rx>
+			<ry>0</ry>
+			<rz>180</rz>
+			<tx>7</tx>
+			<ty>-2</ty>
+			<tz>3</tz>
+		</objet>
 	
 	</template>
 	
 	<template id="2">
-	
+		<name>brain</name>
+		<objectCount>2</objectCount>
+		<objet id="0">
+			<name>Grey matter</name>
+			<path>../rsc/objets3D/grayMatter.stl</path>
+			<sx></sx>
+			<sy></sy>
+			<sz></sz>
+			<rx></rx>
+			<ry></ry>
+			<rz></rz>
+			<tx></tx>
+			<ty></ty>
+			<tz></tz>
+		</objet>
+		<objet id="1">
+			<name>White matter</name>
+			<path>../rsc/objets3D/whiteMatter.stl</path>
+			<sx></sx>
+			<sy></sy>
+			<sz></sz>
+			<rx></rx>
+			<ry></ry>
+			<rz></rz>
+			<tx></tx>
+			<ty></ty>
+			<tz></tz>
+		</objet>	
 	</template>
 	
 	<template id="3">
-	
+		<name>axes</name>
+		<objectCount>1</objectCount>
+		<objet id="0">
+			<name>Axes</name>
+			<path>../rsc/objets3D/axes.osgt</path>
+			<sx>10</sx>
+			<sy>10</sy>
+			<sz>10</sz>
+			<rx>0</rx>
+			<ry>0</ry>
+			<rz>0</rz>
+			<tx>0</tx>
+			<ty>0</ty>
+			<tz>0</tz>
+		</objet>	
 	</template>
-</objectTemplates>
+</objectsTemplate>
 
