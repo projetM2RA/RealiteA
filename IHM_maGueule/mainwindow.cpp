@@ -287,6 +287,8 @@ void MainWindow::updateObjectCharacteristics(int objectID)
 
 void MainWindow::updateDetectMode()
 {
+    _detectionLabel2->setVisible(false);
+
     for(int i = 0; i < NBR_DETECT; i++)
     {
         if(_detectActions[i]->isChecked())
@@ -318,6 +320,8 @@ void MainWindow::updateDetectMode()
 
 void MainWindow::updateDetectLabel(bool detect)
 {
+    _detectionLabel2->setVisible(true);
+
     for(int i = 0; i < NBR_DETECT; i++)
     {
         if(_detectActions[i]->isChecked())
@@ -329,21 +333,21 @@ void MainWindow::updateDetectLabel(bool detect)
                 break;
             case 1:
                 if(detect)
-                    _detectionLabel2->setText(": face detected.");
+                    _detectionLabel2->setText("-> face detected");
                 else
-                    _detectionLabel2->setText(": no detection.");
+                    _detectionLabel2->setText("-> no detection");
                 break;
             case 2:
                 if(detect)
-                    _detectionLabel2->setText(": board detected.");
+                    _detectionLabel2->setText("-> board detected");
                 else
-                    _detectionLabel2->setText(": no detection.");
+                    _detectionLabel2->setText("-> no detection");
                 break;
             case 3:
                 if(detect)
-                    _detectionLabel2->setText(": marker detected.");
+                    _detectionLabel2->setText("-> marker detected");
                 else
-                    _detectionLabel2->setText(": no detection.");
+                    _detectionLabel2->setText("-> no detection");
                 break;
             default:
                 _detectionLabel2->setText("");

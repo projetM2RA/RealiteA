@@ -9,6 +9,10 @@
 #include <QVBoxLayout>
 #include <QFileDialog>
 #include <QPushButton>
+#include <QGroupBox>
+#include <QButtonGroup>
+
+enum { face = 0, chessboard = 1, brain = 2, axes = 3 };
 
 class AddObjectDialog : public QDialog
 {
@@ -21,6 +25,7 @@ public:
 
 
 signals:
+    void setTemplate(int);
 
 public slots:
 
@@ -30,6 +35,8 @@ private slots:
 private:
     QLineEdit *_objectName;
     QLineEdit *_objectPath;
+
+    int _templateIndex;
 };
 
 #endif // ADDOBJECTDIALOG_H
