@@ -165,7 +165,7 @@ void MainWindow::addTemplate(int templateID)
             continue;
         if(reader.tokenType() == QXmlStreamReader::StartElement)
         {
-            if(reader.name() == "templates")
+            if(reader.name() == "objectsTemplate")
                 continue;
             if(reader.name() == "template")
             {

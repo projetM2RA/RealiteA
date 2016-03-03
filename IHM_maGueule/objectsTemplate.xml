@@ -1,10 +1,10 @@
- <?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
  
 <objectsTemplate>
 	<template id="0">
 		<name>face</name>
 		<objectCount>4</objectCount>
-		<objet id="0">
+                <object id="0">
 			<name>Head mask</name>
 			<path>../rsc/objets3D/head.obj</path>
 			<sx>21</sx>
@@ -17,8 +17,8 @@
 			<ty>-13</ty>
 			<tz>-10</tz>
 			<alpha>0</alpha>
-		</objet>
-		<objet id="1">
+                </object>
+                <object id="1">
 			<name>Glasses</name>
 			<path>../rsc/objets3D/GlassesSwag.3DS</path>
 			<sx>5</sx>
@@ -31,8 +31,8 @@
 			<ty>-27</ty>
 			<tz>-86</tz>
 			<alpha>100</alpha>
-		</objet>
-		<objet id="2">
+                </object>
+                <object id="2">
 			<name>Mustache</name>
 			<path>../rsc/objets3D/Mustache.obj</path>
 			<sx>35</sx>
@@ -45,8 +45,8 @@
 			<ty>-72</ty>
 			<tz>21</tz>
 			<alpha>100</alpha>
-		</objet>
-		<objet id="3">
+                </object>
+                <object id="3">
 			<name>Rabbit hat</name>
 			<path>../rsc/objets3D/rabbit.obj</path>
 			<sx>49</sx>
@@ -59,13 +59,13 @@
 			<ty>1</ty>
 			<tz>-165</tz>
 			<alpha>100</alpha>
-		</objet>		
+                </object>
 	</template>
 	
 	<template id="1">
 		<name>chess</name>
 		<objectCount>2</objectCount>
-		<objet id="0">
+                <object id="0">
 			<name>Avatar</name>
 			<path>../rsc/objets3D/avatar.osg</path>
 			<sx>4</sx>
@@ -78,8 +78,8 @@
 			<ty>-13</ty>
 			<tz>0</tz>
 			<alpha>100</alpha>
-		</objet>
-		<objet id="1">
+                </object>
+                <object id="1">
 			<name>Cow</name>
 			<path>../rsc/objets3D/cow.osg</path>
 			<sx>10</sx>
@@ -92,13 +92,13 @@
 			<ty>-14</ty>
 			<tz>34</tz>
 			<alpha>100</alpha>
-		</objet>	
+                </object>
 	</template>
 	
 	<template id="2">
 		<name>brain</name>
 		<objectCount>2</objectCount>
-		<objet id="0">
+                <object id="0">
 			<name>Grey matter</name>
 			<path>../rsc/objets3D/grayMatter.stl</path>
 			<sx>1</sx>
@@ -111,8 +111,8 @@
 			<ty>-35</ty>
 			<tz>-170</tz>
 			<alpha>50</alpha>
-		</objet>
-		<objet id="1">
+                </object>
+                <object id="1">
 			<name>White matter</name>
 			<path>../rsc/objets3D/whiteMatter.stl</path>
 			<sx>1</sx>
@@ -125,13 +125,13 @@
 			<ty>0</ty>
 			<tz>128</tz>
 			<alpha>100</alpha>
-		</objet>	
+                </object>
 	</template>
 	
 	<template id="3">
 		<name>axes</name>
 		<objectCount>1</objectCount>
-		<objet id="0">
+                <object id="0">
 			<name>Axes</name>
 			<path>../rsc/objets3D/axes.osgt</path>
 			<sx>100</sx>
@@ -144,7 +144,7 @@
 			<ty>0</ty>
 			<tz>0</tz>
 			<alpha>100</alpha>
-		</objet>	
+                </object>
 	</template>
 </objectsTemplate>
 
