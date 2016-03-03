@@ -10,6 +10,7 @@ AddObjectDialog::AddObjectDialog(QWidget *parent) :
     _objectPath->setText(tr(""));
 
     QLabel* templateLabel = new QLabel("Templates");
+    QLabel* customLabel = new QLabel("Custom object");
 
     QPushButton* ok = new QPushButton(tr("Ok"));
     QPushButton* cancel = new QPushButton(tr("Cancel"));
@@ -25,6 +26,7 @@ AddObjectDialog::AddObjectDialog(QWidget *parent) :
     brainTemplate->setObjectName("brainTemplate");
     axesTemplate->setObjectName("axesTemplate");
     templateLabel->setObjectName("infoLabel");
+    customLabel->setObjectName("infoLabel");
 
     QButtonGroup* templateGroup = new QButtonGroup();
     templateGroup->addButton(faceTemplate, face);
@@ -54,7 +56,8 @@ AddObjectDialog::AddObjectDialog(QWidget *parent) :
     QVBoxLayout* mainLayout = new QVBoxLayout;
     mainLayout->addWidget(templateLabel);
     mainLayout->addLayout(templateLayout);
-    mainLayout->addSpacing(20);
+    mainLayout->addSpacing(10);
+    mainLayout->addWidget(customLabel);
     mainLayout->addLayout(optionsLayout);
     mainLayout->addLayout(buttonsLayout);
 

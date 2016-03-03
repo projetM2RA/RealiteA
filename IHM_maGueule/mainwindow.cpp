@@ -134,12 +134,6 @@ void MainWindow::addObject(QString name, QString path)
         return;
     }
 
-    if(!QFile::exists(path))
-    {
-        QMessageBox::warning(this, tr("Error loading object"), tr("The object's path doesn't exist."));
-        return;
-    }
-
     _objectsList.push_back(new Our3DObject(path));
     _objectsList[0]->addChild(_objectsList[_objectsList.size() - 1]);
     _objectsList2.push_back(new Our3DObject(path));
@@ -162,6 +156,11 @@ void MainWindow::addTemplate(int templateID)
     {
         /* Read next element.*/
         reader.readNext();
+        std::cout << "line : " << reader.lineNumber() << std::endl
+                  << "col : " << reader.columnNumber() << std::endl
+                  << "token : " << reader.tokenString().toStdString() << std::endl
+                  << "name : " << reader.name().toString().toStdString() << std::endl
+                  << "text : " << reader.text().toString().toStdString() << std::endl << std::endl;
         if(reader.tokenType() == QXmlStreamReader::StartDocument)
             continue;
         if(reader.tokenType() == QXmlStreamReader::StartElement)
@@ -175,110 +174,53 @@ void MainWindow::addTemplate(int templateID)
                 {
                     while(!(reader.tokenType() == QXmlStreamReader::EndElement && reader.name() == "template"))
                     {
-                        if(reader.name() == "object" && reader.tokenType() == QXmlStreamReader::StartElement)
+                        if(reader.name() == "name")
+                            continue;
+                        if(reader.name() == "objectsCount")
+                            continue;
+                        if(reader.name() == "object")
                         {
                             while(!(reader.tokenType() == QXmlStreamReader::EndElement && reader.name() == "object"))
                             {
-                                if(reader.name() == "name" && reader.tokenType() == QXmlStreamReader::StartElement)
-                                {
-                                    while(reader.tokenType() != QXmlStreamReader::Characters)
-                                        reader.readNext();
+                                if(reader.name() == "name")
                                     name = reader.text().toString();
-                                }
-                                if(reader.name() == "path" && reader.tokenType() == QXmlStreamReader::StartElement)
-                                {
-                                    while(reader.tokenType() != QXmlStreamReader::Characters)
-                                        reader.readNext();
+                                if(reader.name() == "path")
                                     path = reader.text().toString();
-                                }
                                 if(name != "" && path != "")
-                                {
-                                    this->addObject(name, path); // je sais pas ou le mettre ce if
-                                    name = "";
-                                    path = "";
-                                }
+                                    this->addObject(name, path); // je sais pas ou le mettre d'autre ce if
 
-                                if(reader.name() == "sx" && reader.tokenType() == QXmlStreamReader::StartElement)
-                                {
-                                    while(reader.tokenType() != QXmlStreamReader::Characters)
-                                        reader.readNext();
+                                if(reader.name() == "sx")
                                     _objectsList[_objectsList.size() - 1]->setSizeX(reader.text().toInt());
-                                    _objectsList2[_objectsList2.size() - 1]->setSizeX(reader.text().toInt());
-                                }
-                                if(reader.name() == "sy" && reader.tokenType() == QXmlStreamReader::StartElement)
-                                {
-                                    while(reader.tokenType() != QXmlStreamReader::Characters)
-                                        reader.readNext();
+                                if(reader.name() == "sy")
                                     _objectsList[_objectsList.size() - 1]->setSizeY(reader.text().toInt());
-                                    _objectsList2[_objectsList2.size() - 1]->setSizeY(reader.text().toInt());
-                                }
-                                if(reader.name() == "sz" && reader.tokenType() == QXmlStreamReader::StartElement)
-                                {
-                                    while(reader.tokenType() != QXmlStreamReader::Characters)
-                                        reader.readNext();
+                                if(reader.name() == "sz")
                                     _objectsList[_objectsList.size() - 1]->setSizeZ(reader.text().toInt());
-                                    _objectsList2[_objectsList2.size() - 1]->setSizeZ(reader.text().toInt());
-                                }
 
-                                if(reader.name() == "rx" && reader.tokenType() == QXmlStreamReader::StartElement)
-                                {
-                                    while(reader.tokenType() != QXmlStreamReader::Characters)
-                                        reader.readNext();
+                                if(reader.name() == "rx")
                                     _objectsList[_objectsList.size() - 1]->setRotX(reader.text().toInt());
-                                    _objectsList2[_objectsList2.size() - 1]->setRotX(reader.text().toInt());
-                                }
-                                if(reader.name() == "ry" && reader.tokenType() == QXmlStreamReader::StartElement)
-                                {
-                                    while(reader.tokenType() != QXmlStreamReader::Characters)
-                                        reader.readNext();
+                                if(reader.name() == "ry")
                                     _objectsList[_objectsList.size() - 1]->setRotY(reader.text().toInt());
-                                    _objectsList2[_objectsList2.size() - 1]->setRotY(reader.text().toInt());
-                                }
-                                if(reader.name() == "rz" && reader.tokenType() == QXmlStreamReader::StartElement)
-                                {
-                                    while(reader.tokenType() != QXmlStreamReader::Characters)
-                                        reader.readNext();
+                                if(reader.name() == "rz")
                                     _objectsList[_objectsList.size() - 1]->setRotZ(reader.text().toInt());
-                                    _objectsList2[_objectsList2.size() - 1]->setRotZ(reader.text().toInt());
-                                }
 
-                                if(reader.name() == "tx" && reader.tokenType() == QXmlStreamReader::StartElement)
-                                {
-                                    while(reader.tokenType() != QXmlStreamReader::Characters)
-                                        reader.readNext();
+                                if(reader.name() == "tx")
                                     _objectsList[_objectsList.size() - 1]->setTransX(reader.text().toInt());
-                                    _objectsList2[_objectsList2.size() - 1]->setTransX(reader.text().toInt());
-                                }
-                                if(reader.name() == "ty" && reader.tokenType() == QXmlStreamReader::StartElement)
-                                {
-                                    while(reader.tokenType() != QXmlStreamReader::Characters)
-                                        reader.readNext();
+                                if(reader.name() == "ty")
                                     _objectsList[_objectsList.size() - 1]->setTransY(reader.text().toInt());
-                                    _objectsList2[_objectsList2.size() - 1]->setTransY(reader.text().toInt());
-                                }
-                                if(reader.name() == "tz" && reader.tokenType() == QXmlStreamReader::StartElement)
-                                {
-                                    while(reader.tokenType() != QXmlStreamReader::Characters)
-                                        reader.readNext();
+                                if(reader.name() == "tz")
                                     _objectsList[_objectsList.size() - 1]->setTransZ(reader.text().toInt());
-                                    _objectsList2[_objectsList2.size() - 1]->setTransZ(reader.text().toInt());
-                                }
 
-                                if(reader.name() == "alpha" && reader.tokenType() == QXmlStreamReader::StartElement)
-                                {
-                                    while(reader.tokenType() != QXmlStreamReader::Characters)
-                                        reader.readNext();
+                                if(reader.name() == "alpha")
                                     _objectsList[_objectsList.size() - 1]->setAlpha(reader.text().toInt());
-                                    _objectsList2[_objectsList2.size() - 1]->setAlpha(reader.text().toInt());
-                                }
 
                                 reader.readNext();
                             }
+                            name = "";
+                            path = "";
                         }
+
                         reader.readNext();
                     }
-                    reader.clear();
-                    return;
                 }
             }
         }
@@ -879,17 +821,17 @@ void MainWindow::setMainWindow(int mode)
     QFormLayout *resizeLayout = new QFormLayout;
     QGroupBox *resizeGroup = new QGroupBox(tr(" Resize object "));
 
-    _objectCharacteristicsSpinSliders[sizeX]->setRange(-1000, 1000);
+    _objectCharacteristicsSpinSliders[sizeX]->setRange(-100, 100);
     _objectCharacteristicsSpinSliders[sizeX]->setSingleStep(1);
-    _objectCharacteristicsSpinSliders[sizeX]->setValue(0);
+    _objectCharacteristicsSpinSliders[sizeX]->setValue(10.0);
     resizeLayout->addRow("x : ", _objectCharacteristicsSpinSliders[sizeX]);
-    _objectCharacteristicsSpinSliders[sizeY]->setRange(-1000, 1000);
+    _objectCharacteristicsSpinSliders[sizeY]->setRange(-100, 100);
     _objectCharacteristicsSpinSliders[sizeY]->setSingleStep(1);
-    _objectCharacteristicsSpinSliders[sizeY]->setValue(0);
+    _objectCharacteristicsSpinSliders[sizeY]->setValue(10.0);
     resizeLayout->addRow("y : ", _objectCharacteristicsSpinSliders[sizeY]);
-    _objectCharacteristicsSpinSliders[sizeZ]->setRange(-1000, 1000);
+    _objectCharacteristicsSpinSliders[sizeZ]->setRange(-100, 100);
     _objectCharacteristicsSpinSliders[sizeZ]->setSingleStep(1);
-    _objectCharacteristicsSpinSliders[sizeZ]->setValue(0);
+    _objectCharacteristicsSpinSliders[sizeZ]->setValue(10.0);
     resizeLayout->addRow("z : ", _objectCharacteristicsSpinSliders[sizeZ]);
 
     resizeGroup->setLayout(resizeLayout);
