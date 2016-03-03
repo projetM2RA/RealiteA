@@ -58,6 +58,7 @@ private slots:
     void addObject(QString name, QString path);
     void addTemplate(int templateID);
     void updateObjectCharacteristics(int objectID);
+    void removeObject();
     void updateDetectMode();
     void updateDetectLabel(bool detect);
     void switchInput();

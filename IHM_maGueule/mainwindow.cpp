@@ -62,19 +62,20 @@ bool MainWindow::start()
 {
     int initCalib = 0;
     //QSplashScreen splash(QPixmap(":/icons/splash"), Qt::WindowStaysOnTopHint);
-    QWidget *splash = new QWidget();
+    QWidget splash;
     QBitmap bit(":/icons/splash");
-    splash->setMask(bit);
-    splash->setFixedSize(bit.size());
+    splash.setMask(bit);
+    //splash.setObjectName("splashScreen");
+    splash.setFixedSize(bit.size());
 
     initCalib = _webcamDevice->initMatrix();
 
     if(initCalib == cancel)
         return _delete;
 
-    splash->show();
-    splash->raise();
-    splash->repaint();
+    splash.show();
+    //    splash->raise();
+    //    splash->repaint();
     this->setCursor(QCursor(Qt::WaitCursor));
 
     if(initCalib == defaultCase)
@@ -100,7 +101,7 @@ bool MainWindow::start()
 
     this->setCursor(QCursor(Qt::ArrowCursor));
     this->show();
-    splash->close();
+    splash.close();
     _delete = true;
 }
 
@@ -134,6 +135,12 @@ void MainWindow::addObject(QString name, QString path)
         return;
     }
 
+    if(!QFile::exists(path))
+    {
+        QMessageBox::warning(this, tr("Error loading object"), tr("The object's path doesn't exist."));
+        return;
+    }
+
     _objectsList.push_back(new Our3DObject(path));
     _objectsList[0]->addChild(_objectsList[_objectsList.size() - 1]);
     _objectsList2.push_back(new Our3DObject(path));
@@ -156,11 +163,6 @@ void MainWindow::addTemplate(int templateID)
     {
         /* Read next element.*/
         reader.readNext();
-        std::cout << "line : " << reader.lineNumber() << std::endl
-                  << "col : " << reader.columnNumber() << std::endl
-                  << "token : " << reader.tokenString().toStdString() << std::endl
-                  << "name : " << reader.name().toString().toStdString() << std::endl
-                  << "text : " << reader.text().toString().toStdString() << std::endl << std::endl;
         if(reader.tokenType() == QXmlStreamReader::StartDocument)
             continue;
         if(reader.tokenType() == QXmlStreamReader::StartElement)
@@ -174,53 +176,110 @@ void MainWindow::addTemplate(int templateID)
                 {
                     while(!(reader.tokenType() == QXmlStreamReader::EndElement && reader.name() == "template"))
                     {
-                        if(reader.name() == "name")
-                            continue;
-                        if(reader.name() == "objectsCount")
-                            continue;
-                        if(reader.name() == "object")
+                        if(reader.name() == "object" && reader.tokenType() == QXmlStreamReader::StartElement)
                         {
                             while(!(reader.tokenType() == QXmlStreamReader::EndElement && reader.name() == "object"))
                             {
-                                if(reader.name() == "name")
+                                if(reader.name() == "name" && reader.tokenType() == QXmlStreamReader::StartElement)
+                                {
+                                    while(reader.tokenType() != QXmlStreamReader::Characters)
+                                        reader.readNext();
                                     name = reader.text().toString();
-                                if(reader.name() == "path")
+                                }
+                                if(reader.name() == "path" && reader.tokenType() == QXmlStreamReader::StartElement)
+                                {
+                                    while(reader.tokenType() != QXmlStreamReader::Characters)
+                                        reader.readNext();
                                     path = reader.text().toString();
+                                }
                                 if(name != "" && path != "")
-                                    this->addObject(name, path); // je sais pas ou le mettre d'autre ce if
+                                {
+                                    this->addObject(name, path); // je sais pas ou le mettre ce if
+                                    name = "";
+                                    path = "";
+                                }
 
-                                if(reader.name() == "sx")
+                                if(reader.name() == "sx" && reader.tokenType() == QXmlStreamReader::StartElement)
+                                {
+                                    while(reader.tokenType() != QXmlStreamReader::Characters)
+                                        reader.readNext();
                                     _objectsList[_objectsList.size() - 1]->setSizeX(reader.text().toInt());
-                                if(reader.name() == "sy")
+                                    _objectsList2[_objectsList2.size() - 1]->setSizeX(reader.text().toInt());
+                                }
+                                if(reader.name() == "sy" && reader.tokenType() == QXmlStreamReader::StartElement)
+                                {
+                                    while(reader.tokenType() != QXmlStreamReader::Characters)
+                                        reader.readNext();
                                     _objectsList[_objectsList.size() - 1]->setSizeY(reader.text().toInt());
-                                if(reader.name() == "sz")
+                                    _objectsList2[_objectsList2.size() - 1]->setSizeY(reader.text().toInt());
+                                }
+                                if(reader.name() == "sz" && reader.tokenType() == QXmlStreamReader::StartElement)
+                                {
+                                    while(reader.tokenType() != QXmlStreamReader::Characters)
+                                        reader.readNext();
                                     _objectsList[_objectsList.size() - 1]->setSizeZ(reader.text().toInt());
+                                    _objectsList2[_objectsList2.size() - 1]->setSizeZ(reader.text().toInt());
+                                }
 
-                                if(reader.name() == "rx")
+                                if(reader.name() == "rx" && reader.tokenType() == QXmlStreamReader::StartElement)
+                                {
+                                    while(reader.tokenType() != QXmlStreamReader::Characters)
+                                        reader.readNext();
                                     _objectsList[_objectsList.size() - 1]->setRotX(reader.text().toInt());
-                                if(reader.name() == "ry")
+                                    _objectsList2[_objectsList2.size() - 1]->setRotX(reader.text().toInt());
+                                }
+                                if(reader.name() == "ry" && reader.tokenType() == QXmlStreamReader::StartElement)
+                                {
+                                    while(reader.tokenType() != QXmlStreamReader::Characters)
+                                        reader.readNext();
                                     _objectsList[_objectsList.size() - 1]->setRotY(reader.text().toInt());
-                                if(reader.name() == "rz")
+                                    _objectsList2[_objectsList2.size() - 1]->setRotY(reader.text().toInt());
+                                }
+                                if(reader.name() == "rz" && reader.tokenType() == QXmlStreamReader::StartElement)
+                                {
+                                    while(reader.tokenType() != QXmlStreamReader::Characters)
+                                        reader.readNext();
                                     _objectsList[_objectsList.size() - 1]->setRotZ(reader.text().toInt());
+                                    _objectsList2[_objectsList2.size() - 1]->setRotZ(reader.text().toInt());
+                                }
 
-                                if(reader.name() == "tx")
+                                if(reader.name() == "tx" && reader.tokenType() == QXmlStreamReader::StartElement)
+                                {
+                                    while(reader.tokenType() != QXmlStreamReader::Characters)
+                                        reader.readNext();
                                     _objectsList[_objectsList.size() - 1]->setTransX(reader.text().toInt());
-                                if(reader.name() == "ty")
+                                    _objectsList2[_objectsList2.size() - 1]->setTransX(reader.text().toInt());
+                                }
+                                if(reader.name() == "ty" && reader.tokenType() == QXmlStreamReader::StartElement)
+                                {
+                                    while(reader.tokenType() != QXmlStreamReader::Characters)
+                                        reader.readNext();
                                     _objectsList[_objectsList.size() - 1]->setTransY(reader.text().toInt());
-                                if(reader.name() == "tz")
+                                    _objectsList2[_objectsList2.size() - 1]->setTransY(reader.text().toInt());
+                                }
+                                if(reader.name() == "tz" && reader.tokenType() == QXmlStreamReader::StartElement)
+                                {
+                                    while(reader.tokenType() != QXmlStreamReader::Characters)
+                                        reader.readNext();
                                     _objectsList[_objectsList.size() - 1]->setTransZ(reader.text().toInt());
+                                    _objectsList2[_objectsList2.size() - 1]->setTransZ(reader.text().toInt());
+                                }
 
-                                if(reader.name() == "alpha")
+                                if(reader.name() == "alpha" && reader.tokenType() == QXmlStreamReader::StartElement)
+                                {
+                                    while(reader.tokenType() != QXmlStreamReader::Characters)
+                                        reader.readNext();
                                     _objectsList[_objectsList.size() - 1]->setAlpha(reader.text().toInt());
+                                    _objectsList2[_objectsList2.size() - 1]->setAlpha(reader.text().toInt());
+                                }
 
                                 reader.readNext();
                             }
-                            name = "";
-                            path = "";
                         }
-
                         reader.readNext();
                     }
+                    reader.clear();
+                    return;
                 }
             }
         }
@@ -353,6 +412,8 @@ void MainWindow::updateObjectCharacteristics(int objectID)
         _objectCharacteristicsSpinSliders[transY]->setValue(object->getTransY());
         _objectCharacteristicsSpinSliders[transZ]->setValue(object->getTransZ());
 
+        _objectCharacteristicsSpinSliders[alpha]->setValue(object->getAlpha());
+
         connect(_objectCharacteristicsSpinSliders[sizeX], SIGNAL(valueChanged(int)), object, SLOT(setSizeX(int)));
         connect(_objectCharacteristicsSpinSliders[sizeY], SIGNAL(valueChanged(int)), object, SLOT(setSizeY(int)));
         connect(_objectCharacteristicsSpinSliders[sizeZ], SIGNAL(valueChanged(int)), object, SLOT(setSizeZ(int)));
@@ -364,8 +425,6 @@ void MainWindow::updateObjectCharacteristics(int objectID)
         connect(_objectCharacteristicsSpinSliders[transX], SIGNAL(valueChanged(int)), object, SLOT(setTransX(int)));
         connect(_objectCharacteristicsSpinSliders[transY], SIGNAL(valueChanged(int)), object, SLOT(setTransY(int)));
         connect(_objectCharacteristicsSpinSliders[transZ], SIGNAL(valueChanged(int)), object, SLOT(setTransZ(int)));
-
-        _objectCharacteristicsSpinSliders[alpha]->setValue(object->getAlpha());
         connect(_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object, SLOT(setAlpha(int)));
 
         //////////////////////////////////////////////////
@@ -384,6 +443,147 @@ void MainWindow::updateObjectCharacteristics(int objectID)
 
         connect(_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object2, SLOT(setAlpha(int)));
     }
+}
+
+void MainWindow::removeObject()
+{
+    if(_objectID < 2)
+        return;
+
+    disconnect(_objectChoiceComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(updateObjectCharacteristics(int)));
+
+    {
+        Our3DObject* object = _objectsList[_objectID];
+        Our3DObject* object2 = _objectsList2[_objectID];
+
+        disconnect(_objectCharacteristicsSpinSliders[sizeX], SIGNAL(valueChanged(int)), object, SLOT(setSizeX(int)));
+        disconnect(_objectCharacteristicsSpinSliders[sizeY], SIGNAL(valueChanged(int)), object, SLOT(setSizeY(int)));
+        disconnect(_objectCharacteristicsSpinSliders[sizeZ], SIGNAL(valueChanged(int)), object, SLOT(setSizeZ(int)));
+
+        disconnect(_objectCharacteristicsSpinSliders[rotX], SIGNAL(valueChanged(int)), object, SLOT(setRotX(int)));
+        disconnect(_objectCharacteristicsSpinSliders[rotY], SIGNAL(valueChanged(int)), object, SLOT(setRotY(int)));
+        disconnect(_objectCharacteristicsSpinSliders[rotZ], SIGNAL(valueChanged(int)), object, SLOT(setRotZ(int)));
+
+        disconnect(_objectCharacteristicsSpinSliders[transX], SIGNAL(valueChanged(int)), object, SLOT(setTransX(int)));
+        disconnect(_objectCharacteristicsSpinSliders[transY], SIGNAL(valueChanged(int)), object, SLOT(setTransY(int)));
+        disconnect(_objectCharacteristicsSpinSliders[transZ], SIGNAL(valueChanged(int)), object, SLOT(setTransZ(int)));
+
+        disconnect(_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object, SLOT(setAlpha(int)));
+
+        //////////////////////////////////////////////////
+
+        disconnect(_objectCharacteristicsSpinSliders[sizeX], SIGNAL(valueChanged(int)), object2, SLOT(setSizeX(int)));
+        disconnect(_objectCharacteristicsSpinSliders[sizeY], SIGNAL(valueChanged(int)), object2, SLOT(setSizeY(int)));
+        disconnect(_objectCharacteristicsSpinSliders[sizeZ], SIGNAL(valueChanged(int)), object2, SLOT(setSizeZ(int)));
+
+        disconnect(_objectCharacteristicsSpinSliders[rotX], SIGNAL(valueChanged(int)), object2, SLOT(setRotX(int)));
+        disconnect(_objectCharacteristicsSpinSliders[rotY], SIGNAL(valueChanged(int)), object2, SLOT(setRotY(int)));
+        disconnect(_objectCharacteristicsSpinSliders[rotZ], SIGNAL(valueChanged(int)), object2, SLOT(setRotZ(int)));
+
+        disconnect(_objectCharacteristicsSpinSliders[transX], SIGNAL(valueChanged(int)), object2, SLOT(setTransX(int)));
+        disconnect(_objectCharacteristicsSpinSliders[transY], SIGNAL(valueChanged(int)), object2, SLOT(setTransY(int)));
+        disconnect(_objectCharacteristicsSpinSliders[transZ], SIGNAL(valueChanged(int)), object2, SLOT(setTransZ(int)));
+
+        disconnect(_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object2, SLOT(setAlpha(int)));
+    }
+
+    _objectsList[0]->removeChild(_objectsList[_objectID]);
+    _objectsList.erase(_objectsList.begin() += _objectID);
+    _objectsList2[0]->removeChild(_objectsList2[_objectID]);
+    _objectsList2.erase(_objectsList2.begin() += _objectID);
+    _objectChoiceComboBox->removeItem(_objectID);
+
+    if(_objectID >= _objectsList.size())
+        _objectID--;
+
+
+    {
+        Our3DObject* object = _objectsList[_objectID];
+        Our3DObject* object2 = _objectsList2[_objectID];
+
+        _isPrintedBox->setChecked(object->getNodeMask());
+        _isPrintedBox2->setChecked(object2->getNodeMask());
+
+        if(_objectID == 1)
+        {
+            _objectCharacteristicsSpinSliders[sizeX]->setValue(0);
+            _objectCharacteristicsSpinSliders[sizeY]->setValue(0);
+            _objectCharacteristicsSpinSliders[sizeZ]->setValue(0);
+
+            _objectCharacteristicsSpinSliders[rotX]->setValue(0);
+            _objectCharacteristicsSpinSliders[rotY]->setValue(0);
+            _objectCharacteristicsSpinSliders[rotZ]->setValue(0);
+
+            _objectCharacteristicsSpinSliders[transX]->setValue(0);
+            _objectCharacteristicsSpinSliders[transY]->setValue(0);
+            _objectCharacteristicsSpinSliders[transZ]->setValue(0);
+
+            _objectCharacteristicsSpinSliders[sizeX]->setEnabled(false);
+            _objectCharacteristicsSpinSliders[sizeY]->setEnabled(false);
+            _objectCharacteristicsSpinSliders[sizeZ]->setEnabled(false);
+
+            _objectCharacteristicsSpinSliders[rotX]->setEnabled(false);
+            _objectCharacteristicsSpinSliders[rotY]->setEnabled(false);
+            _objectCharacteristicsSpinSliders[rotZ]->setEnabled(false);
+
+            _objectCharacteristicsSpinSliders[transX]->setEnabled(false);
+            _objectCharacteristicsSpinSliders[transY]->setEnabled(false);
+            _objectCharacteristicsSpinSliders[transZ]->setEnabled(false);
+
+            _isPrintedBox->setEnabled(false);
+
+            _objectCharacteristicsSpinSliders[alpha]->setValue(object2->getAlpha());
+            connect(_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object2, SLOT(setAlpha(int)));
+        }
+        else
+        {
+            _objectCharacteristicsSpinSliders[sizeX]->setValue(object->getSizeX());
+            _objectCharacteristicsSpinSliders[sizeY]->setValue(object->getSizeY());
+            _objectCharacteristicsSpinSliders[sizeZ]->setValue(object->getSizeZ());
+
+            _objectCharacteristicsSpinSliders[rotX]->setValue(object->getRotX());
+            _objectCharacteristicsSpinSliders[rotY]->setValue(object->getRotY());
+            _objectCharacteristicsSpinSliders[rotZ]->setValue(object->getRotZ());
+
+            _objectCharacteristicsSpinSliders[transX]->setValue(object->getTransX());
+            _objectCharacteristicsSpinSliders[transY]->setValue(object->getTransY());
+            _objectCharacteristicsSpinSliders[transZ]->setValue(object->getTransZ());
+
+            _objectCharacteristicsSpinSliders[alpha]->setValue(object->getAlpha());
+
+            connect(_objectCharacteristicsSpinSliders[sizeX], SIGNAL(valueChanged(int)), object, SLOT(setSizeX(int)));
+            connect(_objectCharacteristicsSpinSliders[sizeY], SIGNAL(valueChanged(int)), object, SLOT(setSizeY(int)));
+            connect(_objectCharacteristicsSpinSliders[sizeZ], SIGNAL(valueChanged(int)), object, SLOT(setSizeZ(int)));
+
+            connect(_objectCharacteristicsSpinSliders[rotX], SIGNAL(valueChanged(int)), object, SLOT(setRotX(int)));
+            connect(_objectCharacteristicsSpinSliders[rotY], SIGNAL(valueChanged(int)), object, SLOT(setRotY(int)));
+            connect(_objectCharacteristicsSpinSliders[rotZ], SIGNAL(valueChanged(int)), object, SLOT(setRotZ(int)));
+
+            connect(_objectCharacteristicsSpinSliders[transX], SIGNAL(valueChanged(int)), object, SLOT(setTransX(int)));
+            connect(_objectCharacteristicsSpinSliders[transY], SIGNAL(valueChanged(int)), object, SLOT(setTransY(int)));
+            connect(_objectCharacteristicsSpinSliders[transZ], SIGNAL(valueChanged(int)), object, SLOT(setTransZ(int)));
+
+            connect(_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object, SLOT(setAlpha(int)));
+
+            //////////////////////////////////////////////////
+
+            connect(_objectCharacteristicsSpinSliders[sizeX], SIGNAL(valueChanged(int)), object2, SLOT(setSizeX(int)));
+            connect(_objectCharacteristicsSpinSliders[sizeY], SIGNAL(valueChanged(int)), object2, SLOT(setSizeY(int)));
+            connect(_objectCharacteristicsSpinSliders[sizeZ], SIGNAL(valueChanged(int)), object2, SLOT(setSizeZ(int)));
+
+            connect(_objectCharacteristicsSpinSliders[rotX], SIGNAL(valueChanged(int)), object2, SLOT(setRotX(int)));
+            connect(_objectCharacteristicsSpinSliders[rotY], SIGNAL(valueChanged(int)), object2, SLOT(setRotY(int)));
+            connect(_objectCharacteristicsSpinSliders[rotZ], SIGNAL(valueChanged(int)), object2, SLOT(setRotZ(int)));
+
+            connect(_objectCharacteristicsSpinSliders[transX], SIGNAL(valueChanged(int)), object2, SLOT(setTransX(int)));
+            connect(_objectCharacteristicsSpinSliders[transY], SIGNAL(valueChanged(int)), object2, SLOT(setTransY(int)));
+            connect(_objectCharacteristicsSpinSliders[transZ], SIGNAL(valueChanged(int)), object2, SLOT(setTransZ(int)));
+
+            connect(_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object2, SLOT(setAlpha(int)));
+        }
+    }
+
+    connect(_objectChoiceComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(updateObjectCharacteristics(int)));
 }
 
 void MainWindow::updateDetectMode()
@@ -550,15 +750,15 @@ void MainWindow::updateSceneRT(cv::Mat rotVec, cv::Mat tvecs)
         rx -= 2 * atan(t2 / t3);
         ry -= 2 * atan(t1 / t3);
         rz *= 0.70; // la rotation autour de z semble excessive ; no idea why
-        /*
-                std::cout << "r x : " << rx * 180 / PI << std::endl;
-                std::cout << "r y : " << ry * 180 / PI << std::endl;
-                std::cout << "r z : " << rz * 180 / PI << std::endl;
-                std::cout << std::endl << std::endl;
-                std::cout << "t x : " << t1 << std::endl;
-                std::cout << "t y : " << t2 << std::endl;
-                std::cout << "t z : " << t3 << std::endl;
-                std::cout << std::endl << std::endl;*/
+
+//                std::cout << "r x : " << rx * 180 / PI << std::endl;
+//                std::cout << "r y : " << -ry * 180 / PI << std::endl;
+//                std::cout << "r z : " << rz * 180 / PI << std::endl;
+//                std::cout << std::endl << std::endl;
+//                std::cout << "t x : " << t1 << std::endl;
+//                std::cout << "t y : " << t2 << std::endl;
+//                std::cout << "t z : " << t3 << std::endl;
+//                std::cout << std::endl << std::endl;
 
         osg::Matrixd matrixR; // rotation corrigee
         matrixR.makeRotate(rx, osg::Vec3d(1.0, 0.0, 0.0), -ry, osg::Vec3d(0.0, 1.0, 0.0), rz, osg::Vec3d(0.0, 0.0, 1.0));
@@ -806,7 +1006,7 @@ void MainWindow::setMainWindow(int mode)
     _isPrintedBox2->setChecked(true);
     objectDispalyOptionsLayout->addWidget(_isPrintedBox2);
     _deleteObjectButton = new QPushButton(tr("Delete object"));
-    _deleteObjectButton->setEnabled(false);
+    //    _deleteObjectButton->setEnabled(false);
     objectDispalyOptionsLayout->addWidget(_deleteObjectButton);
 
     objectLayout->addLayout(objectDispalyOptionsLayout);
@@ -821,17 +1021,17 @@ void MainWindow::setMainWindow(int mode)
     QFormLayout *resizeLayout = new QFormLayout;
     QGroupBox *resizeGroup = new QGroupBox(tr(" Resize object "));
 
-    _objectCharacteristicsSpinSliders[sizeX]->setRange(-100, 100);
+    _objectCharacteristicsSpinSliders[sizeX]->setRange(-1000, 1000);
     _objectCharacteristicsSpinSliders[sizeX]->setSingleStep(1);
-    _objectCharacteristicsSpinSliders[sizeX]->setValue(10.0);
+    _objectCharacteristicsSpinSliders[sizeX]->setValue(0);
     resizeLayout->addRow("x : ", _objectCharacteristicsSpinSliders[sizeX]);
-    _objectCharacteristicsSpinSliders[sizeY]->setRange(-100, 100);
+    _objectCharacteristicsSpinSliders[sizeY]->setRange(-1000, 1000);
     _objectCharacteristicsSpinSliders[sizeY]->setSingleStep(1);
-    _objectCharacteristicsSpinSliders[sizeY]->setValue(10.0);
+    _objectCharacteristicsSpinSliders[sizeY]->setValue(0);
     resizeLayout->addRow("y : ", _objectCharacteristicsSpinSliders[sizeY]);
-    _objectCharacteristicsSpinSliders[sizeZ]->setRange(-100, 100);
+    _objectCharacteristicsSpinSliders[sizeZ]->setRange(-1000, 1000);
     _objectCharacteristicsSpinSliders[sizeZ]->setSingleStep(1);
-    _objectCharacteristicsSpinSliders[sizeZ]->setValue(10.0);
+    _objectCharacteristicsSpinSliders[sizeZ]->setValue(0);
     resizeLayout->addRow("z : ", _objectCharacteristicsSpinSliders[sizeZ]);
 
     resizeGroup->setLayout(resizeLayout);
@@ -951,6 +1151,7 @@ void MainWindow::connectAll()
     connect(_isPrintedBox2, SIGNAL(clicked(bool)), this, SLOT(displayObjectInSideView(bool))); // #truanderie
 
     connect(_objectChoiceComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(updateObjectCharacteristics(int)));
+    connect(_deleteObjectButton, SIGNAL(clicked()), this, SLOT(removeObject()));
 
     connect(_webcamDevice, SIGNAL(updateScene(cv::Mat, cv::Mat)), this, SLOT(updateSceneRT(cv::Mat, cv::Mat)));
 

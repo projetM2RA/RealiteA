@@ -2,7 +2,8 @@
 /* Group Boxes */
 /***************/
 
-QGroupBox {
+QGroupBox
+{
     font: bold;
     border: 1px solid gray;
     border-radius: 5px;
@@ -13,17 +14,29 @@ QGroupBox {
     margin-top: 20px;
 }*/
 
-QGroupBox::title {
+QGroupBox::title
+{
     subcontrol-origin: margin;
     subcontrol-position: top left;
     padding: 0 3px;
 }
 
 /**********/
-/* Labels *//**********/
+/* Labels */
+/**********/
 
-QLabel#infoLabel {
+QLabel#infoLabel
+{
     font: bold;
+}
+
+/********************/
+/*      widget      */
+/********************/
+
+QMainWindow
+{
+    background-color:darkgray;
 }
 
 /********************/

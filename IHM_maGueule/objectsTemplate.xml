@@ -101,29 +101,29 @@
                 <object id="0">
 			<name>Grey matter</name>
 			<path>../rsc/objets3D/grayMatter.stl</path>
-			<sx>1</sx>
-			<sy>1</sy>
-			<sz>1</sz>
+                        <sx>12</sx>
+                        <sy>12</sy>
+                        <sz>12</sz>
 			<rx>-96</rx>
 			<ry>180</ry>
 			<rz>9</rz>
-			<tx>-1</tx>
-			<ty>-35</ty>
-			<tz>-170</tz>
+                        <tx>-15</tx>
+                        <ty>-10</ty>
+                        <tz>-150</tz>
 			<alpha>50</alpha>
                 </object>
                 <object id="1">
 			<name>White matter</name>
 			<path>../rsc/objets3D/whiteMatter.stl</path>
-			<sx>1</sx>
-			<sy>1</sy>
-			<sz>1</sz>
+                        <sx>12</sx>
+                        <sy>12</sy>
+                        <sz>12</sz>
 			<rx>85</rx>
 			<ry>2</ry>
 			<rz>-177</rz>
-			<tx>0</tx>
-			<ty>0</ty>
-			<tz>128</tz>
+                        <tx>-15</tx>
+                        <ty>-10</ty>
+                        <tz>-150</tz>
 			<alpha>100</alpha>
                 </object>
 	</template>

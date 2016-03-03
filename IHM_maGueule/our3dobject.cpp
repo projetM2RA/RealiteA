@@ -2,7 +2,7 @@
 
 Our3DObject::Our3DObject() :
     QObject(0), _printed(true),
-    _sizeX(10.0), _sizeY(10.0), _sizeZ(10.0), _alpha(10.0),
+    _sizeX(1.0), _sizeY(1.0), _sizeZ(1.0), _alpha(1.0),
     _rotX(0.0), _rotY(0.0), _rotZ(0.0), _transX(0.0), _transY(0.0), _transZ(0.0)
 {
     _object = NULL;
