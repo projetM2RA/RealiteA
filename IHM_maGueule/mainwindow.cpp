@@ -958,9 +958,9 @@ void MainWindow::setMainWindow(int mode)
     QHBoxLayout *camLayout = new QHBoxLayout;
     _camGroup = new QGroupBox();
     _detectionLabel = new QLabel("No active detection.");
-    _detectionLabel->setObjectName("infoDetection"); // CSS
+    _detectionLabel->setObjectName("infoLabel"); // CSS
     _detectionLabel2 = new QLabel("");
-    _detectionLabel2->setObjectName("infoDetection"); // CSS
+    _detectionLabel2->setObjectName("infoLabel"); // CSS
 
     camLayout->addWidget(_detectionLabel);
     camLayout->addWidget(_detectionLabel2);

@@ -2,12 +2,24 @@
     <qresource prefix="/icons">
         <file alias="open">icons/open-file.png</file>
         <file alias="icon">icons/icon.png</file>
-        <file alias="pause">icons/pause.ico</file>
+        <file alias="splash">icons/splash.png</file>
+        <file alias="axis">icons/axis.png</file>
+        <file alias="axisHover">icons/axis_hover.png</file>
+        <file alias="axisPressed">icons/axis_pressed.png</file>
+        <file alias="brain">icons/brain.png</file>
+        <file alias="brainHover">icons/brain_hover.png</file>
+        <file alias="brainPressed">icons/brain_pressed.png</file>
+        <file alias="chess">icons/chess.png</file>
+        <file alias="chessHover">icons/chess_hover.png</file>
+        <file alias="chessPressed">icons/chess_pressed.png</file>
+        <file alias="face">icons/face.png</file>
+        <file alias="faceHover">icons/face_hover.png</file>
+        <file alias="facePressed">icons/face_pressed.png</file>
         <file alias="back">icons/backward.png</file>
         <file alias="forw">icons/forward.png</file>
+        <file alias="pause">icons/pause.png</file>
         <file alias="play">icons/play.png</file>
-        <file alias="splash">icons/splash.png</file>
-        <file alias="backBegin">icons/back.png</file>
+        <file alias="backBegin">icons/replay.png</file>
     </qresource>
     <qresource prefix="/css">
         <file alias="style">stylesheet.css</file>

@@ -26,7 +26,7 @@ CalibrateDialog::CalibrateDialog(cv::Mat* frame, QWidget *parent) :
 
     _imageIndexLabel = new QLabel("Image : " + QString::number(_imageIndex-1) + " / 15");
     _infoMessage = new QLabel();
-    _infoMessage->setObjectName("infoCalib"); // CSS
+    _infoMessage->setObjectName("infoLabel"); // CSS
 
     _webcamFluxScene = new WebcamGraphicsScene(frame);
     _imageSavedScene = new WebcamGraphicsScene(_savedFrame);

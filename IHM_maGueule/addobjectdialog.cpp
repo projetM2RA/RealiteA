@@ -9,13 +9,22 @@ AddObjectDialog::AddObjectDialog(QWidget *parent) :
     _objectPath = new QLineEdit;
     _objectPath->setText(tr(""));
 
+    QLabel* templateLabel = new QLabel("Templates");
+
     QPushButton* ok = new QPushButton(tr("Ok"));
     QPushButton* cancel = new QPushButton(tr("Cancel"));
     QPushButton* path = new QPushButton(QIcon(":/icons/open"), "");
-    QPushButton* faceTemplate = new QPushButton("Face Template");
-    QPushButton* chessTemplate = new QPushButton("Chess Template");
-    QPushButton* brainTemplate = new QPushButton("Brain Template");
-    QPushButton* axesTemplate = new QPushButton("Axes Template");
+    QPushButton* faceTemplate = new QPushButton("");
+    QPushButton* chessTemplate = new QPushButton("");
+    QPushButton* brainTemplate = new QPushButton("");
+    QPushButton* axesTemplate = new QPushButton("");
+
+    //CSS
+    faceTemplate->setObjectName("faceTemplate");
+    chessTemplate->setObjectName("chessTemplate");
+    brainTemplate->setObjectName("brainTemplate");
+    axesTemplate->setObjectName("axesTemplate");
+    templateLabel->setObjectName("infoLabel");
 
     QButtonGroup* templateGroup = new QButtonGroup();
     templateGroup->addButton(faceTemplate, face);
@@ -43,6 +52,7 @@ AddObjectDialog::AddObjectDialog(QWidget *parent) :
     buttonsLayout->addWidget(cancel);
 
     QVBoxLayout* mainLayout = new QVBoxLayout;
+    mainLayout->addWidget(templateLabel);
     mainLayout->addLayout(templateLayout);
     mainLayout->addSpacing(20);
     mainLayout->addLayout(optionsLayout);
@@ -56,8 +66,8 @@ AddObjectDialog::AddObjectDialog(QWidget *parent) :
     this->setWindowIcon(QIcon(":/icons/icon"));
     this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
 
-    connect(templateGroup, SIGNAL(buttonClicked(int)), this, SLOT(emitIndex(int)));
-    connect(templateGroup, SIGNAL(buttonClicked(int)), this, SLOT(close()));
+    //connect(templateGroup, SIGNAL(buttonClicked(int)), this, SLOT(emitIndex(int)));
+    //connect(templateGroup, SIGNAL(buttonClicked(int)), this, SLOT(close()));
     connect(path, SIGNAL(clicked()), this, SLOT(updatePath()));
     connect(cancel, SIGNAL(clicked()), this, SLOT(reject()));
     connect(ok, SIGNAL(clicked()), this, SLOT(accept()));

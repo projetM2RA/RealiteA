@@ -11,6 +11,7 @@
 #include <QPushButton>
 #include <QGroupBox>
 #include <QButtonGroup>
+#include <QLabel>
 
 enum { face = 0, chessboard = 1, brain = 2, axes = 3 };
 

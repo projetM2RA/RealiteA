@@ -1,3 +1,7 @@
+/***************/
+/* Group Boxes */
+/***************/
+
 QGroupBox {
     font: bold;
     border: 1px solid gray;
@@ -15,10 +19,91 @@ QGroupBox::title {
     padding: 0 3px;
 }
 
-QLabel#infoCalib {
+/**********/
+/* Labels *//**********/
+
+QLabel#infoLabel {
     font: bold;
 }
 
-QLabel#infoDetection {
-    font: bold;
+/********************/
+/* Buttons template */
+/********************/
+
+QPushButton#brainTemplate
+{
+    background-color: transparent;
+    border-image: url(":/icons/brain");
+    min-width: 85px;
+    min-height: 70px;
+}
+
+QPushButton#brainTemplate:hover
+{
+    border-image: url(":/icons/brainHover");
+}
+
+QPushButton#brainTemplate:pressed
+{
+    border-image: url(":/icons/brainPressed");
+}
+
+/*****************************/
+
+QPushButton#chessTemplate
+{
+    background-color: transparent;
+    border-image: url(":/icons/chess");
+    min-width: 85px;
+    min-height: 70px;
+}
+
+QPushButton#chessTemplate:hover
+{
+    border-image: url(":/icons/chessHover");
+}
+
+QPushButton#chessTemplate:pressed
+{
+    border-image: url(":/icons/chessPressed");
+}
+
+/*****************************/
+
+QPushButton#axesTemplate
+{
+    background-color: transparent;
+    border-image: url(":/icons/axis");
+    min-width: 85px;
+    min-height: 70px;
+}
+
+QPushButton#axesTemplate:hover
+{
+    border-image: url(":/icons/axisHover");
+}
+
+QPushButton#axesTemplate:pressed
+{
+    border-image: url(":/icons/axisPressed");
+}
+
+/*****************************/
+
+QPushButton#faceTemplate
+{
+    background-color: transparent;
+    border-image: url(":/icons/face");
+    min-width: 85px;
+    min-height: 70px;
+}
+
+QPushButton#faceTemplate:hover
+{
+    border-image: url(":/icons/faceHover");
+}
+
+QPushButton#faceTemplate:pressed
+{
+    border-image: url(":/icons/facePressed");
 }
