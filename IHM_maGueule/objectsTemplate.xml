@@ -20,7 +20,7 @@
                 </object>
                 <object id="1">
 			<name>Glasses</name>
-			<path>../rsc/objets3D/GlassesSwag.3DS</path>
+                        <path>../rsc/objets3D/GlassesSwag.3DS</path>
 			<sx>5</sx>
 			<sy>4</sy>
 			<sz>4</sz>
