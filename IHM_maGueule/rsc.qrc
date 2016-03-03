@@ -17,4 +17,7 @@
         <file alias="mark2">markers/marker2.png</file>
         <file alias="mark3">markers/marker3.png</file>
     </qresource>
+    <qresource prefix="/templates">
+        <file>objectsTemplate.xml</file>
+    </qresource>
 </RCC>

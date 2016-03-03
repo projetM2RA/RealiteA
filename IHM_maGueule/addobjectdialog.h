@@ -31,12 +31,11 @@ public slots:
 
 private slots:
     void updatePath();
+    void emitIndex(int index) { emit setTemplate(index); }
 
 private:
     QLineEdit *_objectName;
     QLineEdit *_objectPath;
-
-    int _templateIndex;
 };
 
 #endif // ADDOBJECTDIALOG_H

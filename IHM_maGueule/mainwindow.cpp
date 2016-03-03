@@ -113,28 +113,129 @@ void MainWindow::calibrateCamera()
 
 void MainWindow::addObject()
 {
-    AddObjectDialog objectDialog;
+    _objectDialog = new AddObjectDialog(this);
 
-    if(objectDialog.exec() == QDialog::Rejected)
+    connect(_objectDialog, SIGNAL(setTemplate(int)), this, SLOT(addTemplate(int)));
+
+    if(_objectDialog->exec() == QDialog::Rejected)
         return;
 
-    QString objectPath = objectDialog.getObjectPath();
-    QString objectName = objectDialog.getObjectName();
+    QString objectPath = _objectDialog->getObjectPath();
+    QString objectName = _objectDialog->getObjectName();
 
-    if(objectPath == "" || objectName == "")
+    this->addObject(objectName, objectPath);
+}
+
+void MainWindow::addObject(QString name, QString path)
+{
+    if(path == "" || name == "")
     {
         QMessageBox::warning(this, tr("Error loading object"), tr("The object's path and/or name have not been specified."));
         return;
     }
 
-    _objectsList.push_back(new Our3DObject(objectPath));
+    _objectsList.push_back(new Our3DObject(path));
     _objectsList[0]->addChild(_objectsList[_objectsList.size() - 1]);
-    _objectsList2.push_back(new Our3DObject(objectPath));
+    _objectsList2.push_back(new Our3DObject(path));
     _objectsList2[0]->addChild(_objectsList2[_objectsList2.size() - 1]);
 
     int nbrObjects = _objectChoiceComboBox->itemText(0).mid(14).toInt();
     _objectChoiceComboBox->setItemText(0, "All objects : " + QString::number(nbrObjects + 1));
-    _objectChoiceComboBox->addItem(objectName);
+    _objectChoiceComboBox->addItem(name);
+}
+
+void MainWindow::addTemplate(int templateID)
+{
+    QXmlStreamReader reader;
+    QFile file(":/templates/objectsTemplate.xml");
+    file.open(QFile::ReadOnly | QFile::Text);
+    reader.setDevice(&file);
+    QString name, path;
+
+    while(!reader.atEnd() && !reader.hasError())
+    {
+        /* Read next element.*/
+        reader.readNext();
+        std::cout << "line : " << reader.lineNumber() << std::endl
+                  << "col : " << reader.columnNumber() << std::endl
+                  << "token : " << reader.tokenString().toStdString() << std::endl
+                  << "name : " << reader.name().toString().toStdString() << std::endl
+                  << "text : " << reader.text().toString().toStdString() << std::endl << std::endl;
+        if(reader.tokenType() == QXmlStreamReader::StartDocument)
+            continue;
+        if(reader.tokenType() == QXmlStreamReader::StartElement)
+        {
+            if(reader.name() == "templates")
+                continue;
+            if(reader.name() == "template")
+            {
+                QXmlStreamAttributes attributes = reader.attributes();
+                if(attributes.value("id").toInt() == templateID)
+                {
+                    while(!(reader.tokenType() == QXmlStreamReader::EndElement && reader.name() == "template"))
+                    {
+                        if(reader.name() == "name")
+                            continue;
+                        if(reader.name() == "objectsCount")
+                            continue;
+                        if(reader.name() == "object")
+                        {
+                            while(!(reader.tokenType() == QXmlStreamReader::EndElement && reader.name() == "object"))
+                            {
+                                if(reader.name() == "name")
+                                    name = reader.text().toString();
+                                if(reader.name() == "path")
+                                    path = reader.text().toString();
+                                if(name != "" && path != "")
+                                    this->addObject(name, path); // je sais pas ou le mettre d'autre ce if
+
+                                if(reader.name() == "sx")
+                                    _objectsList[_objectsList.size() - 1]->setSizeX(reader.text().toInt());
+                                if(reader.name() == "sy")
+                                    _objectsList[_objectsList.size() - 1]->setSizeY(reader.text().toInt());
+                                if(reader.name() == "sz")
+                                    _objectsList[_objectsList.size() - 1]->setSizeZ(reader.text().toInt());
+
+                                if(reader.name() == "rx")
+                                    _objectsList[_objectsList.size() - 1]->setRotX(reader.text().toInt());
+                                if(reader.name() == "ry")
+                                    _objectsList[_objectsList.size() - 1]->setRotY(reader.text().toInt());
+                                if(reader.name() == "rz")
+                                    _objectsList[_objectsList.size() - 1]->setRotZ(reader.text().toInt());
+
+                                if(reader.name() == "tx")
+                                    _objectsList[_objectsList.size() - 1]->setTransX(reader.text().toInt());
+                                if(reader.name() == "ty")
+                                    _objectsList[_objectsList.size() - 1]->setTransY(reader.text().toInt());
+                                if(reader.name() == "tz")
+                                    _objectsList[_objectsList.size() - 1]->setTransZ(reader.text().toInt());
+
+                                if(reader.name() == "alpha")
+                                    _objectsList[_objectsList.size() - 1]->setAlpha(reader.text().toInt());
+
+                                reader.readNext();
+                            }
+                            name = "";
+                            path = "";
+                        }
+
+                        reader.readNext();
+                    }
+                }
+            }
+        }
+    }
+    // Error handling.
+    if(reader.hasError())
+    {
+        QMessageBox::critical(this,
+                              "QXSRExample::parseXML",
+                              reader.errorString(),
+                              QMessageBox::Ok);
+    }
+    /* Removes any device() or data from the reader
+        * and resets its internal state to the initial state. */
+    reader.clear();
 }
 
 void MainWindow::updateObjectCharacteristics(int objectID)
@@ -845,7 +946,7 @@ void MainWindow::connectAll()
 
     connect(_detectActions[noDetect], SIGNAL(toggled(bool)), this, SLOT(displayObjects(bool)));
     connect(_webcamDevice, SIGNAL(updateDetect(bool)), this, SLOT(displaySceneAuto(bool)));
-    connect(_webcamDevice, SIGNAL(updateDetect(bool)), this, SLOT(displayInsideViewAuto(bool)));
+    connect(_webcamDevice, SIGNAL(updateDetect(bool)), this, SLOT(displayInSideViewAuto(bool)));
     connect(_isPrintedBox, SIGNAL(clicked(bool)), this, SLOT(displayObjectInScene(bool)));
     connect(_isPrintedBox2, SIGNAL(clicked(bool)), this, SLOT(displayObjectInSideView(bool))); // #truanderie
 

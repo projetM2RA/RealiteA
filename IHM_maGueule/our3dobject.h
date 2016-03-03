@@ -29,9 +29,9 @@ public slots:
 
     // getters
 
-    int getSizeX() { if(_sizeX >= 1) return _sizeX - 1; else return -((1 / _sizeX) - 1); }
-    int getSizeY() { if(_sizeY >= 1) return _sizeY - 1; else return -((1 / _sizeY) - 1); }
-    int getSizeZ() { if(_sizeZ >= 1) return _sizeZ - 1; else return -((1 / _sizeZ) - 1); }
+    int getSizeX() { if(_sizeX >= 1) return _sizeX - 1; else return -((1.0 / _sizeX) - 1.0); }
+    int getSizeY() { if(_sizeY >= 1) return _sizeY - 1; else return -((1.0 / _sizeY) - 1.0); }
+    int getSizeZ() { if(_sizeZ >= 1) return _sizeZ - 1; else return -((1.0 / _sizeZ) - 1.0); }
 
     int getRotX() { return _rotX; }
     int getRotY() { return _rotY; }

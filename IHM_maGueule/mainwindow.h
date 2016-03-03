@@ -4,6 +4,8 @@
 #include <QMainWindow>
 #include <iostream>
 
+#include <QXmlStreamReader>
+
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 
@@ -47,12 +49,14 @@ public:
 private slots:
     void updateCam() { _backgroundImage->dirty(); _mainView->repaint(); _sideView->repaint(); _fullScreenView->repaint(); }
     void displayObjects(bool removeObjects) { _objectsList[0]->setNodeMask(!removeObjects); _isPrintedBox->setChecked(!removeObjects); }
-    void displaySceneAuto(bool displayObj) { _objectsList[0]->setNodeMask(displayObj); }
-    void displayInsideViewAuto(bool displayObj) { _objectsList2[0]->setNodeMask(displayObj); }
     void displayObjectsInSideView(bool removeObjects) { _objectsList2[0]->setNodeMask(!removeObjects); }
+    void displaySceneAuto(bool displayObj) { _objectsList[0]->setNodeMask(displayObj); }
+    void displayInSideViewAuto(bool displayObj) { _objectsList2[0]->setNodeMask(displayObj); }
     bool start();
     void calibrateCamera();
     void addObject();
+    void addObject(QString name, QString path);
+    void addTemplate(int templateID);
     void updateObjectCharacteristics(int objectID);
     void updateDetectMode();
     void updateDetectLabel(bool detect);
@@ -145,6 +149,8 @@ private:
     osg::MatrixTransform *_mainMat2;
 
     osg::Image* _backgroundImage;
+
+    AddObjectDialog* _objectDialog;
 
     double _corrector;
     int _objectID;

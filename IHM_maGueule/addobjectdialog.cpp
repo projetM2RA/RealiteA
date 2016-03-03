@@ -56,7 +56,7 @@ AddObjectDialog::AddObjectDialog(QWidget *parent) :
     this->setWindowIcon(QIcon(":/icons/icon"));
     this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
 
-    connect(templateGroup, SIGNAL(buttonClicked(int)), this, SLOT(updateIndex(int)));
+    connect(templateGroup, SIGNAL(buttonClicked(int)), this, SLOT(emitIndex(int)));
     connect(templateGroup, SIGNAL(buttonClicked(int)), this, SLOT(close()));
     connect(path, SIGNAL(clicked()), this, SLOT(updatePath()));
     connect(cancel, SIGNAL(clicked()), this, SLOT(reject()));
