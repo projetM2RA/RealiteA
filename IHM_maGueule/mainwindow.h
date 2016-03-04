@@ -8,6 +8,7 @@
 
 #include <QHBoxLayout>
 #include <QVBoxLayout>
+#include <QToolBar>
 
 #include <QMenu>
 #include <QMenuBar>

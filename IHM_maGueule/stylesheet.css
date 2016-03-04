@@ -21,6 +21,18 @@ QGroupBox::title
     padding: 0 3px;
 }
 
+QGroupBox#sliderGroup
+{
+    margin-top: 15px;
+}
+
+QGroupBox#sliderGroup::title
+{
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 10 3px;
+}
+
 /**********/
 /* Labels */
 /**********/
@@ -36,7 +48,31 @@ QLabel#infoLabel
 
 QMainWindow
 {
-    background-color:darkgray;
+    background-color: darkgray;
+}
+
+/*********************/
+/*      Menu bar     */
+/*********************/
+
+QMenuBar
+{
+    background: #C0C0C0;
+}
+
+QMenuBar::item
+{
+    background: transparent;
+}
+
+QMenuBar::item:selected
+{
+    background: #a8a8a8;
+}
+
+QMenuBar::item:pressed
+{
+    background: #888888;
 }
 
 /********************/

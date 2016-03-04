@@ -74,7 +74,7 @@
 			<rx>0</rx>
 			<ry>0</ry>
 			<rz>90</rz>
-			<tx>-80</tx>
+                        <tx>-80</tx>
 			<ty>-13</ty>
 			<tz>0</tz>
 			<alpha>100</alpha>
@@ -88,7 +88,7 @@
 			<rx>0</rx>
 			<ry>0</ry>
 			<rz>180</rz>
-			<tx>7O</tx>
+                        <tx>70</tx>
 			<ty>-14</ty>
 			<tz>34</tz>
 			<alpha>100</alpha>

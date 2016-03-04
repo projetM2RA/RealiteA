@@ -6,7 +6,7 @@ OptionsDialog::OptionsDialog(int nbrCols, int nbrRows, double chessSize, int mar
     this->setWindowTitle("Options");
     this->setWindowIcon(QIcon(":/icons/icon"));
 
-    _chehra = new QCheckBox("Activate face detection (might take up to 1min to load)");
+    _chehra = new QCheckBox("Activate face detection (might take up to 1 minute to load)");
     _chehra->setChecked(true);
 
     _nbrRowsLabel = new QLabel(tr("Number of rows : "));

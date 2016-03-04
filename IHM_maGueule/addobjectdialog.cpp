@@ -20,6 +20,9 @@ AddObjectDialog::AddObjectDialog(QWidget *parent) :
     QPushButton* brainTemplate = new QPushButton("");
     QPushButton* axesTemplate = new QPushButton("");
 
+    QFrame* separator = new QFrame();
+    separator->setFrameShape(QFrame::HLine);
+
     //CSS
     faceTemplate->setObjectName("faceTemplate");
     chessTemplate->setObjectName("chessTemplate");
@@ -56,14 +59,14 @@ AddObjectDialog::AddObjectDialog(QWidget *parent) :
     QVBoxLayout* mainLayout = new QVBoxLayout;
     mainLayout->addWidget(templateLabel);
     mainLayout->addLayout(templateLayout);
-    mainLayout->addSpacing(10);
+    mainLayout->addWidget(separator);
     mainLayout->addWidget(customLabel);
     mainLayout->addLayout(optionsLayout);
     mainLayout->addLayout(buttonsLayout);
 
     setLayout(mainLayout);
 
-    mainLayout->setSizeConstraint( QLayout::SetFixedSize );
+    mainLayout->setSizeConstraint(QLayout::SetFixedSize);
 
     this->setWindowTitle("Add 3D object");
     this->setWindowIcon(QIcon(":/icons/icon"));

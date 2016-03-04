@@ -963,7 +963,7 @@ void MainWindow::setMainWindow(int mode)
     _addObjectAction->setEnabled(true);
     _fullScreenAction->setEnabled(true);
 
-    for(int i = 0; i < NBR_DETECT; i++)
+    for(int i = 0; i < NBR_DETECT-1; i++)
         _detectActions[i]->setEnabled(true);
 
     _detectActions[noDetect]->setEnabled(true);
@@ -977,6 +977,7 @@ void MainWindow::setMainWindow(int mode)
     //////////////////////////////////////////////////
 
     QWidget* mainWidget = new QWidget();
+    QSplitter* mainSplitter = new QSplitter(Qt::Horizontal);
     QHBoxLayout* mainLayout = new QHBoxLayout();
 
     QVBoxLayout* objectLayout = new QVBoxLayout();
@@ -986,17 +987,19 @@ void MainWindow::setMainWindow(int mode)
     //////////////////////////////////////////////////
 
     _mainView = new OSGWidget(_webcamDevice->getWebcam(), _mainMat, _objectsList[1], mode, this);
-    mainLayout->addWidget(_mainView);
+    //mainLayout->addWidget(_mainView);
 
     //////////////////////////////////////////////////
     ////////// object layout /////////////////////////
     //////////////////////////////////////////////////
 
+    QGridLayout* gridLayout = new QGridLayout();
 
     _objectChoiceComboBox = new QComboBox();
     _objectChoiceComboBox->addItem("All objects : 0");
-    _objectChoiceComboBox->addItem("video");
-    objectLayout->addWidget(_objectChoiceComboBox);
+    _objectChoiceComboBox->addItem("Video");
+    //objectLayout->addWidget(_objectChoiceComboBox);
+    gridLayout->addWidget(_objectChoiceComboBox, 0, 0, 1, 3);
 
     QHBoxLayout* objectDispalyOptionsLayout = new QHBoxLayout();
     _isPrintedBox = new QCheckBox(tr("Display object in main view"));
@@ -1009,7 +1012,11 @@ void MainWindow::setMainWindow(int mode)
     //    _deleteObjectButton->setEnabled(false);
     objectDispalyOptionsLayout->addWidget(_deleteObjectButton);
 
-    objectLayout->addLayout(objectDispalyOptionsLayout);
+    gridLayout->addWidget(_isPrintedBox, 1, 0, 1, 1);
+    gridLayout->addWidget(_isPrintedBox2, 1, 1, 1, 1);
+    gridLayout->addWidget(_deleteObjectButton, 1, 2, 1, 1);
+
+    //objectLayout->addLayout(objectDispalyOptionsLayout);
 
     _objectCharacteristicsSpinSliders = new QSlider*[NBR_CHARACTERISTICS];
     for(int i = 0; i < NBR_CHARACTERISTICS; i++)
@@ -1035,7 +1042,7 @@ void MainWindow::setMainWindow(int mode)
     resizeLayout->addRow("z : ", _objectCharacteristicsSpinSliders[sizeZ]);
 
     resizeGroup->setLayout(resizeLayout);
-    objectLayout->addWidget(resizeGroup);
+    //objectLayout->addWidget(resizeGroup);
 
     QFormLayout *rotateLayout = new QFormLayout;
     QGroupBox *rotateGroup = new QGroupBox(tr(" Rotate object "));
@@ -1051,7 +1058,7 @@ void MainWindow::setMainWindow(int mode)
     rotateLayout->addRow("z : ", _objectCharacteristicsSpinSliders[rotZ]);
 
     rotateGroup->setLayout(rotateLayout);
-    objectLayout->addWidget(rotateGroup);
+    //objectLayout->addWidget(rotateGroup);
 
     QFormLayout *translateLayout = new QFormLayout;
     QGroupBox *translateGroup = new QGroupBox(tr(" Translate object "));
@@ -1067,7 +1074,12 @@ void MainWindow::setMainWindow(int mode)
     translateLayout->addRow("z : ", _objectCharacteristicsSpinSliders[transZ]);
 
     translateGroup->setLayout(translateLayout);
-    objectLayout->addWidget(translateGroup);
+    //objectLayout->addWidget(translateGroup);
+
+    // CSS
+    translateGroup->setObjectName("sliderGroup");
+    rotateGroup->setObjectName("sliderGroup");
+    resizeGroup->setObjectName("sliderGroup");
 
     QFormLayout *alphaLayout = new QFormLayout;
     QGroupBox *alphaGroup = new QGroupBox(tr(" Transparency "));
@@ -1078,7 +1090,8 @@ void MainWindow::setMainWindow(int mode)
     alphaLayout->addRow("α : ", _objectCharacteristicsSpinSliders[alpha]);
 
     alphaGroup->setLayout(alphaLayout);
-    objectLayout->addWidget(alphaGroup);
+    gridLayout->addWidget(alphaGroup, 2, 0, 1, 3);
+    //objectLayout->addWidget(alphaGroup);
 
     QHBoxLayout *videoLayout = new QHBoxLayout;
     _videoGroup = new QGroupBox();
@@ -1114,14 +1127,36 @@ void MainWindow::setMainWindow(int mode)
     objectLayout->addWidget(_sideView);
 
     objectLayout->setStretchFactor(_sideView, 2);
-    mainLayout->addLayout(objectLayout);
+    mainWidget->setLayout(objectLayout);
+    //mainLayout->addLayout(objectLayout);
 
     //////////////////////////////////////////////////
+    //              TOOLBAR - TODO                  //
+    //////////////////////////////////////////////////
 
-    mainLayout->setStretch(0, 2);
-    mainLayout->setStretch(1, 1);
-    mainWidget->setLayout(mainLayout);
-    this->setCentralWidget(mainWidget);
+    QWidget* widgetToolbar = new QWidget();
+    widgetToolbar->setLayout(gridLayout);
+
+    QToolBar* toolbar = new QToolBar();
+    toolbar->addWidget(widgetToolbar);
+    toolbar->addWidget(resizeGroup);
+    toolbar->addWidget(rotateGroup);
+    toolbar->addWidget(translateGroup);
+    toolbar->setMovable(true);
+    this->addToolBar(Qt::BottomToolBarArea, toolbar);
+
+    ///////////////////////////////////////////////////
+
+    //mainLayout->setStretch(0, 2);
+    //mainLayout->setStretch(1, 1);
+    //mainWidget->setLayout(mainLayout);
+    mainSplitter->addWidget(_mainView);
+    mainSplitter->addWidget(mainWidget);
+    mainSplitter->setCollapsible(0, false);
+    mainSplitter->setCollapsible(1, false);
+    mainSplitter->setStretchFactor(0, 2);
+    mainSplitter->setStretchFactor(1, 1);
+    this->setCentralWidget(mainSplitter);
 
 
 }
