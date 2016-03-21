@@ -17,6 +17,7 @@
 #include <osg/Shape>
 #include <osg/ShapeDrawable>
 #include <osg/StateSet>
+#include <osg/LineWidth>
 
 #include <osgDB/ReadFile>
 #include <osg/Geometry>
@@ -59,6 +60,7 @@ protected:
 private:
     // members
 
+    osg::Geode* createFrustrumFrame(osg::Matrixd projectionMatrix);
     virtual void onHome();
 
     osgGA::EventQueue* getEventQueue() const;

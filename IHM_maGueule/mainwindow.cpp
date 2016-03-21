@@ -751,14 +751,14 @@ void MainWindow::updateSceneRT(cv::Mat rotVec, cv::Mat tvecs)
         ry -= 2 * atan(t1 / t3);
         rz *= 0.70; // la rotation autour de z semble excessive ; no idea why
 
-//                std::cout << "r x : " << rx * 180 / PI << std::endl;
-//                std::cout << "r y : " << -ry * 180 / PI << std::endl;
-//                std::cout << "r z : " << rz * 180 / PI << std::endl;
-//                std::cout << std::endl << std::endl;
-//                std::cout << "t x : " << t1 << std::endl;
-//                std::cout << "t y : " << t2 << std::endl;
-//                std::cout << "t z : " << t3 << std::endl;
-//                std::cout << std::endl << std::endl;
+                std::cout << "r x : " << rx * 180 / PI << std::endl;
+                std::cout << "r y : " << -ry * 180 / PI << std::endl;
+                std::cout << "r z : " << rz * 180 / PI << std::endl;
+                std::cout << std::endl << std::endl;
+                std::cout << "t x : " << t1 << std::endl;
+                std::cout << "t y : " << t2 << std::endl;
+                std::cout << "t z : " << t3 << std::endl;
+                std::cout << std::endl << std::endl;
 
         osg::Matrixd matrixR; // rotation corrigee
         matrixR.makeRotate(rx, osg::Vec3d(1.0, 0.0, 0.0), -ry, osg::Vec3d(0.0, 1.0, 0.0), rz, osg::Vec3d(0.0, 0.0, 1.0));

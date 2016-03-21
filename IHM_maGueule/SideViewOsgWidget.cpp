@@ -53,13 +53,14 @@ SideViewOsgWidet::SideViewOsgWidet(cv::Mat* webcamMat, osg::MatrixTransform *mai
     projectionMatrix.makeFrustum(
                 -cameraMatrix.at<double>(0, 2),		webcamMat->cols - cameraMatrix.at<double>(0, 2),
                 -cameraMatrix.at<double>(1, 2),		webcamMat->rows - cameraMatrix.at<double>(1, 2),
-                NEAR_VALUE / 2,							20000*200);
+                NEAR_VALUE,             			3 * NEAR_VALUE);
 
     _corrector = (NEAR_VALUE / 2) / (cameraMatrix.at<double>(1, 2) - webcamMat->rows / 2);
 
     osg::Vec3d eye(0.0f, 0.0f, 0.0f), target(0.0f, 1000.0, 0.0f), normal(0.0f, 0.0f, 1.0f);
 
     _group->addChild(hud);
+    _group->addChild(this->createFrustrumFrame(projectionMatrix));
     _group->addChild(mainMat);
 
     //float aspectRatio = static_cast<float>(this->width()) / static_cast<float>( this->height() );
@@ -219,6 +220,38 @@ bool SideViewOsgWidet::event( QEvent* event )
     return handled;
 }
 // private
+
+osg::Geode* SideViewOsgWidet::createFrustrumFrame(osg::Matrixd projectionMatrix)
+{
+    float l, r, b, t, n, f;
+    projectionMatrix.getFrustum(l, r, b, t, n, f);
+
+    osg::Geode* geode = new osg::Geode();
+    osg::Geometry* geo = new osg::Geometry();
+    osg::Vec3Array* v = new osg::Vec3Array;
+    v->push_back(osg::Vec3f(0.0, 0.0, 0.0));
+    v->push_back(osg::Vec3f(r * f / n, f, b * f / n));
+    v->push_back(osg::Vec3f(0.0, 0.0, 0.0));
+    v->push_back(osg::Vec3f(r * f / n, f, t * f / n));
+    v->push_back(osg::Vec3f(0.0, 0.0, 0.0));
+    v->push_back(osg::Vec3f(l * f / n, f, b * f / n));
+    v->push_back(osg::Vec3f(0.0, 0.0, 0.0));
+    v->push_back(osg::Vec3f(l * f / n, f, t * f / n));
+
+    // draw lines
+    geo->setVertexArray(v);
+
+    geo->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINES, 0, v->size()));
+
+    geode->addDrawable(geo);
+
+    osg::LineWidth* linewidth = new osg::LineWidth();
+    linewidth->setWidth(2.0f);
+    geode->getOrCreateStateSet()->setAttributeAndModes(linewidth, osg::StateAttribute::ON);
+    geode->getOrCreateStateSet()->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+
+    return geode;
+}
 
 void SideViewOsgWidet::onHome()
 {

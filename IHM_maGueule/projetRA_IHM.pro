@@ -12,9 +12,9 @@ TARGET = projetRA_IHM
 TEMPLATE = app
 
 #OpenCV
-INCLUDEPATH += E:\Logiciels\Prog\opencv_2_4_11\opencv\build\include
+INCLUDEPATH += D:\Logiciels\Prog\opencv_2_4_11\opencv\build\include
 
-LIBS += -L"E:\Logiciels\Prog\opencv_2_4_11\opencv\build\x64\vc11\lib"
+LIBS += -L"D:\Logiciels\Prog\opencv_2_4_11\opencv\build\x64\vc11\lib"
 
 win32:CONFIG(debug, debug|release): LIBS += -lopencv_calib3d2411d \
     -lopencv_core2411d -lopencv_features2d2411d -lopencv_highgui2411d \
@@ -28,9 +28,9 @@ win32:CONFIG(release, debug|release): LIBS += -lopencv_calib3d2411 \
 ##
 
 #OpenScenGraph
-INCLUDEPATH += E:\Logiciels\Prog\OpenSceneGraph-3.4.0\include
+INCLUDEPATH += D:\Logiciels\Prog\OpenSceneGraph-3.4.0\include
 
-LIBS += -L"E:\Logiciels\Prog\OpenSceneGraph-3.4.0\lib"
+LIBS += -L"D:\Logiciels\Prog\OpenSceneGraph-3.4.0\lib"
 win32:CONFIG(debug, debug|release): LIBS += -lOpenThreadsd -losgd \
     -losgDBd -losgGAd -losgViewerd
 win32:CONFIG(release, debug|release): LIBS += -lOpenThreads -losg \
@@ -38,9 +38,9 @@ win32:CONFIG(release, debug|release): LIBS += -lOpenThreads -losg \
 ##
 
 #Chehra
-INCLUDEPATH += E:\Logiciels\Prog\Chehra
+INCLUDEPATH += D:\Logiciels\Prog\Chehra
 
-LIBS += -L"E:\Logiciels\Prog\Chehra"
+LIBS += -L"D:\Logiciels\Prog\Chehra"
 win32:CONFIG(debug, debug|release): LIBS += -lChehra_d
 win32:CONFIG(release, debug|release): LIBS += -lChehra_r
 ##
