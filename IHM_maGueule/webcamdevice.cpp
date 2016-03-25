@@ -154,6 +154,17 @@ bool WebcamDevice::initModels()
 
     _chessCornersInit = std::vector<std::vector<cv::Point2f>>(2);
     _markerCornersInit = std::vector<std::vector<cv::Point2f>>(2);
+
+    // Lecture des marqueurs
+    for (int i = 0; i < 3; i++)
+    {
+        std::ostringstream oss;
+        oss << "../rsc/markers/Mqr" << i+1 << ".png";
+        cv::Mat imMQR = cv::imread(oss.str());
+        cv::cvtColor(imMQR, imMQR, CV_BGR2GRAY);
+        _markersModels.push_back(imMQR);
+    }
+
     if(_optionsDialog->launchChehra())
     {
         _chehra = new Chehra;
@@ -585,29 +596,33 @@ bool WebcamDevice::detectMarker(std::vector<cv::Point2f> *pointQR)
 
         cv::swap((*_frame), _frameCropped);
         cv::Rect ROI(minPoint.x, minPoint.y, tabDistCrop[1], tabDistCrop[0]);
-        cv::Mat croppedRef(_frameCropped, ROI);
-        cv::cvtColor(croppedRef, _frameCropped, CV_BGR2GRAY);
 
-        cv::Point2f D(0.0f,0.0f);
-        cv::Point2f E(0.0f,0.0f);
-        cv::Point2f F(0.0f,0.0f);
+        if(ROI.x >= 0 && ROI.y >= 0 && ROI.width + ROI.x < _frameCropped.cols && ROI.height + ROI.y < _frameCropped.rows)
+        {
+            cv::Mat croppedRef(_frameCropped, ROI);
+            cv::cvtColor(croppedRef, _frameCropped, CV_BGR2GRAY);
 
-        D.x = (mc[A].x + mc[B].x)/2;
-        E.x = (mc[B].x + mc[C].x)/2;
-        F.x = (mc[C].x + mc[A].x)/2;
+            cv::Point2f D(0.0f,0.0f);
+            cv::Point2f E(0.0f,0.0f);
+            cv::Point2f F(0.0f,0.0f);
 
-        D.y = (mc[A].y + mc[B].y)/2;
-        E.y = (mc[B].y + mc[C].y)/2;
-        F.y = (mc[C].y + mc[A].y)/2;
+            D.x = (mc[A].x + mc[B].x)/2;
+            E.x = (mc[B].x + mc[C].x)/2;
+            F.x = (mc[C].x + mc[A].x)/2;
 
-        (*pointQR).push_back(D);
-        //cv::circle((*_frame), cv::Point((*pointQR)[3].x, (*pointQR)[3].y), 3, cv::Scalar(0, 0, 255), 1, 8, 0);
-        (*pointQR).push_back(E);
-        //cv::circle((*_frame), cv::Point((*pointQR)[4].x, (*pointQR)[4].y), 3, cv::Scalar(0, 0, 255), 1, 8, 0);
-        (*pointQR).push_back(F);
-        //cv::circle((*_frame), cv::Point((*pointQR)[5].x, (*pointQR)[5].y), 3, cv::Scalar(0, 0, 255), 1, 8, 0);
+            D.y = (mc[A].y + mc[B].y)/2;
+            E.y = (mc[B].y + mc[C].y)/2;
+            F.y = (mc[C].y + mc[A].y)/2;
 
-        patternFound = true;
+            (*pointQR).push_back(D);
+            //cv::circle((*_frame), cv::Point((*pointQR)[3].x, (*pointQR)[3].y), 3, cv::Scalar(0, 0, 255), 1, 8, 0);
+            (*pointQR).push_back(E);
+            //cv::circle((*_frame), cv::Point((*pointQR)[4].x, (*pointQR)[4].y), 3, cv::Scalar(0, 0, 255), 1, 8, 0);
+            (*pointQR).push_back(F);
+            //cv::circle((*_frame), cv::Point((*pointQR)[5].x, (*pointQR)[5].y), 3, cv::Scalar(0, 0, 255), 1, 8, 0);
+
+            patternFound = true;
+        }
     }
 
     if(patternFound)
@@ -675,47 +690,50 @@ void WebcamDevice::dbCorrelation()
     descriptor->compute(_markersModels[0], keypoints2, descriptors2 );
     descriptor->compute(_markersModels[1], keypoints3, descriptors3 );
 
-    cv::FlannBasedMatcher matcher;
-    std::vector< cv::DMatch > matches;
-    std::vector< cv::DMatch > good_matches1;
-    std::vector< cv::DMatch > good_matches2;
-    double max_dist = 0; double min_dist = 100;
-
-    matcher.match( descriptors2, descriptors1, matches );
-
-    for( int i = 0; i < descriptors2.rows; i++ )
+    if(!descriptors1.empty())
     {
-        double dist = matches[i].distance;
-        if( dist < min_dist ) min_dist = dist;
-        if( dist > max_dist ) max_dist = dist;
+        cv::FlannBasedMatcher matcher;
+        std::vector< cv::DMatch > matches;
+        std::vector< cv::DMatch > good_matches1;
+        std::vector< cv::DMatch > good_matches2;
+        double max_dist = 0; double min_dist = 100;
 
-        if( matches[i].distance <= 2*min_dist )
-            good_matches1.push_back( matches[i]);
+        matcher.match( descriptors2, descriptors1, matches );
+
+        for( int i = 0; i < descriptors2.rows; i++ )
+        {
+            double dist = matches[i].distance;
+            if( dist < min_dist ) min_dist = dist;
+            if( dist > max_dist ) max_dist = dist;
+
+            if( matches[i].distance <= 2*min_dist )
+                good_matches1.push_back( matches[i]);
+        }
+
+        /*for( int i = 0; i < descriptors2.rows; i++ )
+            if( matches[i].distance <= 2*min_dist )
+                good_matches1.push_back( matches[i]);*/
+        matcher.match( descriptors3, descriptors1, matches );
+
+        for( int i = 0; i < descriptors3.rows; i++ )
+        {
+            double dist = matches[i].distance;
+            if( dist < min_dist ) min_dist = dist;
+            if( dist > max_dist ) max_dist = dist;
+
+            if( matches[i].distance <= 2*min_dist )
+                good_matches2.push_back( matches[i]);
+        }
+
+        /* for( int i = 0; i < descriptors3.rows; i++ )
+            if( matches[i].distance <= 2*min_dist )
+                good_matches2.push_back( matches[i]);*/
+
+        if(good_matches1.size() > good_matches2.size())
+            std::cout << "cerveau" << std::endl;
+        else
+            std::cout << "os" << std::endl;
     }
-
-    /*for( int i = 0; i < descriptors2.rows; i++ )
-        if( matches[i].distance <= 2*min_dist )
-            good_matches1.push_back( matches[i]);*/
-    matcher.match( descriptors3, descriptors1, matches );
-
-    for( int i = 0; i < descriptors3.rows; i++ )
-    {
-        double dist = matches[i].distance;
-        if( dist < min_dist ) min_dist = dist;
-        if( dist > max_dist ) max_dist = dist;
-
-        if( matches[i].distance <= 2*min_dist )
-            good_matches2.push_back( matches[i]);
-    }
-
-    /* for( int i = 0; i < descriptors3.rows; i++ )
-        if( matches[i].distance <= 2*min_dist )
-            good_matches2.push_back( matches[i]);*/
-
-    if(good_matches1.size() > good_matches2.size())
-        std::cout << "cerveau" << std::endl;
-    else
-        std::cout << "os" << std::endl;
 }
 
 void WebcamDevice::faceRT()
@@ -819,19 +837,10 @@ void WebcamDevice::chessRT()
 
 void WebcamDevice::markerRT()
 {
-    cv::Mat imMQR;
     std::vector<cv::Point2f> imagePoints;
     std::vector<double> errors;
     double meanErrors;
 
-    for (int i = 0; i < 3; i++)
-    {
-        std::ostringstream oss;
-        oss << "../rsc/markers/Mqr" << i+1 << ".png";
-        imMQR = cv::imread(oss.str());
-        cv::cvtColor(imMQR, imMQR, CV_BGR2GRAY);
-        _markersModels.push_back(imMQR);
-    }
 
     if(_markerDetected)
     {
