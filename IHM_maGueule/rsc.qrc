@@ -20,6 +20,12 @@
         <file alias="pause">icons/pause.png</file>
         <file alias="play">icons/play.png</file>
         <file alias="backBegin">icons/replay.png</file>
+        <file alias="opencv">icons/opencv.png</file>
+        <file alias="itseez">icons/itseez.png</file>
+        <file alias="osg">icons/osg.png</file>
+        <file alias="chehra">icons/chehra.png</file>
+        <file alias="aronBlack">icons/aron_black.png</file>
+        <file alias="aronWhite">icons/aron_white.png</file>
     </qresource>
     <qresource prefix="/css">
         <file alias="style">stylesheet.css</file>

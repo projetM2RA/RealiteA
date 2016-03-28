@@ -46,6 +46,16 @@ SideViewOsgWidet::SideViewOsgWidet(cv::Mat* webcamMat, osg::MatrixTransform *mai
 
     _group = new osg::Group;
 
+    //lumiere !
+    osg::Light* pLight = new osg::Light;
+    pLight->setLightNum( 1 );// ici cette lumière sera GL_LIGHT1
+    pLight->setAmbient( osg::Vec4d(1.0, 1.0, 1.0, 0.0) );
+    pLight->setDiffuse( osg::Vec4(1.0f, 1.0f, 1.0f, 0.0f) );
+    pLight->setSpecular(osg::Vec4(1.0f,1.0f,1.0f,1.0f));
+    pLight->setPosition(osg::Vec4(0.0f,0.0f,0.0f,1.0f));
+    osg::LightSource* pLightSource = new osg::LightSource;
+    pLightSource->setLight(pLight);
+
     // Projection
 
     osg::Matrixd projectionMatrix;
@@ -57,8 +67,13 @@ SideViewOsgWidet::SideViewOsgWidet(cv::Mat* webcamMat, osg::MatrixTransform *mai
 
     _corrector = (NEAR_VALUE / 2) / (cameraMatrix.at<double>(1, 2) - webcamMat->rows / 2);
 
-    osg::Vec3d eye(0.0f, 0.0f, 0.0f), target(0.0f, 1000.0, 0.0f), normal(0.0f, 0.0f, 1.0f);
+    osg::Vec3d eye(5000.0f, 0.0f, 0.0f), target(0.0f, 500.0, 0.0f), normal(0.0f, 0.0f, 1.0f);
 
+
+    _group->addChild(pLightSource);
+    osg::StateSet* state = _group->getOrCreateStateSet();
+    state->setMode( GL_LIGHT0, osg::StateAttribute::OFF );
+    state->setMode( GL_LIGHT1, osg::StateAttribute::ON );
     _group->addChild(hud);
     _group->addChild(this->createFrustrumFrame(projectionMatrix));
     _group->addChild(mainMat);
@@ -70,7 +85,6 @@ SideViewOsgWidet::SideViewOsgWidet(cv::Mat* webcamMat, osg::MatrixTransform *mai
     manipulator->setAllowThrow(false);
 
     _viewer->setCameraManipulator( manipulator );
-    _viewer->getCamera()->setProjectionMatrix(projectionMatrix);
     _viewer->getCamera()->setViewMatrixAsLookAt(eye, target, normal);
     _viewer->getCamera()->setGraphicsContext(_graphicsWindow);
 

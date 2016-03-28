@@ -3,9 +3,9 @@
 OSGWidget::OSGWidget(cv::Mat* webcamMat, osg::MatrixTransform *mainMat, Our3DObject* hud, int mode, QWidget* parent, const QGLWidget* shareWidget)
     : QGLWidget( parent, shareWidget)
     , _graphicsWindow( new osgViewer::GraphicsWindowEmbedded( this->x(),
-                                                               this->y(),
-                                                               this->width(),
-                                                               this->height()) )
+                                                              this->y(),
+                                                              this->width(),
+                                                              this->height()) )
     , _viewer( new osgViewer::Viewer )
 {
 
@@ -53,6 +53,16 @@ OSGWidget::OSGWidget(cv::Mat* webcamMat, osg::MatrixTransform *mainMat, Our3DObj
     _mainCam = new osg::Camera();
     _hudCam = new osg::Camera();
 
+    //lumiere !
+    osg::Light* pLight = new osg::Light;
+    pLight->setLightNum( 1 );// ici cette lumière sera GL_LIGHT1
+    pLight->setAmbient( osg::Vec4d(1.0, 1.0, 1.0, 0.0) );
+    pLight->setDiffuse( osg::Vec4(1.0f, 1.0f, 1.0f, 0.0f) );
+    pLight->setSpecular(osg::Vec4(1.0f,1.0f,1.0f,1.0f));
+    pLight->setPosition(osg::Vec4(0.0f,0.0f,0.0f,1.0f));
+    osg::LightSource* pLightSource = new osg::LightSource;
+    pLightSource->setLight(pLight);
+
     // Projection
 
     osg::Matrixd projectionMatrix;
@@ -79,6 +89,11 @@ OSGWidget::OSGWidget(cv::Mat* webcamMat, osg::MatrixTransform *mainMat, Our3DObj
 
     _mainCam->addChild(mainMat);
     _hudCam->addChild(hud);
+
+    _group->addChild(pLightSource);
+    osg::StateSet* state = _group->getOrCreateStateSet();
+    state->setMode( GL_LIGHT0, osg::StateAttribute::OFF );
+    state->setMode( GL_LIGHT1, osg::StateAttribute::ON );
 
     _group->addChild(_mainCam);
     _group->addChild(_hudCam);

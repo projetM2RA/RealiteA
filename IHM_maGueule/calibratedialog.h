@@ -38,7 +38,9 @@ private slots:
     void delSnapShot();
     void endSnapShot();
 
-private:
+private:    
+    bool detectChess(cv::Mat chessFrame, cv::Mat* chessSaved);
+
     QSpinBox *_nbrCols;
     QSpinBox *_nbrRows;
     QDoubleSpinBox *_chessSize;
@@ -56,8 +58,6 @@ private:
     int _rows;
     int _cols;
     int _type;
-
-    bool detectChess(cv::Mat chessFrame, cv::Mat* chessSaved);
 };
 
 #endif // CALIBRATEDIALOG_H

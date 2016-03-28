@@ -78,3 +78,6 @@ HEADERS  += \
 
 RESOURCES += \
     rsc.qrc \
+
+DISTFILES += \
+    Model.qmodel

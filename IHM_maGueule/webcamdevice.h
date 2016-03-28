@@ -68,9 +68,9 @@ private:
     int calibrateCam(FileStorage *fs);
     bool detecterVisage(std::vector<cv::Point2f> *pointsVisage);
     bool detectChess();
-    bool detectMarker(std::vector<cv::Point2f> *markerPoints);
+    bool detectMarker();
     void trackingChess();
-    void trackingMarker(cv::Mat *rotVecs);
+    void trackingMarker();
     void dbCorrelation();
     void faceRT();
     void chessRT();

@@ -23,6 +23,7 @@ public:
 
     QString getObjectName() { return _objectName->text(); }
     QString getObjectPath() { return _objectPath->text(); }
+    QString getTexturePath() { return _texturePath->text(); }
 
 
 signals:
@@ -32,11 +33,13 @@ public slots:
 
 private slots:
     void updatePath();
+    void updateTexture();
     void emitIndex(int index) { emit setTemplate(index); }
 
 private:
     QLineEdit *_objectName;
     QLineEdit *_objectPath;
+    QLineEdit *_texturePath;
 };
 
 #endif // ADDOBJECTDIALOG_H

@@ -56,7 +56,8 @@ private slots:
     bool start();
     void calibrateCamera();
     void addObject();
-    void addObject(QString name, QString path);
+    bool addObject(QString name, QString path);
+    void setTexture();
     void addTemplate(int templateID);
     void updateObjectCharacteristics(int objectID);
     void removeObject();
@@ -72,6 +73,12 @@ private slots:
     void freezeButtons();
     void playVideo();
     void playCam();
+
+    void displayAboutQt() { QMessageBox::aboutQt(this, "About Qt"); }
+    void displayAboutCV();
+    void displayAboutOsg();
+    void displayAboutChehra();
+    void displayAbout();
 
 private:
     void setFirstWindow();
@@ -106,6 +113,7 @@ private:
 
     QComboBox* _objectChoiceComboBox;
     QPushButton* _deleteObjectButton;
+    QPushButton* _setTextureButton;
     QCheckBox* _isPrintedBox;
     QCheckBox* _isPrintedBox2;
     QSlider** _objectCharacteristicsSpinSliders;
@@ -161,6 +169,7 @@ private:
     bool _delete;
     bool _playVideo;
     bool _playCam;
+    std::ofstream _file;
 };
 
 #endif // MAINWINDOW_H

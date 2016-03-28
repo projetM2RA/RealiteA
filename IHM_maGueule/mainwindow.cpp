@@ -13,6 +13,10 @@ MainWindow::MainWindow(QWidget *parent)
     _playVideo = false;
     _playCam = false;
 
+    _file.open ("../rsc/angles.txt");
+    _file << "   rotX   " << "   rotY   " << "   rotZ   " << "   tX   " << "   tY   " << "   tZ   " << std::endl;
+
+
     setFirstWindow();
 
 
@@ -21,6 +25,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
+    _file.close();
     if(_delete)
     {
         for(int i = 0; i < NBR_DETECT; i++)
@@ -65,7 +70,6 @@ bool MainWindow::start()
     QWidget splash;
     QBitmap bit(":/icons/splash");
     splash.setMask(bit);
-    //splash.setObjectName("splashScreen");
     splash.setFixedSize(bit.size());
 
     initCalib = _webcamDevice->initMatrix();
@@ -74,8 +78,6 @@ bool MainWindow::start()
         return _delete;
 
     splash.show();
-    //    splash->raise();
-    //    splash->repaint();
     this->setCursor(QCursor(Qt::WaitCursor));
 
     if(initCalib == defaultCase)
@@ -125,20 +127,27 @@ void MainWindow::addObject()
     QString objectName = _objectDialog->getObjectName();
 
     this->addObject(objectName, objectPath);
+    QString texPath = _objectDialog->getTexturePath();
+
+    if(QFile::exists(texPath))
+    {
+        _objectsList[_objectsList.size() - 1]->applyTexture(texPath);
+        _objectsList2[_objectsList2.size() - 1]->applyTexture(texPath);
+    }
 }
 
-void MainWindow::addObject(QString name, QString path)
+bool MainWindow::addObject(QString name, QString path)
 {
     if(path == "" || name == "")
     {
         QMessageBox::warning(this, tr("Error loading object"), tr("The object's path and/or name have not been specified."));
-        return;
+        return false;
     }
 
     if(!QFile::exists(path))
     {
-        QMessageBox::warning(this, tr("Error loading object"), tr("The object's path doesn't exist."));
-        return;
+        QMessageBox::warning(this, tr("Error loading object"), "The object's path doesn't exist.\n(" + path + ")");
+        return false;
     }
 
     _objectsList.push_back(new Our3DObject(path));
@@ -149,6 +158,19 @@ void MainWindow::addObject(QString name, QString path)
     int nbrObjects = _objectChoiceComboBox->itemText(0).mid(14).toInt();
     _objectChoiceComboBox->setItemText(0, "All objects : " + QString::number(nbrObjects + 1));
     _objectChoiceComboBox->addItem(name);
+
+    return true;
+}
+
+void MainWindow::setTexture()
+{
+    if(_objectID <= 1)
+        return;
+    QString texPath = QFileDialog::getOpenFileName(this, "Open 3D Texture", "../rsc/objets3D/Textures/", "texture image (*.bmp)");
+    if(!QFile::exists(texPath))
+        return;
+    _objectsList[_objectID]->applyTexture(texPath);
+    _objectsList2[_objectID]->applyTexture(texPath);
 }
 
 void MainWindow::addTemplate(int templateID)
@@ -157,7 +179,7 @@ void MainWindow::addTemplate(int templateID)
     QFile file(":/templates/objectsTemplate.xml");
     file.open(QFile::ReadOnly | QFile::Text);
     reader.setDevice(&file);
-    QString name, path;
+    QString name, path, texture;
 
     while(!reader.atEnd() && !reader.hasError())
     {
@@ -192,11 +214,20 @@ void MainWindow::addTemplate(int templateID)
                                         reader.readNext();
                                     path = reader.text().toString();
                                 }
-                                if(name != "" && path != "")
+                                if(name != "" && path != "") // je sais pas ou le mettre ce if
                                 {
-                                    this->addObject(name, path); // je sais pas ou le mettre ce if
+                                    if(!this->addObject(name, path))
+                                        return;
                                     name = "";
                                     path = "";
+                                }
+                                if(reader.name() == "texture" && reader.tokenType() == QXmlStreamReader::StartElement)
+                                {
+                                    while(reader.tokenType() != QXmlStreamReader::Characters)
+                                        reader.readNext();
+                                    texture = reader.text().toString();
+                                    _objectsList[_objectsList.size() - 1]->applyTexture(texture);
+                                    _objectsList2[_objectsList2.size() - 1]->applyTexture(texture);
                                 }
 
                                 if(reader.name() == "sx" && reader.tokenType() == QXmlStreamReader::StartElement)
@@ -447,143 +478,150 @@ void MainWindow::updateObjectCharacteristics(int objectID)
 
 void MainWindow::removeObject()
 {
-    if(_objectID < 2)
+    if(_objectID == 1)
         return;
-
-    disconnect(_objectChoiceComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(updateObjectCharacteristics(int)));
-
+    else if(_objectID == 0)
     {
-        Our3DObject* object = _objectsList[_objectID];
-        Our3DObject* object2 = _objectsList2[_objectID];
-
-        disconnect(_objectCharacteristicsSpinSliders[sizeX], SIGNAL(valueChanged(int)), object, SLOT(setSizeX(int)));
-        disconnect(_objectCharacteristicsSpinSliders[sizeY], SIGNAL(valueChanged(int)), object, SLOT(setSizeY(int)));
-        disconnect(_objectCharacteristicsSpinSliders[sizeZ], SIGNAL(valueChanged(int)), object, SLOT(setSizeZ(int)));
-
-        disconnect(_objectCharacteristicsSpinSliders[rotX], SIGNAL(valueChanged(int)), object, SLOT(setRotX(int)));
-        disconnect(_objectCharacteristicsSpinSliders[rotY], SIGNAL(valueChanged(int)), object, SLOT(setRotY(int)));
-        disconnect(_objectCharacteristicsSpinSliders[rotZ], SIGNAL(valueChanged(int)), object, SLOT(setRotZ(int)));
-
-        disconnect(_objectCharacteristicsSpinSliders[transX], SIGNAL(valueChanged(int)), object, SLOT(setTransX(int)));
-        disconnect(_objectCharacteristicsSpinSliders[transY], SIGNAL(valueChanged(int)), object, SLOT(setTransY(int)));
-        disconnect(_objectCharacteristicsSpinSliders[transZ], SIGNAL(valueChanged(int)), object, SLOT(setTransZ(int)));
-
-        disconnect(_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object, SLOT(setAlpha(int)));
-
-        //////////////////////////////////////////////////
-
-        disconnect(_objectCharacteristicsSpinSliders[sizeX], SIGNAL(valueChanged(int)), object2, SLOT(setSizeX(int)));
-        disconnect(_objectCharacteristicsSpinSliders[sizeY], SIGNAL(valueChanged(int)), object2, SLOT(setSizeY(int)));
-        disconnect(_objectCharacteristicsSpinSliders[sizeZ], SIGNAL(valueChanged(int)), object2, SLOT(setSizeZ(int)));
-
-        disconnect(_objectCharacteristicsSpinSliders[rotX], SIGNAL(valueChanged(int)), object2, SLOT(setRotX(int)));
-        disconnect(_objectCharacteristicsSpinSliders[rotY], SIGNAL(valueChanged(int)), object2, SLOT(setRotY(int)));
-        disconnect(_objectCharacteristicsSpinSliders[rotZ], SIGNAL(valueChanged(int)), object2, SLOT(setRotZ(int)));
-
-        disconnect(_objectCharacteristicsSpinSliders[transX], SIGNAL(valueChanged(int)), object2, SLOT(setTransX(int)));
-        disconnect(_objectCharacteristicsSpinSliders[transY], SIGNAL(valueChanged(int)), object2, SLOT(setTransY(int)));
-        disconnect(_objectCharacteristicsSpinSliders[transZ], SIGNAL(valueChanged(int)), object2, SLOT(setTransZ(int)));
-
-        disconnect(_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object2, SLOT(setAlpha(int)));
-    }
-
-    _objectsList[0]->removeChild(_objectsList[_objectID]);
-    _objectsList.erase(_objectsList.begin() += _objectID);
-    _objectsList2[0]->removeChild(_objectsList2[_objectID]);
-    _objectsList2.erase(_objectsList2.begin() += _objectID);
-    _objectChoiceComboBox->removeItem(_objectID);
-
-    if(_objectID >= _objectsList.size())
-        _objectID--;
-
-
-    {
-        Our3DObject* object = _objectsList[_objectID];
-        Our3DObject* object2 = _objectsList2[_objectID];
-
-        _isPrintedBox->setChecked(object->getNodeMask());
-        _isPrintedBox2->setChecked(object2->getNodeMask());
-
-        if(_objectID == 1)
+        for(int i = _objectsList.size() - 1; i > 1; --i)
         {
-            _objectCharacteristicsSpinSliders[sizeX]->setValue(0);
-            _objectCharacteristicsSpinSliders[sizeY]->setValue(0);
-            _objectCharacteristicsSpinSliders[sizeZ]->setValue(0);
-
-            _objectCharacteristicsSpinSliders[rotX]->setValue(0);
-            _objectCharacteristicsSpinSliders[rotY]->setValue(0);
-            _objectCharacteristicsSpinSliders[rotZ]->setValue(0);
-
-            _objectCharacteristicsSpinSliders[transX]->setValue(0);
-            _objectCharacteristicsSpinSliders[transY]->setValue(0);
-            _objectCharacteristicsSpinSliders[transZ]->setValue(0);
-
-            _objectCharacteristicsSpinSliders[sizeX]->setEnabled(false);
-            _objectCharacteristicsSpinSliders[sizeY]->setEnabled(false);
-            _objectCharacteristicsSpinSliders[sizeZ]->setEnabled(false);
-
-            _objectCharacteristicsSpinSliders[rotX]->setEnabled(false);
-            _objectCharacteristicsSpinSliders[rotY]->setEnabled(false);
-            _objectCharacteristicsSpinSliders[rotZ]->setEnabled(false);
-
-            _objectCharacteristicsSpinSliders[transX]->setEnabled(false);
-            _objectCharacteristicsSpinSliders[transY]->setEnabled(false);
-            _objectCharacteristicsSpinSliders[transZ]->setEnabled(false);
-
-            _isPrintedBox->setEnabled(false);
-
-            _objectCharacteristicsSpinSliders[alpha]->setValue(object2->getAlpha());
-            connect(_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object2, SLOT(setAlpha(int)));
+            _objectID = i;
+            this->removeObject();
         }
-        else
+        _objectID = 0;
+    }
+    else
+    {
+        disconnect(_objectChoiceComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(updateObjectCharacteristics(int)));
         {
-            _objectCharacteristicsSpinSliders[sizeX]->setValue(object->getSizeX());
-            _objectCharacteristicsSpinSliders[sizeY]->setValue(object->getSizeY());
-            _objectCharacteristicsSpinSliders[sizeZ]->setValue(object->getSizeZ());
+            Our3DObject* object = _objectsList[_objectID];
+            Our3DObject* object2 = _objectsList2[_objectID];
 
-            _objectCharacteristicsSpinSliders[rotX]->setValue(object->getRotX());
-            _objectCharacteristicsSpinSliders[rotY]->setValue(object->getRotY());
-            _objectCharacteristicsSpinSliders[rotZ]->setValue(object->getRotZ());
+            disconnect(_objectCharacteristicsSpinSliders[sizeX], SIGNAL(valueChanged(int)), object, SLOT(setSizeX(int)));
+            disconnect(_objectCharacteristicsSpinSliders[sizeY], SIGNAL(valueChanged(int)), object, SLOT(setSizeY(int)));
+            disconnect(_objectCharacteristicsSpinSliders[sizeZ], SIGNAL(valueChanged(int)), object, SLOT(setSizeZ(int)));
 
-            _objectCharacteristicsSpinSliders[transX]->setValue(object->getTransX());
-            _objectCharacteristicsSpinSliders[transY]->setValue(object->getTransY());
-            _objectCharacteristicsSpinSliders[transZ]->setValue(object->getTransZ());
+            disconnect(_objectCharacteristicsSpinSliders[rotX], SIGNAL(valueChanged(int)), object, SLOT(setRotX(int)));
+            disconnect(_objectCharacteristicsSpinSliders[rotY], SIGNAL(valueChanged(int)), object, SLOT(setRotY(int)));
+            disconnect(_objectCharacteristicsSpinSliders[rotZ], SIGNAL(valueChanged(int)), object, SLOT(setRotZ(int)));
 
-            _objectCharacteristicsSpinSliders[alpha]->setValue(object->getAlpha());
+            disconnect(_objectCharacteristicsSpinSliders[transX], SIGNAL(valueChanged(int)), object, SLOT(setTransX(int)));
+            disconnect(_objectCharacteristicsSpinSliders[transY], SIGNAL(valueChanged(int)), object, SLOT(setTransY(int)));
+            disconnect(_objectCharacteristicsSpinSliders[transZ], SIGNAL(valueChanged(int)), object, SLOT(setTransZ(int)));
 
-            connect(_objectCharacteristicsSpinSliders[sizeX], SIGNAL(valueChanged(int)), object, SLOT(setSizeX(int)));
-            connect(_objectCharacteristicsSpinSliders[sizeY], SIGNAL(valueChanged(int)), object, SLOT(setSizeY(int)));
-            connect(_objectCharacteristicsSpinSliders[sizeZ], SIGNAL(valueChanged(int)), object, SLOT(setSizeZ(int)));
-
-            connect(_objectCharacteristicsSpinSliders[rotX], SIGNAL(valueChanged(int)), object, SLOT(setRotX(int)));
-            connect(_objectCharacteristicsSpinSliders[rotY], SIGNAL(valueChanged(int)), object, SLOT(setRotY(int)));
-            connect(_objectCharacteristicsSpinSliders[rotZ], SIGNAL(valueChanged(int)), object, SLOT(setRotZ(int)));
-
-            connect(_objectCharacteristicsSpinSliders[transX], SIGNAL(valueChanged(int)), object, SLOT(setTransX(int)));
-            connect(_objectCharacteristicsSpinSliders[transY], SIGNAL(valueChanged(int)), object, SLOT(setTransY(int)));
-            connect(_objectCharacteristicsSpinSliders[transZ], SIGNAL(valueChanged(int)), object, SLOT(setTransZ(int)));
-
-            connect(_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object, SLOT(setAlpha(int)));
+            disconnect(_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object, SLOT(setAlpha(int)));
 
             //////////////////////////////////////////////////
 
-            connect(_objectCharacteristicsSpinSliders[sizeX], SIGNAL(valueChanged(int)), object2, SLOT(setSizeX(int)));
-            connect(_objectCharacteristicsSpinSliders[sizeY], SIGNAL(valueChanged(int)), object2, SLOT(setSizeY(int)));
-            connect(_objectCharacteristicsSpinSliders[sizeZ], SIGNAL(valueChanged(int)), object2, SLOT(setSizeZ(int)));
+            disconnect(_objectCharacteristicsSpinSliders[sizeX], SIGNAL(valueChanged(int)), object2, SLOT(setSizeX(int)));
+            disconnect(_objectCharacteristicsSpinSliders[sizeY], SIGNAL(valueChanged(int)), object2, SLOT(setSizeY(int)));
+            disconnect(_objectCharacteristicsSpinSliders[sizeZ], SIGNAL(valueChanged(int)), object2, SLOT(setSizeZ(int)));
 
-            connect(_objectCharacteristicsSpinSliders[rotX], SIGNAL(valueChanged(int)), object2, SLOT(setRotX(int)));
-            connect(_objectCharacteristicsSpinSliders[rotY], SIGNAL(valueChanged(int)), object2, SLOT(setRotY(int)));
-            connect(_objectCharacteristicsSpinSliders[rotZ], SIGNAL(valueChanged(int)), object2, SLOT(setRotZ(int)));
+            disconnect(_objectCharacteristicsSpinSliders[rotX], SIGNAL(valueChanged(int)), object2, SLOT(setRotX(int)));
+            disconnect(_objectCharacteristicsSpinSliders[rotY], SIGNAL(valueChanged(int)), object2, SLOT(setRotY(int)));
+            disconnect(_objectCharacteristicsSpinSliders[rotZ], SIGNAL(valueChanged(int)), object2, SLOT(setRotZ(int)));
 
-            connect(_objectCharacteristicsSpinSliders[transX], SIGNAL(valueChanged(int)), object2, SLOT(setTransX(int)));
-            connect(_objectCharacteristicsSpinSliders[transY], SIGNAL(valueChanged(int)), object2, SLOT(setTransY(int)));
-            connect(_objectCharacteristicsSpinSliders[transZ], SIGNAL(valueChanged(int)), object2, SLOT(setTransZ(int)));
+            disconnect(_objectCharacteristicsSpinSliders[transX], SIGNAL(valueChanged(int)), object2, SLOT(setTransX(int)));
+            disconnect(_objectCharacteristicsSpinSliders[transY], SIGNAL(valueChanged(int)), object2, SLOT(setTransY(int)));
+            disconnect(_objectCharacteristicsSpinSliders[transZ], SIGNAL(valueChanged(int)), object2, SLOT(setTransZ(int)));
 
-            connect(_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object2, SLOT(setAlpha(int)));
+            disconnect(_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object2, SLOT(setAlpha(int)));
         }
-    }
 
-    connect(_objectChoiceComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(updateObjectCharacteristics(int)));
+        _objectsList[0]->removeChild(_objectsList[_objectID]);
+        _objectsList.erase(_objectsList.begin() += _objectID);
+        _objectsList2[0]->removeChild(_objectsList2[_objectID]);
+        _objectsList2.erase(_objectsList2.begin() += _objectID);
+        _objectChoiceComboBox->removeItem(_objectID);
+
+        if(_objectID >= _objectsList.size())
+            _objectID--;
+        {
+            Our3DObject* object = _objectsList[_objectID];
+            Our3DObject* object2 = _objectsList2[_objectID];
+
+            _isPrintedBox->setChecked(object->getNodeMask());
+            _isPrintedBox2->setChecked(object2->getNodeMask());
+
+            if(_objectID == 1)
+            {
+                _objectCharacteristicsSpinSliders[sizeX]->setValue(0);
+                _objectCharacteristicsSpinSliders[sizeY]->setValue(0);
+                _objectCharacteristicsSpinSliders[sizeZ]->setValue(0);
+
+                _objectCharacteristicsSpinSliders[rotX]->setValue(0);
+                _objectCharacteristicsSpinSliders[rotY]->setValue(0);
+                _objectCharacteristicsSpinSliders[rotZ]->setValue(0);
+
+                _objectCharacteristicsSpinSliders[transX]->setValue(0);
+                _objectCharacteristicsSpinSliders[transY]->setValue(0);
+                _objectCharacteristicsSpinSliders[transZ]->setValue(0);
+
+                _objectCharacteristicsSpinSliders[sizeX]->setEnabled(false);
+                _objectCharacteristicsSpinSliders[sizeY]->setEnabled(false);
+                _objectCharacteristicsSpinSliders[sizeZ]->setEnabled(false);
+
+                _objectCharacteristicsSpinSliders[rotX]->setEnabled(false);
+                _objectCharacteristicsSpinSliders[rotY]->setEnabled(false);
+                _objectCharacteristicsSpinSliders[rotZ]->setEnabled(false);
+
+                _objectCharacteristicsSpinSliders[transX]->setEnabled(false);
+                _objectCharacteristicsSpinSliders[transY]->setEnabled(false);
+                _objectCharacteristicsSpinSliders[transZ]->setEnabled(false);
+
+                _isPrintedBox->setEnabled(false);
+
+                _objectCharacteristicsSpinSliders[alpha]->setValue(object2->getAlpha());
+                connect(_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object2, SLOT(setAlpha(int)));
+            }
+            else
+            {
+                _objectCharacteristicsSpinSliders[sizeX]->setValue(object->getSizeX());
+                _objectCharacteristicsSpinSliders[sizeY]->setValue(object->getSizeY());
+                _objectCharacteristicsSpinSliders[sizeZ]->setValue(object->getSizeZ());
+
+                _objectCharacteristicsSpinSliders[rotX]->setValue(object->getRotX());
+                _objectCharacteristicsSpinSliders[rotY]->setValue(object->getRotY());
+                _objectCharacteristicsSpinSliders[rotZ]->setValue(object->getRotZ());
+
+                _objectCharacteristicsSpinSliders[transX]->setValue(object->getTransX());
+                _objectCharacteristicsSpinSliders[transY]->setValue(object->getTransY());
+                _objectCharacteristicsSpinSliders[transZ]->setValue(object->getTransZ());
+
+                _objectCharacteristicsSpinSliders[alpha]->setValue(object->getAlpha());
+
+                connect(_objectCharacteristicsSpinSliders[sizeX], SIGNAL(valueChanged(int)), object, SLOT(setSizeX(int)));
+                connect(_objectCharacteristicsSpinSliders[sizeY], SIGNAL(valueChanged(int)), object, SLOT(setSizeY(int)));
+                connect(_objectCharacteristicsSpinSliders[sizeZ], SIGNAL(valueChanged(int)), object, SLOT(setSizeZ(int)));
+
+                connect(_objectCharacteristicsSpinSliders[rotX], SIGNAL(valueChanged(int)), object, SLOT(setRotX(int)));
+                connect(_objectCharacteristicsSpinSliders[rotY], SIGNAL(valueChanged(int)), object, SLOT(setRotY(int)));
+                connect(_objectCharacteristicsSpinSliders[rotZ], SIGNAL(valueChanged(int)), object, SLOT(setRotZ(int)));
+
+                connect(_objectCharacteristicsSpinSliders[transX], SIGNAL(valueChanged(int)), object, SLOT(setTransX(int)));
+                connect(_objectCharacteristicsSpinSliders[transY], SIGNAL(valueChanged(int)), object, SLOT(setTransY(int)));
+                connect(_objectCharacteristicsSpinSliders[transZ], SIGNAL(valueChanged(int)), object, SLOT(setTransZ(int)));
+
+                connect(_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object, SLOT(setAlpha(int)));
+
+                //////////////////////////////////////////////////
+
+                connect(_objectCharacteristicsSpinSliders[sizeX], SIGNAL(valueChanged(int)), object2, SLOT(setSizeX(int)));
+                connect(_objectCharacteristicsSpinSliders[sizeY], SIGNAL(valueChanged(int)), object2, SLOT(setSizeY(int)));
+                connect(_objectCharacteristicsSpinSliders[sizeZ], SIGNAL(valueChanged(int)), object2, SLOT(setSizeZ(int)));
+
+                connect(_objectCharacteristicsSpinSliders[rotX], SIGNAL(valueChanged(int)), object2, SLOT(setRotX(int)));
+                connect(_objectCharacteristicsSpinSliders[rotY], SIGNAL(valueChanged(int)), object2, SLOT(setRotY(int)));
+                connect(_objectCharacteristicsSpinSliders[rotZ], SIGNAL(valueChanged(int)), object2, SLOT(setRotZ(int)));
+
+                connect(_objectCharacteristicsSpinSliders[transX], SIGNAL(valueChanged(int)), object2, SLOT(setTransX(int)));
+                connect(_objectCharacteristicsSpinSliders[transY], SIGNAL(valueChanged(int)), object2, SLOT(setTransY(int)));
+                connect(_objectCharacteristicsSpinSliders[transZ], SIGNAL(valueChanged(int)), object2, SLOT(setTransZ(int)));
+
+                connect(_objectCharacteristicsSpinSliders[alpha], SIGNAL(valueChanged(int)), object2, SLOT(setAlpha(int)));
+            }
+        }
+        connect(_objectChoiceComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(updateObjectCharacteristics(int)));
+    }
 }
 
 void MainWindow::updateDetectMode()
@@ -721,47 +759,92 @@ void MainWindow::displayFullScreen()
 
 void MainWindow::updateSceneRT(cv::Mat rotVec, cv::Mat tvecs)
 {
-    double t3 = tvecs.at<double>(2, 0);
-    double t2 = tvecs.at<double>(1, 0) + t3 / _corrector; // #truanderie
-    double t1 = tvecs.at<double>(0, 0);
+    bool rpy = false; // utilise-ton roll/pitch/yaw de chehra
 
-    double r11 = rotVec.at<double>(0, 0);
-    double r12 = rotVec.at<double>(0, 1);
-    double r13 = rotVec.at<double>(0, 2);
-    double r21 = rotVec.at<double>(1, 0);
-    double r22 = rotVec.at<double>(1, 1);
-    double r23 = rotVec.at<double>(1, 2);
-    double r31 = rotVec.at<double>(2, 0);
-    double r32 = rotVec.at<double>(2, 1);
-    double r33 = rotVec.at<double>(2, 2);
+    double r11, r12, r13, r21, r22, r23, r31, r32, r33;
+    double rx, ry, rz;
+    double t1, t2, t3;
 
     cv::Mat r;
 
-    cv::Rodrigues(rotVec, r);
+    if(!rpy)
+    {
+        r11 = rotVec.at<double>(0, 0);
+        r12 = rotVec.at<double>(0, 1);
+        r13 = rotVec.at<double>(0, 2);
+        r21 = rotVec.at<double>(1, 0);
+        r22 = rotVec.at<double>(1, 1);
+        r23 = rotVec.at<double>(1, 2);
+        r31 = rotVec.at<double>(2, 0);
+        r32 = rotVec.at<double>(2, 1);
+        r33 = rotVec.at<double>(2, 2);
+
+        cv::Rodrigues(rotVec, r);
+    }
+
+    t3 = tvecs.at<double>(2, 0);
+    t2 = tvecs.at<double>(1, 0) + t3 / _corrector; // #truanderie
+    t1 = tvecs.at<double>(0, 0);
 
     if(_webcamDevice->getMode() == chehra)
     {
-        double rx = r.at<double>(2, 0);
-        double ry = r.at<double>(1, 0) - PI;
-        double rz = -r.at<double>(0, 0);
+        if(rpy)
+        {
+            rx = rotVec.at<double>(0, 0) * PI / 180.0;
+            ry = rotVec.at<double>(1, 0) * PI / 180.0;
+            rz = rotVec.at<double>(2, 0) * PI / 180.0;
 
-        ry < -PI ? rz *= -1 : rx *= -1;
+            ry += atan(t1 / t3);
+        }
+        else
+        {
+            rx = r.at<double>(2, 0);
+            ry = r.at<double>(1, 0) + PI;
+            rz = r.at<double>(0, 0);
 
-        rx -= 2 * atan(t2 / t3);
-        ry -= 2 * atan(t1 / t3);
-        rz *= 0.70; // la rotation autour de z semble excessive ; no idea why
+            if(ry > PI)
+            {
+                rx *= -1;
+                rz *= -1;
+                ry -= 2 * PI;
+            }
 
-                std::cout << "r x : " << rx * 180 / PI << std::endl;
-                std::cout << "r y : " << -ry * 180 / PI << std::endl;
-                std::cout << "r z : " << rz * 180 / PI << std::endl;
-                std::cout << std::endl << std::endl;
-                std::cout << "t x : " << t1 << std::endl;
-                std::cout << "t y : " << t2 << std::endl;
-                std::cout << "t z : " << t3 << std::endl;
-                std::cout << std::endl << std::endl;
+            rx -= 2 * atan(t2 / t3);
+            ry -= 2 * atan(t1 / t3);
+            ry *= -1;
+            rz *= 0.75; // la rotation autour de z semble excessive ; no idea why
+
+            if(ry > 0 && rz > 0)
+                ry -= rz / 4;
+            else if(ry < 0 && rz > 0)
+                ry += rz / 4;
+            else if(ry < 0 && rz < 0)
+                ry -= rz / 4;
+            else if(ry > 0 && rz < 0)
+                ry += rz / 4;
+            if(rz > 0)
+                rx += rz / 4;
+            else if(rz < 0)
+                rx -= rz / 4;
+            if(ry < 0)
+            {
+                ry += rx / 4;
+                //rx -= rz / 2;
+            }
+        }
+
+        _file << (rx*180)/PI << " ; " << (ry*180)/PI << " ; "  << (rz*180)/PI << " ; "  << std::endl;
+        std::cout << "r x : " << rx * 180 / PI << std::endl;
+        std::cout << "r y : " << ry * 180 / PI << std::endl;
+        std::cout << "r z : " << rz * 180 / PI << std::endl;
+        std::cout << std::endl << std::endl;
+        std::cout << "t x : " << t1 << std::endl;
+        std::cout << "t y : " << t2 << std::endl;
+        std::cout << "t z : " << t3 << std::endl;
+        std::cout << std::endl << std::endl;
 
         osg::Matrixd matrixR; // rotation corrigee
-        matrixR.makeRotate(rx, osg::Vec3d(1.0, 0.0, 0.0), -ry, osg::Vec3d(0.0, 1.0, 0.0), rz, osg::Vec3d(0.0, 0.0, 1.0));
+        matrixR.makeRotate(rx, osg::Vec3d(1.0, 0.0, 0.0), ry, osg::Vec3d(0.0, 1.0, 0.0), rz, osg::Vec3d(0.0, 0.0, 1.0));
 
         osg::Matrixd matrixT; // translation
         matrixT.makeTranslate(t1, t2, t3);
@@ -774,15 +857,34 @@ void MainWindow::updateSceneRT(cv::Mat rotVec, cv::Mat tvecs)
     }
     else
     {
-        double rx = atan2(r32, r33);
-        double ry = atan2(r21, r11);
-        double rz = -atan2(-r31, sqrt((r32 * r32) + (r33 * r33)));
+        if(rpy)
+        {
+            r11 = rotVec.at<double>(0, 0);
+            r12 = rotVec.at<double>(0, 1);
+            r13 = rotVec.at<double>(0, 2);
+            r21 = rotVec.at<double>(1, 0);
+            r22 = rotVec.at<double>(1, 1);
+            r23 = rotVec.at<double>(1, 2);
+            r31 = rotVec.at<double>(2, 0);
+            r32 = rotVec.at<double>(2, 1);
+            r33 = rotVec.at<double>(2, 2);
+
+            cv::Rodrigues(rotVec, r); // si roll/pitch/yaw avec chehra
+        }
+
+        rx = atan2(r32, r33);
+        ry = atan2(r21, r11);
+        rz = -atan2(-r31, sqrt((r32 * r32) + (r33 * r33)));
+
         osg::Matrixd matrixR; // rotation corrigee
         matrixR.makeRotate(rx, osg::Vec3d(1.0, 0.0, 0.0), rz, osg::Vec3d(0.0, 1.0, 0.0), -ry, osg::Vec3d(0.0, 0.0, 1.0));
+
         osg::Matrixd matrixT; // translation
         matrixT.makeTranslate(-t1, t2, t3);
+
         osg::Matrixd matrix90; // rotation de repere entre opencv et osg
         matrix90.makeRotate(osg::Quat(osg::DegreesToRadians(-90.0f), osg::Vec3d(1.0, 0.0, 0.0)));
+
         _mainMat->setMatrix(matrixR * matrixT * matrix90);
         _mainMat2->setMatrix(matrixR * matrixT * matrix90);
     }
@@ -880,6 +982,132 @@ void MainWindow::playCam()
     _camGroup->setVisible(true);
 }
 
+void MainWindow::displayAboutCV()
+{
+    QMessageBox aboutCVMessageBox(QMessageBox::NoIcon, "About OpenCV",
+                                  "",
+                                  QMessageBox::Ok, this);
+    QSpacerItem* horizontalSpacer = new QSpacerItem(5000, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
+
+    aboutCVMessageBox.setText("<b><big>About OpenCV</big></b><br><br>"
+                              "This program uses OpenCV version 2.4.11.<br><br>"
+                              "<a href=http://opencv.org/about.html>OpenCV</a> (Open Source Computer Vision Library) is an open source computer vision and machine learning software library."
+                              "OpenCV was built to provide a common infrastructure for computer vision applications and to accelerate the use of machine perception in the commercial products."
+                              "Being a BSD-licensed product, OpenCV makes it easy for businesses to utilize and modify the code.<br><br>"
+                              "The library has more than 2500 optimized algorithms, which includes a comprehensive set of both classic and state-of-the-art computer vision and machine learning algorithms."
+                              "These algorithms can be used to detect and recognize faces, identify objects, classify human actions in videos, track camera movements, track moving objects, extract 3D models of objects, produce 3D point clouds from stereo cameras, stitch images together to produce a high resolution image of an entire scene, find similar images from an image database, remove red eyes from images taken using flash, follow eye movements, recognize scenery and establish markers to overlay it with augmented reality, etc."
+                              "OpenCV has more than 47 thousand people of user community and estimated number of downloads exceeding <a href=https://sourceforge.net/projects/opencvlibrary/files/stats/timeline?dates=2001-09-20+to+2013-09-26>7 million</a>."
+                              "The library is used extensively in companies, research groups and by governmental bodies.<br><br>"
+                              "Along with well-established companies like Google, Yahoo, Microsoft, Intel, IBM, Sony, Honda, Toyota that employ the library, there are many startups such as Applied Minds, VideoSurf, and Zeitera, that make extensive use of OpenCV."
+                              "OpenCV’s deployed uses span the range from stitching streetview images together, detecting intrusions in surveillance video in Israel, monitoring mine equipment in China, helping robots navigate and pick up objects at Willow Garage, detection of swimming pool drowning accidents in Europe, running interactive art in Spain and New York, checking runways for debris in Turkey, inspecting labels on products in factories around the world on to rapid face detection in Japan.<br><br>"
+                              "It has C++, C, Python, Java and MATLAB interfaces and supports Windows, Linux, <a href=http://opencv.org/platforms/android.html>Android</a> and Mac OS."
+                              "OpenCV leans mostly towards real-time vision applications and takes advantage of MMX and SSE instructions when available."
+                              "A full-featured <a href=http://opencv.org/platforms/cuda.html>CUDA</a> and OpenCL interfaces are being actively developed right now."
+                              "There are over 500 algorithms and about 10 times as many functions that compose or support those algorithms."
+                              "OpenCV is written natively in C++ and has a templated interface that works seamlessly with STL containers.<br><br>"
+                              "<a href=http://itseez.com>OpenCV Developers Team</a> :<br><br>");
+
+    aboutCVMessageBox.setIconPixmap(QPixmap(":/icons/opencv"));
+    QGridLayout* layout = (QGridLayout*)aboutCVMessageBox.layout();
+    QLabel* logo = new QLabel("");
+    logo->setPixmap(QPixmap(":/icons/itseez"));
+    layout->addWidget(logo, 1, 2, 1, 1);
+
+    layout->addItem(horizontalSpacer, layout->rowCount(), 0, 1, layout->columnCount());
+    //    aboutCVMessageBox.setFixedSize(800, 600);
+    aboutCVMessageBox.exec();
+}
+
+void MainWindow::displayAboutOsg()
+{
+    QMessageBox aboutOSGMessageBox(QMessageBox::NoIcon, "About OpenSceneGraph",
+                                   "",
+                                   QMessageBox::Ok, this);
+    QSpacerItem* horizontalSpacer = new QSpacerItem(5000, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
+
+    aboutOSGMessageBox.setText("<b><big>About OpenSceneGraph</big></b><br><br>"
+                               "This program uses OpenSceneGraph version 3.4.0.<br><br>"
+                               "<b>Usage and Markets</b><br>"
+                               "The OpenSceneGraph is open source, real-time graphics middle-ware used by application developers in fields that range from visual simulation (flight, marine, vehicle, space simulator) to virtual and augmented reality, to medical and scientific visualisation, to education and games.<br><br>"
+                               "<b>Cross Platform</b><br>"
+                               "The OpenSceneGraph is cross platform running on small devices such as embedded graphics platforms to phones, tablets that use OpenGL ES,  to laptops and desktops using OpenGL all the way up to dedicated image generator clusters used in full scale simulators and immersive 3D displays.<br><br>"
+                               "<b>Licensing</b><br>"
+                               "The OpenSceneGraph is published under the OpenSceneGraph Public License, which is a relaxation of the Less GNU Public License (LGPL) that permits usage in commercial application that require static linking or embed systems.<br><br>"
+                               "<b>Technology</b><br>"
+                               "The OpenSceneGraph is written in Standard C++, taking advantage of the standard template library (STL) for containers.  The software uses the scene graph approach to representing 3D worlds as a graph of node that logical and spatially group subgraphs for behaviour and high performance.<br>"
+                               "OpenGL 1.0 through to OpenGL 4.2, and OpenGL ES 1.1 and 2.0 are supported making it possible to support both old hardware and operating systems through to the latest mobile devices and all the features of cutting edge desktop graphics systems thanks to the software run time extension checking.<br>"
+                               "Design Patterns are used throughout the software making it easier to maintain and understand how our software works as well as providing a good example of usage. The software is kept modular and extensible enabling end users to only utilize the components they need and to allow customisation when required.<br>"
+                               "The key strengths of OpenSceneGraph are :<br>"
+                               "<b><ul><li>Performance</li><li>Productivity</li><li>Database loaders</li><li>Node Kits</li><li>Portability</li><li>Scalability</li><li>Multi-language support</li></ul></b><br>"
+                               "see more <a href=http://www.openscenegraph.org/index.php/about/features>here</a>.<br><br>"
+                               "<a href=http://www.openscenegraph.org/index.php/about/licensing>Licensing</a> <a href=http://www.openscenegraph.org/index.php/about/history>History</a> <a href=http://www.openscenegraph.org/index.php/about/contributors>Contributors</a>");
+    aboutOSGMessageBox.setIconPixmap(QPixmap(":/icons/osg"));
+
+    QGridLayout* layout = (QGridLayout*)aboutOSGMessageBox.layout();
+    layout->addItem(horizontalSpacer, layout->rowCount(), 0, 1, layout->columnCount());
+    //    aboutCVMessageBox.setFixedSize(800, 600);
+    aboutOSGMessageBox.exec();
+}
+
+void MainWindow::displayAboutChehra()
+{
+    QMessageBox aboutOSGMessageBox(QMessageBox::NoIcon, "About Chehra",
+                                   "",
+                                   QMessageBox::Ok, this);
+    QSpacerItem* horizontalSpacer = new QSpacerItem(5000, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
+
+    aboutOSGMessageBox.setText("<b><big>About Chehra</big></b><br><br>"
+                               "This program uses Chehra version 0.1.<br><br>"
+                               "Chehra (meaning \"face\" in Hindi) is a fully-automatic real-time face and eyes landmark detection and tracking software capable of handling faces under uncontrolled natural setting.<br>"
+                               "It has been developed by <a href=https://wp.doc.ic.ac.uk/szafeiri>Akshay Asthana</a> and <a href=https://sites.google.com/site/akshayasthana>Stefanos Zafeiriou</a> at Imperial College London.<br>"
+                               "For any further questions, please email me at <a href=mailto:chehra.team@gmail.com>chehra.team@gmail.com</a>.<br><br>"
+                               "This software has been made available for non-commercial and academic purposes only.<br><br><br>"
+                               "see also : <a href=http://ibug.doc.ic.ac.uk/media/uploads/aasthanacvpr2014.pdf>Incremental Face Alignment in the Wild</a>.");
+    aboutOSGMessageBox.setIconPixmap(QPixmap(":/icons/chehra").scaledToWidth(128));
+
+    QGridLayout* layout = (QGridLayout*)aboutOSGMessageBox.layout();
+    layout->addItem(horizontalSpacer, layout->rowCount(), 0, 1, layout->columnCount());
+    //    aboutCVMessageBox.setFixedSize(800, 600);
+    aboutOSGMessageBox.exec();
+}
+
+void MainWindow::displayAbout()
+{
+    QMessageBox aboutOSGMessageBox(QMessageBox::NoIcon, "About",
+                                   "",
+                                   QMessageBox::Ok, this);
+    QSpacerItem* horizontalSpacer = new QSpacerItem(5000, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
+
+    aboutOSGMessageBox.setText("<b><big>About</big></b><br><br>"
+                               "This is a software realised by Nicolas Charlet, Vivien Fragni and Leo Ricouard as a school project supervised by <a href=http://michael.aron.free.fr>Michael Aron</a> at the ISEN Brest. "
+                               "It was meant to be a first approach to computer vision through augmented reality with medical applications.<br><br>"
+                               "The point of this project was to segment IRM pictures of a brain in order to reconstitute it in a 3D model with 3DSlicer. "
+                               "This model is then displayed on the patient's head using augmented reality.<br>"
+                               "In the end, many features linked to this subject were added to the software. "
+                               "Here's the exhaustive list of this software's features : <br>"
+                               "<ul>"
+                               "<li><b>Camera calibration</b> : In order to have the best projection, it is necessary to have the intrinsics parameter of the camera. "
+                               "This is why this software allows the user to calibrate himself his camera (provided he has a chessboard). "
+                               "It is also possible to use a default matrix.</li>"
+                               "<li><b>Chessboard detection</b> : It is possible to choose to project 3D models on a chessboard ; chessboard detection being more accurate than face detection.</li>"
+                               "<li><b>Face detection</b> : The main use of this software. The 3D models are projected on the user's face.</li>"
+                               "<li><b>Custom marker detection</b> : The user can apply the projection on custom markers displaying differents models. (not completely functional for now).</li>"
+                               "<li><b>Video and webcam input</b> : The user can either choose to read a video from a file or a webcam (up to 10 differents webcam). "
+                               "Note than in the current state of things, the intrinsic matrix defined at the launching will be use in all cases.</li>"
+                               "<li><b>Possibility to use any 3D model</b> : The software can import .obj, .3ds, .stl, .osg and .osgt models. "
+                               "Note than 4 templates have been created, importing frequently used models.</li>"
+                               "<li><b>Possibility to resize, rotate and translate the 3D models</b> : The user can adapt the model's characteristics to the scene</li>"
+                               "<li><b>Possibility to set transparency and textures to the 3D models</b> : The user can customize the model with textures or can use it as a mask by setting transparency to 0.</li>"
+                               "</ul><br>"
+                               "The source code is available and free to use.");
+    aboutOSGMessageBox.setIconPixmap(QPixmap(":/icons/aronBlack").scaledToWidth(128));
+
+    QGridLayout* layout = (QGridLayout*)aboutOSGMessageBox.layout();
+    layout->addItem(horizontalSpacer, layout->rowCount(), 0, 1, layout->columnCount());
+    //    aboutCVMessageBox.setFixedSize(800, 600);
+    aboutOSGMessageBox.exec();
+}
+
 
 // private
 void MainWindow::setFirstWindow()
@@ -947,6 +1175,22 @@ void MainWindow::setFirstWindow()
 
 
 
+    QAction* appAction = menuHelp->addAction(tr("&About"));
+    connect(appAction, SIGNAL(triggered()), this, SLOT(displayAbout()));
+    QAction* howToAction = menuHelp->addAction(tr("&How to use"));
+    connect(howToAction, SIGNAL(triggered()), this, SLOT(displayAboutQt()));
+    menuHelp->addSeparator();
+    QAction* qtAction = menuHelp->addAction(tr("About &Qt"));
+    connect(qtAction, SIGNAL(triggered()), this, SLOT(displayAboutQt()));
+    QAction* ocvAction = menuHelp->addAction(tr("About OpenC&V"));
+    connect(ocvAction, SIGNAL(triggered()), this, SLOT(displayAboutCV()));
+    QAction* osgAction = menuHelp->addAction(tr("About Open&SceneGraph"));
+    connect(osgAction, SIGNAL(triggered()), this, SLOT(displayAboutOsg()));
+    QAction* chehraAction = menuHelp->addAction(tr("About &Chehra"));
+    connect(chehraAction, SIGNAL(triggered()), this, SLOT(displayAboutChehra()));
+
+
+
     connect(_startAction, SIGNAL(triggered()), this, SLOT(start()));
     connect(_calibrateAction, SIGNAL(triggered()), this, SLOT(calibrateCamera()));
     connect(_optionsAction, SIGNAL(triggered()), _webcamDevice, SLOT(setOptions()));
@@ -963,14 +1207,14 @@ void MainWindow::setMainWindow(int mode)
     _addObjectAction->setEnabled(true);
     _fullScreenAction->setEnabled(true);
 
-    for(int i = 0; i < NBR_DETECT-1; i++)
+    for(int i = 0; i < NBR_DETECT; i++)
         _detectActions[i]->setEnabled(true);
 
     _detectActions[noDetect]->setEnabled(true);
 
     for(int i = 0; i < _nbrCam; i++)
         _webcamActions[i]->setEnabled(true);
-    _videoAction->setEnabled(true);    // ca bug ; dunno why
+    _videoAction->setEnabled(true);
 
     //////////////////////////////////////////////////
     //////////////////////////////////////////////////
@@ -978,7 +1222,6 @@ void MainWindow::setMainWindow(int mode)
 
     QWidget* mainWidget = new QWidget();
     QSplitter* mainSplitter = new QSplitter(Qt::Horizontal);
-    QHBoxLayout* mainLayout = new QHBoxLayout();
 
     QVBoxLayout* objectLayout = new QVBoxLayout();
 
@@ -998,8 +1241,7 @@ void MainWindow::setMainWindow(int mode)
     _objectChoiceComboBox = new QComboBox();
     _objectChoiceComboBox->addItem("All objects : 0");
     _objectChoiceComboBox->addItem("Video");
-    //objectLayout->addWidget(_objectChoiceComboBox);
-    gridLayout->addWidget(_objectChoiceComboBox, 0, 0, 1, 3);
+    gridLayout->addWidget(_objectChoiceComboBox, 0, 0, 1, 4);
 
     QHBoxLayout* objectDispalyOptionsLayout = new QHBoxLayout();
     _isPrintedBox = new QCheckBox(tr("Display object in main view"));
@@ -1009,12 +1251,14 @@ void MainWindow::setMainWindow(int mode)
     _isPrintedBox2->setChecked(true);
     objectDispalyOptionsLayout->addWidget(_isPrintedBox2);
     _deleteObjectButton = new QPushButton(tr("Delete object"));
-    //    _deleteObjectButton->setEnabled(false);
     objectDispalyOptionsLayout->addWidget(_deleteObjectButton);
+    _setTextureButton = new QPushButton(tr("Apply texture"));
+    objectDispalyOptionsLayout->addWidget(_setTextureButton);
 
     gridLayout->addWidget(_isPrintedBox, 1, 0, 1, 1);
     gridLayout->addWidget(_isPrintedBox2, 1, 1, 1, 1);
     gridLayout->addWidget(_deleteObjectButton, 1, 2, 1, 1);
+    gridLayout->addWidget(_setTextureButton, 1, 3, 1, 1);
 
     //objectLayout->addLayout(objectDispalyOptionsLayout);
 
@@ -1090,7 +1334,7 @@ void MainWindow::setMainWindow(int mode)
     alphaLayout->addRow("α : ", _objectCharacteristicsSpinSliders[alpha]);
 
     alphaGroup->setLayout(alphaLayout);
-    gridLayout->addWidget(alphaGroup, 2, 0, 1, 3);
+    gridLayout->addWidget(alphaGroup, 2, 0, 1, 4);
     //objectLayout->addWidget(alphaGroup);
 
     QHBoxLayout *videoLayout = new QHBoxLayout;
@@ -1187,6 +1431,7 @@ void MainWindow::connectAll()
 
     connect(_objectChoiceComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(updateObjectCharacteristics(int)));
     connect(_deleteObjectButton, SIGNAL(clicked()), this, SLOT(removeObject()));
+    connect(_setTextureButton, SIGNAL(clicked()), this, SLOT(setTexture()));
 
     connect(_webcamDevice, SIGNAL(updateScene(cv::Mat, cv::Mat)), this, SLOT(updateSceneRT(cv::Mat, cv::Mat)));
 
@@ -1348,7 +1593,7 @@ void MainWindow::initObjectsList(int mode)
         n = (cameraMatrix.at<double>(0, 0) + cameraMatrix.at<double>(1, 1)) / 2;
         // NEAR (n) = distance focale ; si pixels carres, fx = fy -> np
         //mais est generalement different de fy donc on prend (pour l'instant) par defaut la valeur mediane
-        _corrector = (n / 2) / (cameraMatrix.at<double>(1, 2) - webcamMat->rows / 2);
+        _corrector = (n / 2) / (cy - webcamMat->rows / 2);
 
     }
 
@@ -1365,7 +1610,7 @@ void MainWindow::initObjectsList(int mode)
         n = (cameraMatrix.at<double>(0, 0) + cameraMatrix.at<double>(1, 1)) / 2;
         // NEAR (n) = distance focale ; si pixels carres, fx = fy -> np
         //mais est generalement different de fy donc on prend (pour l'instant) par defaut la valeur mediane
-        _corrector = (n / 2) / (cameraMatrix.at<double>(1, 2) - webcamMat->rows / 2);
+        _corrector = (n / 2) / (cy - webcamMat->rows / 2);
 
         fs.release();
     }

@@ -8,6 +8,7 @@ WebcamDevice::WebcamDevice(QObject *parent) :
     _vcap = cv::VideoCapture(0);
     _frame = new cv::Mat(cv::Mat::zeros(640,480, CV_8UC3));
     _rotVecs = cv::Mat::zeros(3, 3, CV_64F);
+    _tvecs = cv::Mat::zeros(3, 1, CV_64F);
     _initFps = 25;
     _actualFps = 25;
 
@@ -159,9 +160,13 @@ bool WebcamDevice::initModels()
     for (int i = 0; i < 3; i++)
     {
         std::ostringstream oss;
-        oss << "../rsc/markers/Mqr" << i+1 << ".png";
-        cv::Mat imMQR = cv::imread(oss.str());
-        cv::cvtColor(imMQR, imMQR, CV_BGR2GRAY);
+        oss << ":/markers/mark" << i+1;
+        QImage marker(QString::fromStdString(oss.str()));
+//        marker.convertToFormat(QImage::Format_RGB16);
+        cv::Mat imMQR(marker.height(), marker.width(), CV_8UC4);
+        imMQR.data = marker.bits();
+//        cv::Mat imMQR = cv::imread(oss.str());
+        cv::cvtColor(imMQR, imMQR, CV_RGBA2GRAY);
         _markersModels.push_back(imMQR);
     }
 
@@ -507,7 +512,7 @@ bool WebcamDevice::detectChess()
     return chessFound;
 }
 
-bool WebcamDevice::detectMarker(std::vector<cv::Point2f> *pointQR)
+bool WebcamDevice::detectMarker()
 {
     cv::Mat imCalibGray;
     std::vector<std::vector<cv::Point>> contours;
@@ -521,7 +526,7 @@ bool WebcamDevice::detectMarker(std::vector<cv::Point2f> *pointQR)
     cv::cvtColor((*_frame), imCalibGray, CV_BGR2GRAY);
     Canny(imCalibGray, edges, 100 , 200, 3);
 
-    cv::findContours( edges, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE);
+    cv::findContours(edges, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE);
 
     mark = 0;
 
@@ -542,45 +547,47 @@ bool WebcamDevice::detectMarker(std::vector<cv::Point2f> *pointQR)
         while(hierarchy[k][2] != -1)
         {
             k = hierarchy[k][2] ;
-            c = c+1;
+            ++c;
         }
         if(hierarchy[k][2] != -1)
-            c = c+1;
+            ++c;
 
         if (c >= 5)
         {
-            if (mark == 0)      A = i;
-            else if  (mark == 1)    B = i;      // i.e., A is already found, assign current contour to B
-            else if  (mark == 2)    C = i;      // i.e., A and B are already found, assign current contour to C
-            mark = mark + 1 ;
+            if (mark == 0)
+                A = i;
+            else if (mark == 1)
+                B = i;      // i.e., A is already found, assign current contour to B
+            else if(mark == 2)
+                C = i;      // i.e., A and B are already found, assign current contour to C
+            ++mark;
         }
     }
 
     if (A !=0 && B !=0 && C!=0)
     {
-
-        (*pointQR).push_back(mc[A]);
+        _markerCornersInit[1].push_back(mc[A]);
         //cv::circle((*_frame), cv::Point((*pointQR)[0].x, (*pointQR)[0].y), 3, cv::Scalar(0, 0, 255), 1, 8, 0);
-        (*pointQR).push_back(mc[B]);
+        _markerCornersInit[1].push_back(mc[B]);
         //cv::circle((*_frame), cv::Point((*pointQR)[1].x, (*pointQR)[1].y), 3, cv::Scalar(0, 0, 255), 1, 8, 0);
-        (*pointQR).push_back(mc[C]);
+        _markerCornersInit[1].push_back(mc[C]);
         //cv::circle((*_frame), cv::Point((*pointQR)[2].x, (*pointQR)[2].y), 3, cv::Scalar(0, 0, 255), 1, 8, 0);
 
         float minDist;
         float dist2;
         cv::Point2f minPoint;
 
-        minDist = sqrt(pow((*pointQR)[0].x,2)+pow((*pointQR)[0].y,2));
-        minPoint = (*pointQR)[0];
+        minDist = sqrt(pow(_markerCornersInit[1][0].x, 2) + pow(_markerCornersInit[1][0].y, 2));
+        minPoint = _markerCornersInit[1][0];
 
         for (int i = 1; i < 3; i++)
         {
-            dist2 = sqrt(pow((*pointQR)[i].x,2)+pow((*pointQR)[i].y,2));
+            dist2 = sqrt(pow(_markerCornersInit[1][i].x, 2) + pow(_markerCornersInit[1][i].y, 2));
 
             if (dist2 <= minDist)
             {
                 minDist = dist2;
-                minPoint = (*pointQR)[i];
+                minPoint = _markerCornersInit[1][i];
             }
         }
 
@@ -589,15 +596,15 @@ bool WebcamDevice::detectMarker(std::vector<cv::Point2f> *pointQR)
 
         for (int i = 0; i < 3; i++)
         {
-            distCrop = sqrt(pow(((*pointQR)[i].x - minPoint.x),2)+pow(((*pointQR)[i].y - minPoint.y),2));
+            distCrop = sqrt(pow((_markerCornersInit[1][i].x - minPoint.x),2)+pow((_markerCornersInit[1][i].y - minPoint.y),2));
             if (distCrop != 0)
                 tabDistCrop.push_back(distCrop);
         }
 
-        cv::swap((*_frame), _frameCropped);
+        _frame->copyTo(_frameCropped);
         cv::Rect ROI(minPoint.x, minPoint.y, tabDistCrop[1], tabDistCrop[0]);
 
-        if(ROI.x >= 0 && ROI.y >= 0 && ROI.width + ROI.x < _frameCropped.cols && ROI.height + ROI.y < _frameCropped.rows)
+        if(ROI.x >= 0 && ROI.y >= 0 && (ROI.width + ROI.x) < _frameCropped.cols && (ROI.height + ROI.y) < _frameCropped.rows)
         {
             cv::Mat croppedRef(_frameCropped, ROI);
             cv::cvtColor(croppedRef, _frameCropped, CV_BGR2GRAY);
@@ -614,11 +621,11 @@ bool WebcamDevice::detectMarker(std::vector<cv::Point2f> *pointQR)
             E.y = (mc[B].y + mc[C].y)/2;
             F.y = (mc[C].y + mc[A].y)/2;
 
-            (*pointQR).push_back(D);
+            _markerCornersInit[1].push_back(D);
             //cv::circle((*_frame), cv::Point((*pointQR)[3].x, (*pointQR)[3].y), 3, cv::Scalar(0, 0, 255), 1, 8, 0);
-            (*pointQR).push_back(E);
+            _markerCornersInit[1].push_back(E);
             //cv::circle((*_frame), cv::Point((*pointQR)[4].x, (*pointQR)[4].y), 3, cv::Scalar(0, 0, 255), 1, 8, 0);
-            (*pointQR).push_back(F);
+            _markerCornersInit[1].push_back(F);
             //cv::circle((*_frame), cv::Point((*pointQR)[5].x, (*pointQR)[5].y), 3, cv::Scalar(0, 0, 255), 1, 8, 0);
 
             patternFound = true;
@@ -653,7 +660,7 @@ void WebcamDevice::trackingChess()
     cv::Rodrigues(rvecs, _rotVecs);
 }
 
-void WebcamDevice::trackingMarker(cv::Mat *rotVecs)
+void WebcamDevice::trackingMarker()
 {
     cv::Mat rvecs;
     cv::Mat imCalib;
@@ -672,8 +679,7 @@ void WebcamDevice::trackingMarker(cv::Mat *rotVecs)
 
     cv::solvePnP(_pointsMarker3D, _markerCornersInit[0], _cameraMatrix, _distCoeffs, rvecs, _tvecs);
 
-    _rotVecs = cv::Mat(3, 3, CV_64F);
-    cv::Rodrigues(rvecs, (*rotVecs));
+    cv::Rodrigues(rvecs, _rotVecs);
 }
 
 void WebcamDevice::dbCorrelation()
@@ -844,7 +850,7 @@ void WebcamDevice::markerRT()
 
     if(_markerDetected)
     {
-        this->trackingMarker(&_rotVecs);
+        this->trackingMarker();
 
         cv::projectPoints(_pointsMarker3D, _rotVecs, _tvecs, _cameraMatrix, _distCoeffs, imagePoints);
 
@@ -852,11 +858,11 @@ void WebcamDevice::markerRT()
         for(int m = 0; m < _markerCornersInit[0].size(); m++)
             cv::circle(*_frame, cv::Point(_markerCornersInit[0][m].x, _markerCornersInit[0][m].y), 3, cv::Scalar(0, 0, 255), 1, 8, 0);
 
-        if(_runCount == _actualFps)
-        {
-            this->dbCorrelation();
-            _runCount = 0;
-        }
+//        if(_runCount == _actualFps)
+//        {
+//            this->dbCorrelation();
+//            _runCount = 0;
+//        }
 
         emit updateScene(_rotVecs, _tvecs);
         emit updateDetect(true);
@@ -882,16 +888,13 @@ void WebcamDevice::markerRT()
 
     if (!_markerDetected || _reset == true)
     {
-        imagePoints.clear();
         _markerCornersInit[0].clear();
         _markerCornersInit[1].clear();
-        meanErrors = 0;
-        errors.clear();
         _nextFrame.release();
         _frameCropped.release();
         _reset = false;
         _markerDetected = false;
 
-        _markerDetected = detectMarker(&_markerCornersInit[1]);
+        _markerDetected = detectMarker();
     }
 }
