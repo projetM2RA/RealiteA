@@ -78,6 +78,10 @@ CalibrateDialog::CalibrateDialog(cv::Mat* frame, QWidget *parent) :
     connect(_save, SIGNAL(clicked()), this, SLOT(saveSnapShot()));
     connect(_sup, SIGNAL(clicked()), this, SLOT(delSnapShot()));
     connect(_finish, SIGNAL(clicked()), this, SLOT(endSnapShot()));
+
+    for(int i = 1; i <= 30; ++i)
+        if(QFile::exists(QString("../rsc/mires/mire") + QString::number(i) + QString(".png")))
+            QFile::remove(QString("../rsc/mires/mire") + QString::number(i) + QString(".png"));
 }
 
 bool CalibrateDialog::detectChess(cv::Mat chessFrame, cv::Mat* chessSaved)
@@ -202,7 +206,7 @@ void CalibrateDialog::endSnapShot()
     _calibration->setCancelButton(0);
     _calibration->setMinimumDuration(0);
 
-    cv::Mat imCalib[30];
+    std::vector<cv::Mat> imCalib;
     cv::Mat cameraMatrix = cv::Mat::eye(3, 3, CV_64F);
     cv::Mat distCoeffs = cv::Mat::zeros(8, 1, CV_64F);
     cameraMatrix.at<double>(0, 0) = 1.0;
@@ -216,7 +220,7 @@ void CalibrateDialog::endSnapShot()
     chessCorners3D.clear();
     chessCornersInit.clear();
 
-    for(int i = 0; i < _imageIndex; i++)
+    for(int i = 1; i < _imageIndex; i++)
     {
         std::vector<cv::Point2f> initCorners(_nbrRows->value() * _nbrCols->value(), cv::Point2f(0, 0));
         chessCornersInit.push_back(initCorners);
@@ -224,11 +228,11 @@ void CalibrateDialog::endSnapShot()
 
     _calibration->setValue(33);
 
-    for(int i = 0; i < _imageIndex; i++)
+    for(int i = 0; i < _imageIndex - 1; i++)
     {
         std::ostringstream oss;
         oss << "../rsc/mires/mire" << i + 1 << ".png";
-        imCalib[i] = cv::imread(oss.str());
+        imCalib.push_back(cv::imread(oss.str()));
 
         cv::cvtColor(imCalib[i], imCalib[i], CV_BGR2GRAY);
 
@@ -240,7 +244,7 @@ void CalibrateDialog::endSnapShot()
 
     _calibration->setValue(66);
 
-    for(int i = 1; i < _imageIndex + 1; i++)
+    for(int i = 1; i < _imageIndex; i++)
     {
         std::vector<cv::Point3f> initCorners3D;
 
