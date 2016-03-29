@@ -220,7 +220,7 @@ void MainWindow::addTemplate(int templateID)
                                         return;
                                     name = "";
                                     path = "";
-                                }
+                                }/*
                                 if(reader.name() == "texture" && reader.tokenType() == QXmlStreamReader::StartElement)
                                 {
                                     while(reader.tokenType() != QXmlStreamReader::Characters)
@@ -228,7 +228,7 @@ void MainWindow::addTemplate(int templateID)
                                     texture = reader.text().toString();
                                     _objectsList[_objectsList.size() - 1]->applyTexture(texture);
                                     _objectsList2[_objectsList2.size() - 1]->applyTexture(texture);
-                                }
+                                }*/
 
                                 if(reader.name() == "sx" && reader.tokenType() == QXmlStreamReader::StartElement)
                                 {
@@ -487,7 +487,8 @@ void MainWindow::removeObject()
             _objectID = i;
             this->removeObject();
         }
-        _objectID = 0;
+        _objectID = 1;
+        this->updateObjectCharacteristics(0);
     }
     else
     {
@@ -531,6 +532,8 @@ void MainWindow::removeObject()
         _objectsList.erase(_objectsList.begin() += _objectID);
         _objectsList2[0]->removeChild(_objectsList2[_objectID]);
         _objectsList2.erase(_objectsList2.begin() += _objectID);
+        int nbrObjects = _objectChoiceComboBox->itemText(0).mid(14).toInt();
+        _objectChoiceComboBox->setItemText(0, "All objects : " + QString::number(nbrObjects - 1));
         _objectChoiceComboBox->removeItem(_objectID);
 
         if(_objectID >= _objectsList.size())
@@ -833,7 +836,7 @@ void MainWindow::updateSceneRT(cv::Mat rotVec, cv::Mat tvecs)
             }
         }
 
-        _file << (rx*180)/PI << " ; " << (ry*180)/PI << " ; "  << (rz*180)/PI << " ; "  << std::endl;
+        //_file << (rx*180)/PI << " ; " << (ry*180)/PI << " ; "  << (rz*180)/PI << " ; "  << std::endl;
         std::cout << "r x : " << rx * 180 / PI << std::endl;
         std::cout << "r y : " << ry * 180 / PI << std::endl;
         std::cout << "r z : " << rz * 180 / PI << std::endl;
@@ -1387,7 +1390,8 @@ void MainWindow::setMainWindow(int mode)
     toolbar->addWidget(rotateGroup);
     toolbar->addWidget(translateGroup);
     toolbar->setMovable(true);
-    this->addToolBar(Qt::BottomToolBarArea, toolbar);
+//    this->addToolBar(Qt::BottomToolBarArea, toolbar);
+    this->addToolBar(Qt::TopToolBarArea, toolbar);
 
     ///////////////////////////////////////////////////
 

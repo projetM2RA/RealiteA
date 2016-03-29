@@ -123,7 +123,7 @@ void CalibrateDialog::saveSnapShot()
     {
         if(_imageIndex <= 30)
         {
-            cv::imwrite(oss.str(), _webcamFluxScene->getFrame(), compression_params);
+            cv::imwrite(oss.str(), _webcamFluxScene->getFrame());
             _infoMessage->setText(QString("Image ") + QString::number(_imageIndex) + QString(" saved."));
             _imageSavedScene->update();
         }
@@ -178,7 +178,7 @@ void CalibrateDialog::delSnapShot()
     if(_imageIndex == 1)
     {
         _imageIndexLabel->setText("Image : " + QString::number(_imageIndex - 1) + " / 15");
-        _sup->setEnabled(false);        
+        _sup->setEnabled(false);
     }
     else if(_imageIndex > 1 && _imageIndex <= 15)
     {
@@ -240,6 +240,8 @@ void CalibrateDialog::endSnapShot()
 
         if(patternfound)
             cv::cornerSubPix(imCalib[i], chessCornersInit[i], cv::Size(5, 5), cv::Size(-1, -1), cv::TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1));
+        if(chessCornersInit[i].size() != _nbrRows->value() * _nbrCols->value())
+            chessCornersInit.erase(chessCornersInit.begin() += i);
     }
 
     _calibration->setValue(66);
@@ -252,7 +254,7 @@ void CalibrateDialog::endSnapShot()
         {
             for(int k = 0; k < _nbrRows->value(); k++)
             {
-                 _calibration->setValue(i);
+                _calibration->setValue(i);
                 cv::Point3f corner(j * _chessSize->value(), k * _chessSize->value(), 0.0f);
                 initCorners3D.push_back(corner);
             }
@@ -267,7 +269,7 @@ void CalibrateDialog::endSnapShot()
     _calibration->setValue(99);
 
     std::string filename = "../rsc/intrinsicMatrix.yml";
-    cv::FileStorage fs(filename, cv::FileStorage::WRITE);    
+    cv::FileStorage fs(filename, cv::FileStorage::WRITE);
 
     fs << "cameraMatrix" << cameraMatrix << "distCoeffs" << distCoeffs;
 

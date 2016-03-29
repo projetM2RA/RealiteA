@@ -8,7 +8,6 @@ WebcamDevice::WebcamDevice(QObject *parent) :
     _vcap = cv::VideoCapture(0);
     _frame = new cv::Mat(cv::Mat::zeros(640,480, CV_8UC3));
     _rotVecs = cv::Mat::zeros(3, 3, CV_64F);
-    _tvecs = cv::Mat::zeros(3, 1, CV_64F);
     _initFps = 25;
     _actualFps = 25;
 
@@ -72,60 +71,60 @@ int WebcamDevice::initMatrix()
     {
         switch(calibrateCam(&fs))
         {
-            case cancel:
-            {
+        case cancel:
+        {
+            return cancel;
+            break;
+        }
+        case defaultCase:
+        {
+            _cameraMatrix = cv::Mat::zeros(3, 3, CV_32F);
+            _distCoeffs = cv::Mat::zeros(1, 5, CV_32F);
+
+            _cameraMatrix.at<double>(0,0) = 683.52803565425086;
+            _cameraMatrix.at<double>(0,1) = 0;
+            _cameraMatrix.at<double>(0,2) = 322.55739845129722;
+            _cameraMatrix.at<double>(1,0) = 0;
+            _cameraMatrix.at<double>(1,1) = 684.92870414691424;
+            _cameraMatrix.at<double>(1,1) = 244.60400436525589;
+            _cameraMatrix.at<double>(2,0) = 0;
+            _cameraMatrix.at<double>(2,1) = 0;
+            _cameraMatrix.at<double>(2,2) = 1;
+
+            _distCoeffs.at<double>(0,0) = -0.12517320982838301;
+            _distCoeffs.at<double>(0,1) = 0.30334524836285731;
+            _distCoeffs.at<double>(0,2) = 0.00064225602902184462;
+            _distCoeffs.at<double>(0,3) = -0.0026090495976546276;
+            _distCoeffs.at<double>(0,4) = -1.3717106570492081;
+
+            _focalePlane = (_cameraMatrix.at<double>(0, 0) + _cameraMatrix.at<double>(1, 1)) / 2; // NEAR = distance focale ; si pixels carrés, fx = fy -> np
+            //mais est généralement différent de fy donc on prend (pour l'instant) par défaut la valeur médiane
+            fs.release();
+
+            if(this->setOptions())
+                return defaultCase;
+            else
                 return cancel;
-                break;
-            }
-            case defaultCase:
-            {
-                _cameraMatrix = cv::Mat::zeros(3, 3, CV_32F);
-                _distCoeffs = cv::Mat::zeros(1, 5, CV_32F);
 
-                _cameraMatrix.at<double>(0,0) = 683.52803565425086;
-                _cameraMatrix.at<double>(0,1) = 0;
-                _cameraMatrix.at<double>(0,2) = 322.55739845129722;
-                _cameraMatrix.at<double>(1,0) = 0;
-                _cameraMatrix.at<double>(1,1) = 684.92870414691424;
-                _cameraMatrix.at<double>(1,1) = 244.60400436525589;
-                _cameraMatrix.at<double>(2,0) = 0;
-                _cameraMatrix.at<double>(2,1) = 0;
-                _cameraMatrix.at<double>(2,2) = 1;
+            break;
+        }
+        case calibrationCase:
+        {
+            fs["cameraMatrix"] >> _cameraMatrix;
+            fs["distCoeffs"] >> _distCoeffs;
 
-                _distCoeffs.at<double>(0,0) = -0.12517320982838301;
-                _distCoeffs.at<double>(0,1) = 0.30334524836285731;
-                _distCoeffs.at<double>(0,2) = 0.00064225602902184462;
-                _distCoeffs.at<double>(0,3) = -0.0026090495976546276;
-                _distCoeffs.at<double>(0,4) = -1.3717106570492081;
+            _focalePlane = (_cameraMatrix.at<double>(0, 0) + _cameraMatrix.at<double>(1, 1)) / 2; // NEAR = distance focale ; si pixels carrés, fx = fy -> np
+            //mais est généralement différent de fy donc on prend (pour l'instant) par défaut la valeur médiane
 
-                _focalePlane = (_cameraMatrix.at<double>(0, 0) + _cameraMatrix.at<double>(1, 1)) / 2; // NEAR = distance focale ; si pixels carrés, fx = fy -> np
-                //mais est généralement différent de fy donc on prend (pour l'instant) par défaut la valeur médiane
-                fs.release();
+            fs.release();
 
-                if(this->setOptions())
-                    return defaultCase;
-                else
-                    return cancel;
+            if(this->setOptions())
+                return calibrationCase;
+            else
+                return cancel;
 
-                break;
-            }
-            case calibrationCase:
-            {
-                fs["cameraMatrix"] >> _cameraMatrix;
-                fs["distCoeffs"] >> _distCoeffs;
-
-                _focalePlane = (_cameraMatrix.at<double>(0, 0) + _cameraMatrix.at<double>(1, 1)) / 2; // NEAR = distance focale ; si pixels carrés, fx = fy -> np
-                //mais est généralement différent de fy donc on prend (pour l'instant) par défaut la valeur médiane
-
-                fs.release();
-
-                if(this->setOptions())
-                    return calibrationCase;
-                else
-                    return cancel;
-
-                break;
-            }
+            break;
+        }
         }
     }
     else
@@ -162,10 +161,10 @@ bool WebcamDevice::initModels()
         std::ostringstream oss;
         oss << ":/markers/mark" << i+1;
         QImage marker(QString::fromStdString(oss.str()));
-//        marker.convertToFormat(QImage::Format_RGB16);
+        //        marker.convertToFormat(QImage::Format_RGB16);
         cv::Mat imMQR(marker.height(), marker.width(), CV_8UC4);
         imMQR.data = marker.bits();
-//        cv::Mat imMQR = cv::imread(oss.str());
+        //        cv::Mat imMQR = cv::imread(oss.str());
         cv::cvtColor(imMQR, imMQR, CV_RGBA2GRAY);
         _markersModels.push_back(imMQR);
     }
@@ -399,54 +398,54 @@ int WebcamDevice::calibrateCam(cv::FileStorage *fs)
         {
             switch(matrixDialog->getChoice())
             {
-                case defaultMatrix:
+            case defaultMatrix:
+            {
+                ret = defaultCase;
+                stop = true;
+                break;
+            }
+            case existingMatrix:
+            {
+                cv::Mat test1, test2;
+                QString fsPath = QFileDialog::getOpenFileName((QWidget*)this->parent(), "Select camera intrinsic matrix", "../rsc/", "FileStorage (*.yml)");
+                if(fsPath != "")
+                    fs->open(fsPath.toStdString(), cv::FileStorage::READ);
+                (*fs)["cameraMatrix"] >> test1;
+                (*fs)["distCoeffs"] >> test2;
+                if(test1.empty() || test2.empty())
                 {
-                    ret = defaultCase;
+                    QMessageBox::warning((QWidget*)this->parent(), tr("Incorrect matrix"), tr("The given matrix is incorrect.\nPlease select another one."));
+                    fs->release();
+                }
+                else
+                {
                     stop = true;
-                    break;
-                }
-                case existingMatrix:
-                {
-                    cv::Mat test1, test2;
-                    QString fsPath = QFileDialog::getOpenFileName((QWidget*)this->parent(), "Select camera intrinsic matrix", "../rsc/", "FileStorage (*.yml)");
-                    if(fsPath != "")
-                        fs->open(fsPath.toStdString(), cv::FileStorage::READ);
-                    (*fs)["cameraMatrix"] >> test1;
-                    (*fs)["distCoeffs"] >> test2;
-                    if(test1.empty() || test2.empty())
-                    {
-                        QMessageBox::warning((QWidget*)this->parent(), tr("Incorrect matrix"), tr("The given matrix is incorrect.\nPlease select another one."));
-                        fs->release();
-                    }
-                    else
-                    {
-                        stop = true;
-                        ret = calibrationCase;
+                    ret = calibrationCase;
 
-                        cv::FileStorage fs2("../rsc/intrinsicMatrix.yml", cv::FileStorage::WRITE);
-                        fs2 << "cameraMatrix" << test1 << "distCoeffs" << test2;
-                        fs2.release();
-                        fs->open("../rsc/intrinsicMatrix.yml", cv::FileStorage::READ);
-                    }
-                    break;
+                    cv::FileStorage fs2("../rsc/intrinsicMatrix.yml", cv::FileStorage::WRITE);
+                    fs2 << "cameraMatrix" << test1 << "distCoeffs" << test2;
+                    fs2.release();
+                    fs->open("../rsc/intrinsicMatrix.yml", cv::FileStorage::READ);
                 }
-                case calibrateMatrix:
-                {
-                    CalibrateDialog* calibrateDialog = new CalibrateDialog(_frame);
-                    connect(this, SIGNAL(updateWebcam()), calibrateDialog, SLOT(updateWebcam()));
+                break;
+            }
+            case calibrateMatrix:
+            {
+                CalibrateDialog* calibrateDialog = new CalibrateDialog(_frame);
+                connect(this, SIGNAL(updateWebcam()), calibrateDialog, SLOT(updateWebcam()));
 
-                    if(calibrateDialog->exec() == QDialog::Accepted)
-                    {
-                        fs->open("../rsc/intrinsicMatrix.yml", cv::FileStorage::READ);
-                        stop = true;
-                        ret = calibrationCase;
-                        break;
-                    }
-                    else
-                        break;
-                }
-                default:
+                if(calibrateDialog->exec() == QDialog::Accepted)
+                {
+                    fs->open("../rsc/intrinsicMatrix.yml", cv::FileStorage::READ);
+                    stop = true;
+                    ret = calibrationCase;
                     break;
+                }
+                else
+                    break;
+            }
+            default:
+                break;
             }
         }
         else
@@ -573,6 +572,14 @@ bool WebcamDevice::detectMarker()
         _markerCornersInit[1].push_back(mc[C]);
         //cv::circle((*_frame), cv::Point((*pointQR)[2].x, (*pointQR)[2].y), 3, cv::Scalar(0, 0, 255), 1, 8, 0);
 
+        //        std::vector<cv::Point2f> eqLine;
+        //        for(int i = 0; i < 3; ++i)
+        //        {
+        //            cv::Point2f eq()
+        //        }
+
+
+        //* partie Nico qui "fonctionne"
         float minDist;
         float dist2;
         cv::Point2f minPoint;
@@ -596,7 +603,7 @@ bool WebcamDevice::detectMarker()
 
         for (int i = 0; i < 3; i++)
         {
-            distCrop = sqrt(pow((_markerCornersInit[1][i].x - minPoint.x),2)+pow((_markerCornersInit[1][i].y - minPoint.y),2));
+            distCrop = sqrt(pow((_markerCornersInit[1][i].x - minPoint.x) ,2) + pow((_markerCornersInit[1][i].y - minPoint.y),2));
             if (distCrop != 0)
                 tabDistCrop.push_back(distCrop);
         }
@@ -630,6 +637,7 @@ bool WebcamDevice::detectMarker()
 
             patternFound = true;
         }
+        //*/
     }
 
     if(patternFound)
@@ -712,7 +720,7 @@ void WebcamDevice::dbCorrelation()
             if( dist < min_dist ) min_dist = dist;
             if( dist > max_dist ) max_dist = dist;
 
-            if( matches[i].distance <= 2*min_dist )
+            if( matches[i].distance <= 2*min_dist)
                 good_matches1.push_back( matches[i]);
         }
 
@@ -858,11 +866,11 @@ void WebcamDevice::markerRT()
         for(int m = 0; m < _markerCornersInit[0].size(); m++)
             cv::circle(*_frame, cv::Point(_markerCornersInit[0][m].x, _markerCornersInit[0][m].y), 3, cv::Scalar(0, 0, 255), 1, 8, 0);
 
-//        if(_runCount == _actualFps)
-//        {
-//            this->dbCorrelation();
-//            _runCount = 0;
-//        }
+        //        if(_runCount == _actualFps)
+        //        {
+        //            this->dbCorrelation();
+        //            _runCount = 0;
+        //        }
 
         emit updateScene(_rotVecs, _tvecs);
         emit updateDetect(true);
@@ -879,12 +887,15 @@ void WebcamDevice::markerRT()
 
         if(meanErrors > 10)
         {
-            emit updateDetect(false);
+//            emit updateDetect(false);
             _reset = true;
         }
 
         ++_runCount;
     }
+
+    if(!_markerDetected) // TODO a retirer apres demo
+        emit updateDetect(false);
 
     if (!_markerDetected || _reset == true)
     {
