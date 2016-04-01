@@ -1,3 +1,13 @@
+////////////////////////////////////////////////////////////
+//                                                        //
+//  Fenetre de dialogue qui va permettre à l'utilisateur  //
+//  d'ajouter un modele 3D ou en template prédéfini à la  //
+//  scene 3D. Il peut aussi choisir d'appliquer une       //
+//  texture à l'objet importé                             //
+//                                                        //
+////////////////////////////////////////////////////////////
+
+
 #ifndef ADDOBJECTDIALOG_H
 #define ADDOBJECTDIALOG_H
 

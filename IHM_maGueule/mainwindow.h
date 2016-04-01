@@ -1,3 +1,12 @@
+////////////////////////////////////////////////////////////
+//                                                        //
+//  classe principale qui hérite de QMainWindow           //
+//  pour plus de details, se referer aux commentaires     //
+//  dans le fichier MainWindow.cpp                        //
+//                                                        //
+////////////////////////////////////////////////////////////
+
+
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
@@ -30,6 +39,7 @@
 #include "SideViewOsgWidget.h"
 #include "WebcamDevice.h"
 #include "AddObjectDialog.h"
+#include "HelpWindow.h"
 
 
 #define NBR_CHARACTERISTICS  10
@@ -79,6 +89,7 @@ private slots:
     void displayAboutOsg();
     void displayAboutChehra();
     void displayAbout();
+    void displayHelp();
 
 private:
     void setFirstWindow();

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta  content="text/html; charset=UTF-8"  http-equiv="content-type">
+    <title>detection</title>
+    <style  type="text/css">
+#backgroundColor {  
+  background-color: rgb(236, 240, 241);
+}
+
+</style></head>
+  <body  id="backgroundColor"  style="width: 1217px;"> <img  alt="ARON"  src="file:///C:/Users/Leo/Dropbox/ProjetM2/HowTo/images/banner.png"><br>
+    <h1><span  style="font-family: Calibri;">Detection<br>
+      </span></h1>
+    <span  style="font-family: Calibri;">Three different detection are
+      implemented for now. To select the chosen one, hover the <span  style="font-weight: bold;"><strong>Detection</strong></span><strong>
+      </strong>menu :<br>
+      <br>
+    </span>
+    <div  style="text-align: center;"><img  title="detect"  alt="Detection menu"
+         src="file:///C:/Users/Leo/Dropbox/ProjetM2/HowTo/images/detection.png"><span
+         style="font-family: Calibri;"><strong><br>
+        </strong></span>
+      <div  style="text-align: left;">
+        <ul>
+          <li><span  style="font-family: Calibri;"><strong>Face detection </strong>will
+              launch Chehra automatic face detection and tracking system.</span></li>
+        </ul>
+      </div>
+      <div  style="text-align: left;">
+        <ul>
+          <li><span  style="font-family: Calibri;"><span  style="font-weight: bold;">Board
+                detection </span>required a chessboard pattern similar to the
+              one used for calibration.</span></li>
+        </ul>
+        <ul>
+          <li><span  style="font-family: Calibri;"><strong>Marker detection</strong>
+              uses personal markers but it not fully functional yet.</span></li>
+        </ul>
+        <span  style=" font-family: Calibri;"><br>
+        </span>
+        <div  style="text-align: center;"><span  style="font-family: Calibri;"><span
+               style="font-style: italic;">Once you have selected a detection,
+              you can add 3D models to the scene and start projecting them.<br>
+              <br>
+            </span></span>
+          <div  style="text-align: left;"><span  style="font-family: Calibri;"><span
+                 style="font-style: italic;"><a  title="Previous page"  href="file:///C:/Users/Leo/Dropbox/ProjetM2/HowTo/general.html"><img
+                     title="previous"  alt="Previous page"  src="file:///C:/Users/Leo/Dropbox/ProjetM2/HowTo/images/previous.png"></a>&nbsp;&nbsp;&nbsp;
+                &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+                &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+                &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+                &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+                &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+                &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+                &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+                &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+                &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+                &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+                &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+                &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+                &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+                &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+                &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;
+                &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+                &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+                &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+                &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+                &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+                &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+                &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; <a  title="Next page"
+                   href="file:///C:/Users/Leo/Dropbox/ProjetM2/HowTo/addobject.html"><img
+                     title="next"  alt="Next page"  src="file:///C:/Users/Leo/Dropbox/ProjetM2/HowTo/images/next.png"></a></span></span><br>
+            <span  style="font-family: Calibri;"><span  style="font-style: italic;"></span></span></div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

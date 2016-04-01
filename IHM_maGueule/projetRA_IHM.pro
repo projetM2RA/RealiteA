@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui opengl xml
+QT       += core gui opengl xml help
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -59,7 +59,9 @@ SOURCES += \
     WebcamDevice.cpp \
     WebcamGraphicsScene.cpp \
     Our3DObject.cpp \
-    MatrixDialog.cpp
+    MatrixDialog.cpp \
+    HelpWindow.cpp \
+    HelpBrowser.cpp
 
 HEADERS  += \
     SideViewOsgWidget.h \
@@ -74,7 +76,9 @@ HEADERS  += \
     WebcamGraphicsScene.h \
     WebcamGraphicsView.h \
     Our3DObject.h \
-    MatrixDialog.h
+    MatrixDialog.h \
+    HelpWindow.h \
+    HelpBrowser.h
 
 RESOURCES += \
     rsc.qrc \

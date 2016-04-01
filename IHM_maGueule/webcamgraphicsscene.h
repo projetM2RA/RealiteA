@@ -20,7 +20,7 @@ public:
 private:
     void deleteItems();
 
-    CvSize _frameSize; // TODO  je ne sais pas vraiment Ã  quoi il sert... il est utilisÃ© pour opengl (drawBackground) mais n'est pas initialisÃ©...
+    CvSize _frameSize; // TODO  je ne sais pas vraiment à quoi il sert... il est utilisé pour opengl (drawBackground) mais n'est pas initialisé...
     cv::Mat* _cvFrame;
 };
 

@@ -1,3 +1,11 @@
+////////////////////////////////////////////////////////////
+//                                                        //
+//  Widget permettant d'afficher la scene 3D secondaire   //
+//                                                        //
+//  Remerciements à Bastian Rieck qui a créé cette classe //
+//                                                        //
+////////////////////////////////////////////////////////////
+
 #ifndef SIDEVIEWOSGWIDET_H
 #define SIDEVIEWOSGWIDET_H
 

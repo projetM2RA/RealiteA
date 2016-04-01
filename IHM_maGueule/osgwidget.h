@@ -1,3 +1,11 @@
+////////////////////////////////////////////////////////////
+//                                                        //
+//  Widget permettant d'afficher la scene 3D principale   //
+//                                                        //
+//  Remerciements à Bastian Rieck qui a créé cette classe //
+//                                                        //
+////////////////////////////////////////////////////////////
+
 #ifndef OSGWidget_h__
 #define OSGWidget_h__
 

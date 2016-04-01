@@ -1,3 +1,10 @@
+////////////////////////////////////////////////////////////
+//                                                        //
+//  Fenetre de dialogue qui va permettre à l'utilisateur  //
+//  de parametrer les repères utilisés (mire et marqueur) //
+//                                                        //
+////////////////////////////////////////////////////////////
+
 #ifndef OPTIONSDIALOG_H
 #define OPTIONSDIALOG_H
 

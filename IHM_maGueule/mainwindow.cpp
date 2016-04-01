@@ -13,25 +13,21 @@ MainWindow::MainWindow(QWidget *parent)
     _playVideo = false;
     _playCam = false;
 
-    _file.open ("../rsc/angles.txt");
-    _file << "   rotX   " << "   rotY   " << "   rotZ   " << "   tX   " << "   tY   " << "   tZ   " << std::endl;
-
+    //    _file.open ("../rsc/angles.txt"); // utilisé à des fins de débug
+    //    _file << "   rotX   " << "   rotY   " << "   rotZ   " << "   tX   " << "   tY   " << "   tZ   " << std::endl;
 
     setFirstWindow();
-
 
     this->resize(QDesktopWidget().availableGeometry(this).size() * 0.65);
 }
 
 MainWindow::~MainWindow()
 {
-    _file.close();
+    //_file.close();
     if(_delete)
     {
         for(int i = 0; i < NBR_DETECT; i++)
-        {
             delete _detectActions[i];
-        }
         delete _detectActions;
 
         delete _addObjectAction;
@@ -44,28 +40,38 @@ MainWindow::~MainWindow()
         delete _isPrintedBox;
 
         for(int i = 0; i < NBR_CHARACTERISTICS; i++)
-        {
             delete _objectCharacteristicsSpinSliders[i];
-        }
 
         delete _objectCharacteristicsSpinSliders;
 
         delete _sideView;
     }
 
-    //////////////////////////////////////////////////
-
     _webcamDevice->stop();
-    _sleep(100);
+    _sleep(100); // on s'assure que le thread s'est bien arreté
     delete _webcamDevice;
 }
 
 
 
 // private slots
+
+/*
+ * ce membre sera appelé lorsque l'utilisateur va cliquer sur "start".
+ * il va réllement lancer le programme en appelant notamment les membres suivant :
+ * initOjectsList()
+ * setMainWindow()
+ * connectAll()
+ */
 bool MainWindow::start()
 {
     int initCalib = 0;
+    /*
+     * meme si un QSplashScreen semble plus indiqué, ça ne fonctionne pas ici
+     * (le chargement de chehra prend trop de ressources ?)
+     * on utilise donc un QWidget sur lequel on applique un mask
+     * à noter qu'y appliquer une "simple" image ne fonctionne pas non plus
+     */
     //QSplashScreen splash(QPixmap(":/icons/splash"), Qt::WindowStaysOnTopHint);
     QWidget splash;
     QBitmap bit(":/icons/splash");
@@ -173,13 +179,19 @@ void MainWindow::setTexture()
     _objectsList2[_objectID]->applyTexture(texPath);
 }
 
+/*
+ * membre qui va parser le fichier objectTemplate.xml
+ * (inclut dans les resources .qrc)
+ * et va ajouter les différents modeles 3D avec leurs
+ * caractéristiques propre à la scene
+ */
 void MainWindow::addTemplate(int templateID)
 {
     QXmlStreamReader reader;
     QFile file(":/templates/objectsTemplate.xml");
     file.open(QFile::ReadOnly | QFile::Text);
     reader.setDevice(&file);
-    QString name, path, texture;
+    QString name, path;
 
     while(!reader.atEnd() && !reader.hasError())
     {
@@ -214,21 +226,20 @@ void MainWindow::addTemplate(int templateID)
                                         reader.readNext();
                                     path = reader.text().toString();
                                 }
-                                if(name != "" && path != "") // je sais pas ou le mettre ce if
-                                {
-                                    if(!this->addObject(name, path))
-                                        return;
-                                    name = "";
-                                    path = "";
-                                }/*
+                                /*
+                                 * les templates on été créés avant qu'on mette en place la gestion des textures
+                                 * il faudrait donc les rajouter dans le fichier .xml
+                                 */
+
+                                /*
                                 if(reader.name() == "texture" && reader.tokenType() == QXmlStreamReader::StartElement)
                                 {
                                     while(reader.tokenType() != QXmlStreamReader::Characters)
                                         reader.readNext();
-                                    texture = reader.text().toString();
-                                    _objectsList[_objectsList.size() - 1]->applyTexture(texture);
-                                    _objectsList2[_objectsList2.size() - 1]->applyTexture(texture);
-                                }*/
+                                    _objectsList[_objectsList.size() - 1]->applyTexture(reader.text().toString());
+                                    _objectsList2[_objectsList2.size() - 1]->applyTexture(reader.text().toString());
+                                }
+                                */
 
                                 if(reader.name() == "sx" && reader.tokenType() == QXmlStreamReader::StartElement)
                                 {
@@ -306,6 +317,14 @@ void MainWindow::addTemplate(int templateID)
 
                                 reader.readNext();
                             }
+
+                            if(name != "" && path != "") // je sais pas trop où le mettre ce if
+                            {
+                                if(!this->addObject(name, path))
+                                    return;
+                                name = "";
+                                path = "";
+                            }
                         }
                         reader.readNext();
                     }
@@ -328,6 +347,13 @@ void MainWindow::addTemplate(int templateID)
     reader.clear();
 }
 
+/*
+ * membre qui va mettre à jour les valeurs des sliders
+ * lorsque l'utilisateur change l'objet selectionné dans
+ * la spinbox
+ * (il va aussi relier correctement les signaux des sliders
+ * aux slots de l'objet correspondant)
+ */
 void MainWindow::updateObjectCharacteristics(int objectID)
 {
     if(objectID == _objectID)
@@ -476,6 +502,13 @@ void MainWindow::updateObjectCharacteristics(int objectID)
     }
 }
 
+/*
+ * membre qui va supprimer l'objet selectionné dans
+ * la spinbox de la scene 3D
+ * A noter qu'il ne fera rien sur la video
+ * et qu'il supprimera tous les objets si la spinbox
+ * est sur le "all objects"
+ */
 void MainWindow::removeObject()
 {
     if(_objectID == 1)
@@ -627,6 +660,10 @@ void MainWindow::removeObject()
     }
 }
 
+/*
+ * membre appelé lorsque l'utilisateur change
+ * le mode de detection
+ */
 void MainWindow::updateDetectMode()
 {
     _detectionLabel2->setVisible(false);
@@ -660,6 +697,9 @@ void MainWindow::updateDetectMode()
     }
 }
 
+/*
+ * membre qui va afficher s'il y a detection ou non
+ */
 void MainWindow::updateDetectLabel(bool detect)
 {
     _detectionLabel2->setVisible(true);
@@ -700,6 +740,10 @@ void MainWindow::updateDetectLabel(bool detect)
     }
 }
 
+/*
+ * membre appelé lorsque l'utilisateur change
+ * d'entrée video (autre camera ou fichier video)
+ */
 void MainWindow::switchInput()
 {
     for(int i = 0; i < _nbrCam; i++)
@@ -718,6 +762,10 @@ void MainWindow::switchInput()
     _play->setEnabled(true);
 }
 
+/*
+ * membre appelé lorsque l'utilisateur choisi
+ * d'afficher ou non un objet 3D dans la scene
+ */
 void MainWindow::displayObjectInScene(bool display)
 {
     if(_objectID == 0)
@@ -731,6 +779,10 @@ void MainWindow::displayObjectInScene(bool display)
     }
 }
 
+/*
+ * membre appelé lorsque l'utilisateur choisi
+ * d'afficher ou non un objet 3D dans la sideView
+ */
 void MainWindow::displayObjectInSideView(bool display)
 {
     if(_objectID == 0)
@@ -744,6 +796,14 @@ void MainWindow::displayObjectInSideView(bool display)
     }
 }
 
+/*
+ * membre appelé lorsque l'utilisateur choisi d'afficher
+ * la vue principale en full screen.
+ * A noter que comme on utilise un autre widget,
+ * s'il fait Alt+f4 en full screen, le widget disparaitra
+ * et il ne pourra plus passer en full screen
+ * (#truanderie)
+ */
 void MainWindow::displayFullScreen()
 {
     if(!_fullScreen)
@@ -751,7 +811,7 @@ void MainWindow::displayFullScreen()
     else
     {
         _fullScreenWidget->showNormal();
-        _fullScreenWidget->move(-5000, -5000); //(necessaire pour cacher correctement le full screen #truanderie)
+        _fullScreenWidget->move(-5000, -5000); //(necessaire pour cacher correctement le widget de full screen)
         _fullScreenWidget->hide();
     }
 
@@ -760,9 +820,65 @@ void MainWindow::displayFullScreen()
     _fullScreen = !_fullScreen;
 }
 
+/* /!\ membre le plus important d'un point de vue technique /!\
+ *
+ * ce membre est connecté au signal emis à chaque frame par le webcamDevice
+ * qui transmets les matrice rotation et translation (RT) du repere 3D réel
+ * par rapport à la caméra.
+ *
+ * il va donc appliquer ces matrices R et T à la mainMat
+ * (voir graphe de scene, annexe 2 du rapport)
+ *
+ * normalement, le "simple" code commenté ci-dessous fonctionne
+ * (ça a été testé et il fonctionne parfaitement avec la mire)
+ * mais pour une raison encore inconnue, il ne fonctionne pas
+ * à partir d'une certaine rotation du visage selon l'axe y.
+ * Plusieurs tests ont été effectués et au final les valeurs
+ * de rotations et translation ont été modifiées de maniere
+ * arbitraire lors de la detection du visage afin d'obtenir
+ * un résultat qui semble cohérent. (#truanderie)
+ *
+ * A noter qu'on n'utilise pas exactement le morceau de code
+ * commenté ci-dessous pour la detection de la mire car on a
+ * appliqué un effet miroir à notre texture video
+ * (cf this->initObjectList)
+ *
+ */
+
+/*
+    double t3 = tvecs.at<double>(2, 0);
+    double t2 = tvecs.at<double>(1, 0) + t3 / _corrector;
+    double t1 = tvecs.at<double>(0, 0);
+
+    double r11 = rotVec.at<double>(0, 0);
+    double r12 = rotVec.at<double>(0, 1);
+    double r13 = rotVec.at<double>(0, 2);
+    double r21 = rotVec.at<double>(1, 0);
+    double r22 = rotVec.at<double>(1, 1);
+    double r23 = rotVec.at<double>(1, 2);
+    double r31 = rotVec.at<double>(2, 0);
+    double r32 = rotVec.at<double>(2, 1);
+    double r33 = rotVec.at<double>(2, 2);
+
+    osg::Matrixd matrixR; // rotation (transposee de rotVec)
+    matrixR.set(
+                r11,	r21,    r31,    0,
+                r12,	r22,    r32,    0,
+                r13,	r23,    r33,    0,
+                0,		0,		0,		1);
+
+
+    osg::Matrixd matrixT; // translation
+    matrixT.makeTranslate(t1, t2, t3);
+
+    osg::Matrixd matrix90; // rotation de repere entre opencv et osg
+    matrix90.makeRotate(osg::Quat(osg::DegreesToRadians(90.0f), osg::Vec3d(1.0, 0.0, 0.0)));
+
+    _mainMat->setMatrix(matrixR * matrixT * matrix90);
+ */
 void MainWindow::updateSceneRT(cv::Mat rotVec, cv::Mat tvecs)
 {
-    bool rpy = false; // utilise-ton roll/pitch/yaw de chehra
+    bool rpy = false; // utilise-ton roll/pitch/yaw de chehra (cf WebcamDevice.cpp)
 
     double r11, r12, r13, r21, r22, r23, r31, r32, r33;
     double rx, ry, rz;
@@ -836,7 +952,8 @@ void MainWindow::updateSceneRT(cv::Mat rotVec, cv::Mat tvecs)
             }
         }
 
-        //_file << (rx*180)/PI << " ; " << (ry*180)/PI << " ; "  << (rz*180)/PI << " ; "  << std::endl;
+        /* utilisé à des fins de debug
+        _file << (rx*180)/PI << " ; " << (ry*180)/PI << " ; "  << (rz*180)/PI << " ; "  << std::endl;
         std::cout << "r x : " << rx * 180 / PI << std::endl;
         std::cout << "r y : " << ry * 180 / PI << std::endl;
         std::cout << "r z : " << rz * 180 / PI << std::endl;
@@ -845,6 +962,7 @@ void MainWindow::updateSceneRT(cv::Mat rotVec, cv::Mat tvecs)
         std::cout << "t y : " << t2 << std::endl;
         std::cout << "t z : " << t3 << std::endl;
         std::cout << std::endl << std::endl;
+        */
 
         osg::Matrixd matrixR; // rotation corrigee
         matrixR.makeRotate(rx, osg::Vec3d(1.0, 0.0, 0.0), ry, osg::Vec3d(0.0, 1.0, 0.0), rz, osg::Vec3d(0.0, 0.0, 1.0));
@@ -860,7 +978,7 @@ void MainWindow::updateSceneRT(cv::Mat rotVec, cv::Mat tvecs)
     }
     else
     {
-        if(rpy)
+        if(rpy) // en théorie non necessaire, utilisé à des fins de test en utilisant les membres de chehra sur le visage
         {
             r11 = rotVec.at<double>(0, 0);
             r12 = rotVec.at<double>(0, 1);
@@ -893,6 +1011,10 @@ void MainWindow::updateSceneRT(cv::Mat rotVec, cv::Mat tvecs)
     }
 }
 
+/*
+ * les membres suivant servent à la lecture des videos
+ * (play/pause fonctionne aussi pour les flux webcam)
+ */
 void MainWindow::playNpause()
 {
     if(_playCam)
@@ -985,6 +1107,11 @@ void MainWindow::playCam()
     _camGroup->setVisible(true);
 }
 
+/*
+ * les membre suivant servent à l'affichage
+ * des menus "about" des bibliotheques utilisées
+ * et du projet.
+ */
 void MainWindow::displayAboutCV()
 {
     QMessageBox aboutCVMessageBox(QMessageBox::NoIcon, "About OpenCV",
@@ -1111,8 +1238,17 @@ void MainWindow::displayAbout()
     aboutOSGMessageBox.exec();
 }
 
+void MainWindow::displayHelp()
+{
+    HelpWindow hw;
+    hw.exec();
+}
 
 // private
+
+/*
+ * ce membre va initialiser une premiere fenetre
+ */
 void MainWindow::setFirstWindow()
 {
     //////////////////////////////////////////////////
@@ -1181,7 +1317,7 @@ void MainWindow::setFirstWindow()
     QAction* appAction = menuHelp->addAction(tr("&About"));
     connect(appAction, SIGNAL(triggered()), this, SLOT(displayAbout()));
     QAction* howToAction = menuHelp->addAction(tr("&How to use"));
-    connect(howToAction, SIGNAL(triggered()), this, SLOT(displayAboutQt()));
+    connect(howToAction, SIGNAL(triggered()), this, SLOT(displayHelp()));
     menuHelp->addSeparator();
     QAction* qtAction = menuHelp->addAction(tr("About &Qt"));
     connect(qtAction, SIGNAL(triggered()), this, SLOT(displayAboutQt()));
@@ -1201,6 +1337,11 @@ void MainWindow::setFirstWindow()
     this->setMenuBar(menuBar);
 }
 
+/*
+ * membre qui va créer la fenetre principale
+ * en instanciant et positionnant chaque
+ * widget et layout
+ */
 void MainWindow::setMainWindow(int mode)
 {
     //////////////////////////////////////////////////
@@ -1390,7 +1531,7 @@ void MainWindow::setMainWindow(int mode)
     toolbar->addWidget(rotateGroup);
     toolbar->addWidget(translateGroup);
     toolbar->setMovable(true);
-//    this->addToolBar(Qt::BottomToolBarArea, toolbar);
+    //    this->addToolBar(Qt::BottomToolBarArea, toolbar);
     this->addToolBar(Qt::TopToolBarArea, toolbar);
 
     ///////////////////////////////////////////////////
@@ -1409,6 +1550,9 @@ void MainWindow::setMainWindow(int mode)
 
 }
 
+/*
+ * membre qui va connecter tous les signaux à leurs slots associés
+ */
 void MainWindow::connectAll()
 {
     qRegisterMetaType<cv::Mat>("cv::Mat");
@@ -1479,6 +1623,10 @@ void MainWindow::connectAll()
     connect(_backBegin, SIGNAL(clicked()), _webcamDevice, SLOT(backToBeginSlot()));
 }
 
+/*
+ * membre qui va créer quelques raccourcis clavier et les connecter
+ * à leurs slots associés
+ */
 void MainWindow::setShortcuts()
 {
     _fullScreenShortcut = new QShortcut(Qt::CTRL + Qt::Key_F, this);
@@ -1494,7 +1642,12 @@ void MainWindow::setShortcuts()
     connect(_pauseShortcut2, SIGNAL(activated()), this, SLOT(playNpause()));
 }
 
-void MainWindow::createFullScreenWidget(int mode) // #truanderie
+/*
+ * membre qui va créer un widget permettant l'affichage en plein ecran
+ * il se compose d'un second OSGWidget (représentant la vue principale)
+ * et de deux bandes noires afin d'afficher l'image avec le bon ratio
+ */
+void MainWindow::createFullScreenWidget(int mode)
 {
     QRect rec = QApplication::desktop()->screenGeometry();
     int screenHeight = rec.height();
@@ -1559,6 +1712,14 @@ void MainWindow::createFullScreenWidget(int mode) // #truanderie
         _fullScreenWidget = _fullScreenView;
 }
 
+/*
+ * membre qui va instancier le vector de Our3DObject
+ * a noter que le _objectList[0] contiendra la matrixTransform principale
+ * et que le _objectList[1] contiendra la texture video.
+ * Ainsi, _objectList[0] aura comme "child" dans le graphe de scene tous
+ * les autres objets contenus dans le vector à partir de _objectList[2]
+ * Il y a aussi un vector d'Our3DObject par vue (mainView et sideView)
+ */
 void MainWindow::initObjectsList(int mode)
 {
     _objectsList.push_back(new Our3DObject()); // globalMat en _objectsList[0]
@@ -1582,12 +1743,12 @@ void MainWindow::initObjectsList(int mode)
     {
         cv::Mat cameraMatrix = cv::Mat::zeros(3, 3, CV_32F);
 
-        cameraMatrix.at<double>(0,0) = 683.52803565425086;
+        cameraMatrix.at<double>(0,0) = 680.0;
         cameraMatrix.at<double>(0,1) = 0;
-        cameraMatrix.at<double>(0,2) = 322.55739845129722;
+        cameraMatrix.at<double>(0,2) = 320.0;
         cameraMatrix.at<double>(1,0) = 0;
-        cameraMatrix.at<double>(1,1) = 684.92870414691424;
-        cameraMatrix.at<double>(1,1) = 244.60400436525589;
+        cameraMatrix.at<double>(1,1) = 680;
+        cameraMatrix.at<double>(1,1) = 240.0;
         cameraMatrix.at<double>(2,0) = 0;
         cameraMatrix.at<double>(2,1) = 0;
         cameraMatrix.at<double>(2,2) = 1;
@@ -1598,7 +1759,6 @@ void MainWindow::initObjectsList(int mode)
         // NEAR (n) = distance focale ; si pixels carres, fx = fy -> np
         //mais est generalement different de fy donc on prend (pour l'instant) par defaut la valeur mediane
         _corrector = (n / 2) / (cy - webcamMat->rows / 2);
-
     }
 
     else if(mode == 2)

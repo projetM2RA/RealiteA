@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<QtHelpProject version="1.0">
+    <namespace>aron.help</namespace>
+    <virtualFolder>Howto</virtualFolder>
+    <filterSection>
+        <toc>
+            <section title="Intoduction" ref="intro.html">
+                <section title="Calibration" ref="./calibration.html"></section>
+                <section title="General" ref="./general.html"></section>
+                <section title="Detection" ref="./detection.html"></section>
+                <section title="Add object" ref="./addobject.html"></section>
+            </section>
+        </toc>
+        <keywords>
+            <keyword name="General use" ref="./general.html"/>
+            <keyword name="Calibrate cam" ref="./calibration.html"/>
+            <keyword name="Add object" ref="./addobject.html"/>
+        </keywords>
+        <files>
+            <file>intro.html</file>
+            <file>general.html</file>
+            <file>calibration.html</file>
+            <file>detection.html</file>
+            <file>addobject.html</file>
+            <file>images/addobject.png</file>
+            <file>images/aron_black.png</file>
+            <file>images/banner.png</file>
+            <file>images/brain_blue.png</file>
+            <file>images/calibration.png</file>
+            <file>images/detection.png</file>
+            <file>images/ihm.png</file>
+            <file>images/next.png</file>
+            <file>images/previous.png</file>
+        </files>
+    </filterSection>
+</QtHelpProject>

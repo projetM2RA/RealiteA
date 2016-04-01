@@ -46,7 +46,7 @@ WebcamDevice::WebcamDevice(QObject *parent) :
         do
         {
             _vcap >> *_frame;
-        }while(_frame->empty()); // on s'assure que la camera est lancé (#lenteurDuPCDeNico)
+        }while(_frame->empty()); // on s'assure que la camera est lancï¿½ (#lenteurDuPCDeNico)
     }
     //////////////////////////////////////////////////
 
@@ -60,6 +60,11 @@ WebcamDevice::~WebcamDevice()
     delete _frame;
 }
 
+/*
+ * membre qui va initialiser les matrices intrinseques
+ * selon le choix de l'utilisateur (par defaut ou
+ * en lisant un fichier yml)
+ */
 int WebcamDevice::initMatrix()
 {
     //////////////////////////////////////////////////
@@ -81,21 +86,21 @@ int WebcamDevice::initMatrix()
             _cameraMatrix = cv::Mat::zeros(3, 3, CV_32F);
             _distCoeffs = cv::Mat::zeros(1, 5, CV_32F);
 
-            _cameraMatrix.at<double>(0,0) = 683.52803565425086;
+            _cameraMatrix.at<double>(0,0) = 680.0;
             _cameraMatrix.at<double>(0,1) = 0;
-            _cameraMatrix.at<double>(0,2) = 322.55739845129722;
+            _cameraMatrix.at<double>(0,2) = 320.0;
             _cameraMatrix.at<double>(1,0) = 0;
-            _cameraMatrix.at<double>(1,1) = 684.92870414691424;
-            _cameraMatrix.at<double>(1,1) = 244.60400436525589;
+            _cameraMatrix.at<double>(1,1) = 680.0;
+            _cameraMatrix.at<double>(1,1) = 240.0;
             _cameraMatrix.at<double>(2,0) = 0;
             _cameraMatrix.at<double>(2,1) = 0;
             _cameraMatrix.at<double>(2,2) = 1;
 
-            _distCoeffs.at<double>(0,0) = -0.12517320982838301;
-            _distCoeffs.at<double>(0,1) = 0.30334524836285731;
-            _distCoeffs.at<double>(0,2) = 0.00064225602902184462;
-            _distCoeffs.at<double>(0,3) = -0.0026090495976546276;
-            _distCoeffs.at<double>(0,4) = -1.3717106570492081;
+            _distCoeffs.at<double>(0,0) = 0.0;
+            _distCoeffs.at<double>(0,1) = 0.0;
+            _distCoeffs.at<double>(0,2) = 0.0;
+            _distCoeffs.at<double>(0,3) = 0.0;
+            _distCoeffs.at<double>(0,4) = 0.0;
 
             _focalePlane = (_cameraMatrix.at<double>(0, 0) + _cameraMatrix.at<double>(1, 1)) / 2; // NEAR = distance focale ; si pixels carrés, fx = fy -> np
             //mais est généralement différent de fy donc on prend (pour l'instant) par défaut la valeur médiane
@@ -144,6 +149,12 @@ int WebcamDevice::initMatrix()
     }
 }
 
+/*
+ * membre qui va initialiser les vector de points 3D
+ * qui représentent les modeles des objets réels
+ * detectés
+ * (c'est ici aussi qu'on instancie chehra)
+ */
 bool WebcamDevice::initModels()
 {
     //////////////////////////////////////////////////
@@ -213,6 +224,10 @@ bool WebcamDevice::initModels()
 
 
 //static
+/*
+ * permet d'obtenir le nombre de webcam branchées
+ * ne fonctionne que si elles ne sont pas utilisées
+ */
 int WebcamDevice::webcamCount()
 {
     int count = 0;
@@ -232,9 +247,17 @@ int WebcamDevice::webcamCount()
 void WebcamDevice::switchMode(int mode)
 {
     _detect = (detectMode)mode;
-
 }
 
+/*
+ * on change ici l'entree video.
+ * soit on charge une video, soit on ouvre une nouvelle webcam
+ *
+ * /!\ A noter que toutes les entrées video seront uutilisées
+ * avec la meme matrice intrinseque. il faudrait donc à l'avenir
+ * prévoir une méthode qui permettra d'associer une matrice à
+ * une entrée video.
+ */
 void WebcamDevice::switchInput(int input, bool rewind)
 {
     _inputIsSwitched = true;
@@ -268,7 +291,7 @@ void WebcamDevice::switchInput(int input, bool rewind)
                     emit updateWebcam();
                     emit playVideo();
                     //std::cout << _bufferFrame.size() << std::endl;
-                }while(_bufferFrame.empty()); // on s'assure que la camera est lancé (#lenteurDuPCDeNico)
+                }while(_bufferFrame.empty()); // on s'assure que la camera est lancï¿½ (#lenteurDuPCDeNico)
             }
         }
         else
@@ -289,7 +312,7 @@ void WebcamDevice::switchInput(int input, bool rewind)
                 emit updateWebcam();
                 emit playCam();
                 //std::cout << _bufferFrame.size() << std::endl;
-            }while(_bufferFrame.empty()); // on s'assure que la camera est lancé (#lenteurDuPCDeNico)
+            }while(_bufferFrame.empty()); // on s'assure que la camera est lancï¿½ (#lenteurDuPCDeNico)
             _pause = false;
         }
     }
@@ -311,13 +334,16 @@ void WebcamDevice::switchInput(int input, bool rewind)
             emit updateWebcam();
             emit playVideo();
             //std::cout << _bufferFrame.size() << std::endl;
-        }while(_bufferFrame.empty()); // on s'assure que la camera est lancé (#lenteurDuPCDeNico)
+        }while(_bufferFrame.empty()); // on s'assure que la camera est lancï¿½ (#lenteurDuPCDeNico)
 
     }
 
     _inputIsSwitched = false;
 }
 
+/*
+ * permet de gerer les options de detection
+ */
 bool WebcamDevice::setOptions()
 {
     _optionsDialog = new OptionsDialog(_nbrColChess, _nbrRowChess, _chessSize, _markerSize, _launchChehra, (QWidget*)this->parent());
@@ -337,6 +363,11 @@ bool WebcamDevice::setOptions()
 
 
 // protected
+/*
+ * run du thread
+ * va recupérer l'entrée video puis effectuer le calcul de pose
+ * selon le mode de detection choisi par l'utilisateur
+ */
 void WebcamDevice::run()
 {
     while(_isRunning)
@@ -385,6 +416,11 @@ void WebcamDevice::run()
 
 
 // private
+/*
+ * membre appelé lorsque le soft ne trouve pas de matrice intrinseque en ../rsc
+ * il va proposer à l'utilisateur d'en créer une, d'en utiliser une par defaut,
+ * ou d'indiquer le chemin vers un fichier correct
+ */
 int WebcamDevice::calibrateCam(cv::FileStorage *fs)
 {
     bool stop = false;
@@ -455,6 +491,9 @@ int WebcamDevice::calibrateCam(cv::FileStorage *fs)
     return ret;
 }
 
+/*
+ * les membres suivant servent à detecter le repere choisi par l'utilisateur
+ */
 bool WebcamDevice::detecterVisage(std::vector<cv::Point2f> *pointsVisage)
 {
     bool visageFound = false;
@@ -476,18 +515,12 @@ bool WebcamDevice::detecterVisage(std::vector<cv::Point2f> *pointsVisage)
             (*pointsVisage).push_back(cv::Point2f(points.at<float>(28, 0), points.at<float>(28 + 49, 0)));
             (*pointsVisage).push_back(cv::Point2f(points.at<float>(11, 0), points.at<float>(11 + 49, 0)));
             (*pointsVisage).push_back(cv::Point2f(points.at<float>(12, 0), points.at<float>(12 + 49, 0)));
-            (*pointsVisage).push_back(cv::Point2f(points.at<float>(13, 0), points.at<float>(13 + 49, 0)));
+            (*pointsVisage).push_back(cv::Point2f(points.at<float>(13, 0), points.at<float>(13 + 49, 0)));/*
             (*pointsVisage).push_back(cv::Point2f(points.at<float>(14, 0), points.at<float>(14 + 49, 0)));
             (*pointsVisage).push_back(cv::Point2f(points.at<float>(15, 0), points.at<float>(15 + 49, 0)));
             (*pointsVisage).push_back(cv::Point2f(points.at<float>(16, 0), points.at<float>(16 + 49, 0)));
             (*pointsVisage).push_back(cv::Point2f(points.at<float>(17, 0), points.at<float>(17 + 49, 0)));
-            (*pointsVisage).push_back(cv::Point2f(points.at<float>(18, 0), points.at<float>(18 + 49, 0)));/*
-            (*pointsVisage).push_back(cv::Point2f(points.at<float>(14, 0), points.at<float>(14 + 49, 0)));
-            (*pointsVisage).push_back(cv::Point2f(points.at<float>(18, 0), points.at<float>(18 + 49, 0)));
-            (*pointsVisage).push_back(cv::Point2f(points.at<float>(13, 0), points.at<float>(13 + 49, 0)));
-            (*pointsVisage).push_back(cv::Point2f(points.at<float>(19, 0), points.at<float>(19 + 49, 0)));
-            (*pointsVisage).push_back(cv::Point2f(points.at<float>(10, 0), points.at<float>(10 + 49, 0)));
-            (*pointsVisage).push_back(cv::Point2f(points.at<float>(28, 0), points.at<float>(28 + 49, 0)));*/
+            (*pointsVisage).push_back(cv::Point2f(points.at<float>(18, 0), points.at<float>(18 + 49, 0)));*/
         }
         else
             return false;
@@ -511,6 +544,12 @@ bool WebcamDevice::detectChess()
     return chessFound;
 }
 
+/*
+ * membre qui va detecter le marqueur et le cropper afin de permettre par
+ * la suite un appareillement.
+ * peut etre amélioré en effectuant une homographie afin de remettre l'image
+ * au centre dans le bon sens et permettre une meilleur indentification
+ */
 bool WebcamDevice::detectMarker()
 {
     cv::Mat imCalibGray;
@@ -646,6 +685,9 @@ bool WebcamDevice::detectMarker()
     return patternFound;
 }
 
+/*
+ * tracking à l'aide de flot optique
+ */
 void WebcamDevice::trackingChess()
 {
     cv::Mat rvecs;
@@ -690,6 +732,12 @@ void WebcamDevice::trackingMarker()
     cv::Rodrigues(rvecs, _rotVecs);
 }
 
+/*
+ * membre qui fait ici l'appareillement SIFT entre l'image du marqueur detecté et
+ * les images présentes dans la base de données.
+ * peut etre amélioré en utilisant une méthode d'identification moins "lourde"
+ * (fft par exemple).
+ */
 void WebcamDevice::dbCorrelation()
 {
     cv::SiftFeatureDetector detector;
@@ -700,9 +748,9 @@ void WebcamDevice::dbCorrelation()
 
     cv::Ptr<cv::DescriptorExtractor> descriptor = cv::DescriptorExtractor::create("SIFT");
     cv::Mat descriptors1, descriptors2, descriptors3;
-    descriptor->compute(_frameCropped, keypoints1, descriptors1 );
-    descriptor->compute(_markersModels[0], keypoints2, descriptors2 );
-    descriptor->compute(_markersModels[1], keypoints3, descriptors3 );
+    descriptor->compute(_frameCropped, keypoints1, descriptors1);
+    descriptor->compute(_markersModels[0], keypoints2, descriptors2);
+    descriptor->compute(_markersModels[1], keypoints3, descriptors3);
 
     if(!descriptors1.empty())
     {
@@ -712,16 +760,16 @@ void WebcamDevice::dbCorrelation()
         std::vector< cv::DMatch > good_matches2;
         double max_dist = 0; double min_dist = 100;
 
-        matcher.match( descriptors2, descriptors1, matches );
+        matcher.match(descriptors2, descriptors1, matches);
 
-        for( int i = 0; i < descriptors2.rows; i++ )
+        for(int i = 0; i < descriptors2.rows; i++)
         {
             double dist = matches[i].distance;
-            if( dist < min_dist ) min_dist = dist;
-            if( dist > max_dist ) max_dist = dist;
+            if(dist < min_dist) min_dist = dist;
+            if(dist > max_dist) max_dist = dist;
 
-            if( matches[i].distance <= 2*min_dist)
-                good_matches1.push_back( matches[i]);
+            if(matches[i].distance <= 2 * min_dist)
+                good_matches1.push_back(matches[i]);
         }
 
         /*for( int i = 0; i < descriptors2.rows; i++ )
@@ -750,6 +798,11 @@ void WebcamDevice::dbCorrelation()
     }
 }
 
+/*
+ * les membre suivant vont effectuer le calcul de pose avec solvePNP
+ * ils enverront ensuite le réultat au travers d'un signal relié à
+ * updateSceneRT du mainWindow
+ */
 void WebcamDevice::faceRT()
 {
     cv::Mat rvecs;
@@ -887,7 +940,7 @@ void WebcamDevice::markerRT()
 
         if(meanErrors > 10)
         {
-//            emit updateDetect(false);
+            //            emit updateDetect(false);
             _reset = true;
         }
 

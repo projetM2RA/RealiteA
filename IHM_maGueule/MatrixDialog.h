@@ -1,3 +1,15 @@
+////////////////////////////////////////////////////////////
+//                                                        //
+//  Fenetre de dialogue qui va permettre à l'utilisateur  //
+//  de choisir s'il souhaite utiliser une matrice par     //
+//  défaut, utiliser une matrice déjà créée ou calibrer   //
+//  sa caméra.                                            //
+//  Il est à noter que cette fenetre n'apparaitra que si  //
+//  le programme de trouve pas le fichier                 //
+//  cameraMatrix.yml                                      //
+//                                                        //
+////////////////////////////////////////////////////////////
+
 #ifndef MATRIXDIALOG_H
 #define MATRIXDIALOG_H
 

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta  content="text/html; charset=UTF-8"  http-equiv="content-type">
+    <title>addobject</title>
+    <style  type="text/css">
+#backgroundColor {  
+  background-color: rgb(236, 240, 241);
+}
+
+</style></head>
+  <body  style="width: 1217px;"  id="backgroundColor"><img  title="banner"  alt="ARON"
+       src="file:///C:/Users/Leo/Dropbox/ProjetM2/HowTo/images/banner.png"><br>
+    <h1><span  style="font-family: Calibri;">Add object to the scene</span></h1>
+    <span  style="font-family: Calibri;">To project a 3D model on your detected
+      real object, you can access the <span  style="font-weight: bold;">File
+        &gt; Add object to the scene</span> options dialog in the menu bar.<br>
+      <br>
+    </span>
+    <div  style="text-align: center;"><span  style="font-family: Calibri;"><img
+           title="addobject"  alt="Add object dialog"  src="file:///C:/Users/Leo/Dropbox/ProjetM2/HowTo/images/addobject.png"><br>
+      </span>
+      <div  style="text-align: left;">
+        <ul  style="text-align: justify;">
+          <li><span  style="font-weight: bold;"><span  style="color: rgb(41, 128, 185);"><span
+                   style="font-family: Calibri;">Box 1 : </span></span></span><span
+               style="color: rgb(41, 128, 185);"><span  style="font-family: Calibri;"><span
+                   style="color: rgb(0, 0, 0);">You may chose the fast way to
+                  add objects to the scene, by using automatic templates
+                  integrated in the software. The first and third one are
+                  related to <strong>Face detection</strong>, whereas the
+                  second one in optimized for a <strong>Board detection</strong>.
+                  Finally, the last icon will project a 3D landmark in order to
+                  display axis in the scene.</span></span></span></li>
+        </ul>
+        <ul  style="text-align: justify;">
+          <li><span  style="font-weight: bold;"><span  style="color: rgb(46, 204, 113);"><span
+                   style="font-family: Calibri;">Box 2 : </span></span></span><span
+               style="color: rgb(46, 204, 113);"><span  style="font-family: Calibri;"><span
+                   style="color: rgb(0, 0, 0);">If you prefer to add a single
+                  personal object, you may select the correct <strong>Loading
+                    path</strong> and specify a <strong>Name </strong>to help
+                  you set its properties after that. If you also wish to add a
+                  texture for this object, a <strong>Texture path</strong> is
+                  available.</span></span></span></li>
+        </ul>
+        <div  style="text-align: justify;"><span  style=" color: rgb(46, 204, 113);"><span
+               style=" font-family: Calibri;"><span  style=" color: rgb(0, 0, 0);">Note
+                that you have the possibility to <strong>delete</strong> and/or
+                <strong>display</strong> a specific and/or all objects with the
+                general toolbar. If you wish to try augmented reality on a video
+                of your own, you may select its path with the <strong>Video
+                  Input </strong>menu.<br>
+                <br>
+              </span></span></span>
+          <div  style="text-align: center;"><span  style="color: rgb(46, 204, 113); font-style: italic;"><span
+                 style=" font-family: Calibri;"><span  style=" color: rgb(0, 0, 0);">Thanks
+                  for using this software, do not fear to experiment and have
+                  fun!<br>
+                  <br>
+                </span></span></span>
+            <div  style="text-align: left;"><a  title="Previous page"  href="file:///C:/Users/Leo/Dropbox/ProjetM2/HowTo/detection.html"><span
+                   style="color: rgb(46, 204, 113); font-style: italic;"><span  style=" font-family: Calibri;"><span
+                       style=" color: rgb(0, 0, 0);"><img  title="previous"  alt="Previous page"
+                         src="file:///C:/Users/Leo/Dropbox/ProjetM2/HowTo/images/previous.png"></span></span></span></a><br>
+              <span  style="color: rgb(46, 204, 113); font-style: italic;"><span
+                   style=" font-family: Calibri;"><span  style=" color: rgb(0, 0, 0);"></span></span></span></div>
+            <span  style=" color: rgb(46, 204, 113);"><span  style=" font-family: Calibri;"><span
+                   style=" color: rgb(0, 0, 0);"></span></span></span></div>
+          <span  style=" color: rgb(46, 204, 113);"><span  style=" font-family: Calibri;"><span
+                 style=" color: rgb(0, 0, 0);"></span></span></span></div>
+      </div>
+      <span  style="font-family: Calibri;"></span></div>
+    <p><br>
+    </p>
+  </body>
+</html>

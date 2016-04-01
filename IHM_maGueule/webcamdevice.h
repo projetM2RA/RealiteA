@@ -1,3 +1,14 @@
+////////////////////////////////////////////////////////////
+//                                                        //
+//  QThread qui va tourner en parallele de la mainWindow  //
+//  Il va recuperer les images provenant du flux video,   //
+//  effectuer les cacluls de pose selon le mode de        //
+//  detection choisi et renvoyer les matrices             //
+//  extrinseques trouvées                                 //
+//                                                        //
+////////////////////////////////////////////////////////////
+
+
 #ifndef WEBCAMDEVICE_H
 #define WEBCAMDEVICE_H
 

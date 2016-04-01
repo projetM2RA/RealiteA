@@ -1,3 +1,13 @@
+////////////////////////////////////////////////////////////
+//                                                        //
+//  classe héritant de osg::MatrixTransform et possedant  //
+//  un osg::Node en attribut. Elle représente chaque      //
+//  modèle 3D importé dans la scene dont l'utilisateur    //
+//  pourra modifier les caractéristiques (taille,         //
+//  position, ...)                                        //
+//                                                        //
+////////////////////////////////////////////////////////////
+
 #ifndef OUR3DOBJECT_H
 #define OUR3DOBJECT_H
 

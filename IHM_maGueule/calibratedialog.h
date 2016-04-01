@@ -1,4 +1,12 @@
 #ifndef CALIBRATEDIALOG_H
+////////////////////////////////////////////////////////////
+//                                                        //
+//  Fenetre de dialogue qui va permettre à l'utilisateur  //
+//  de calibrer sa caméra                                 //
+//                                                        //
+////////////////////////////////////////////////////////////
+
+
 #define CALIBRATEDIALOG_H
 
 #undef min
